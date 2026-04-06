@@ -1,0 +1,208 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Fraunces:ital,opsz,wght@0,9..144,100..900;1,9..144,100..900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --font-sans: 'DM Sans', system-ui, sans-serif;
+    --font-display: 'Fraunces', Georgia, serif;
+
+    --background: 40 33% 98%;
+    --foreground: 200 25% 10%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 200 25% 10%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 200 25% 10%;
+
+    --primary: 172 50% 30%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 170 25% 93%;
+    --secondary-foreground: 172 50% 20%;
+
+    --muted: 40 20% 94%;
+    --muted-foreground: 200 10% 45%;
+
+    --accent: 38 80% 60%;
+    --accent-foreground: 38 80% 15%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 200 15% 89%;
+    --input: 200 15% 89%;
+    --ring: 172 50% 30%;
+
+    --radius: 0.75rem;
+
+    --sidebar-background: 170 20% 97%;
+    --sidebar-foreground: 200 15% 25%;
+    --sidebar-primary: 172 50% 30%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 170 25% 93%;
+    --sidebar-accent-foreground: 172 50% 20%;
+    --sidebar-border: 200 15% 91%;
+    --sidebar-ring: 172 50% 30%;
+
+    /* Custom tokens */
+    --gradient-hero: linear-gradient(135deg, hsl(172 50% 30%), hsl(170 40% 45%), hsl(38 80% 60%));
+    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%), hsl(170 20% 97%));
+    --gradient-mesh: radial-gradient(ellipse at 20% 50%, hsl(172 50% 30% / 0.06) 0%, transparent 50%),
+                     radial-gradient(ellipse at 80% 20%, hsl(38 80% 60% / 0.06) 0%, transparent 50%),
+                     radial-gradient(ellipse at 60% 80%, hsl(172 50% 30% / 0.04) 0%, transparent 50%);
+    --shadow-soft: 0 1px 3px hsl(200 15% 10% / 0.04), 0 4px 12px hsl(200 15% 10% / 0.03);
+    --shadow-card: 0 1px 2px hsl(200 15% 10% / 0.04), 0 8px 24px hsl(200 15% 10% / 0.06);
+    --shadow-elevated: 0 4px 6px hsl(200 15% 10% / 0.04), 0 16px 40px hsl(200 15% 10% / 0.08);
+
+    --success: 158 64% 40%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 38 80% 15%;
+    --info: 200 80% 50%;
+    --info-foreground: 0 0% 100%;
+  }
+
+  .dark {
+    --background: 200 20% 7%;
+    --foreground: 40 20% 92%;
+
+    --card: 200 18% 10%;
+    --card-foreground: 40 20% 92%;
+
+    --popover: 200 18% 10%;
+    --popover-foreground: 40 20% 92%;
+
+    --primary: 172 45% 45%;
+    --primary-foreground: 200 20% 5%;
+
+    --secondary: 200 15% 15%;
+    --secondary-foreground: 172 40% 70%;
+
+    --muted: 200 15% 14%;
+    --muted-foreground: 200 10% 55%;
+
+    --accent: 38 70% 50%;
+    --accent-foreground: 38 80% 90%;
+
+    --destructive: 0 62% 45%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 200 15% 16%;
+    --input: 200 15% 16%;
+    --ring: 172 45% 45%;
+
+    --sidebar-background: 200 18% 9%;
+    --sidebar-foreground: 40 15% 80%;
+    --sidebar-primary: 172 45% 45%;
+    --sidebar-primary-foreground: 200 20% 5%;
+    --sidebar-accent: 200 15% 14%;
+    --sidebar-accent-foreground: 172 40% 70%;
+    --sidebar-border: 200 15% 15%;
+    --sidebar-ring: 172 45% 45%;
+
+    --gradient-hero: linear-gradient(135deg, hsl(172 45% 45%), hsl(170 40% 35%), hsl(38 70% 50%));
+    --gradient-card: linear-gradient(145deg, hsl(200 18% 10%), hsl(200 18% 12%));
+    --gradient-mesh: radial-gradient(ellipse at 20% 50%, hsl(172 45% 45% / 0.08) 0%, transparent 50%),
+                     radial-gradient(ellipse at 80% 20%, hsl(38 70% 50% / 0.06) 0%, transparent 50%),
+                     radial-gradient(ellipse at 60% 80%, hsl(172 45% 45% / 0.04) 0%, transparent 50%);
+    --shadow-soft: 0 1px 3px hsl(0 0% 0% / 0.2);
+    --shadow-card: 0 1px 2px hsl(0 0% 0% / 0.2), 0 8px 24px hsl(0 0% 0% / 0.15);
+    --shadow-elevated: 0 4px 6px hsl(0 0% 0% / 0.2), 0 16px 40px hsl(0 0% 0% / 0.25);
+
+    --success: 158 55% 45%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 85% 55%;
+    --warning-foreground: 38 80% 10%;
+    --info: 200 75% 55%;
+    --info-foreground: 0 0% 100%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    font-family: var(--font-sans);
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+
+  h1, h2, h3 {
+    font-family: var(--font-display);
+  }
+}
+
+@layer utilities {
+  .text-gradient {
+    background: var(--gradient-hero);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .bg-mesh {
+    background-image: var(--gradient-mesh);
+  }
+
+  .shadow-soft {
+    box-shadow: var(--shadow-soft);
+  }
+
+  .shadow-card {
+    box-shadow: var(--shadow-card);
+  }
+
+  .shadow-elevated {
+    box-shadow: var(--shadow-elevated);
+  }
+
+  .glass {
+    background: hsl(var(--card) / 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.3);
+}
+
+/* Animations */
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slide-in-left {
+  from { opacity: 0; transform: translateX(-12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
