@@ -33,6 +33,8 @@ import {
 } from "@/components/ui/dialog";
 import { useHealthMemory } from "@/hooks/useHealthMemory";
 import { HealthEntry } from "@/services/healthService";
+import { doctorSummaryService } from "@/services/doctorSummaryService";
+import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
 import { toast } from "sonner";
 
 interface Message {
@@ -42,6 +44,7 @@ interface Message {
 }
 
 const HealthMemory = () => {
+  const { user } = useSupabaseAuth();
   const {
     entries,
     isLoading,
@@ -241,6 +244,31 @@ const HealthMemory = () => {
   const handleGenerateSummary = async () => {
     const summaryData = await generateDoctorSummary();
     if (summaryData) {
+      // Save to database
+      if (user) {
+        try {
+          const { error } = await doctorSummaryService.createDoctorSummary(user.id, {
+            title: `Health Summary - ${new Date().toLocaleDateString()}`,
+            summary: summaryData.summary,
+            insights: summaryData.insights,
+            recommendations: summaryData.recommendations,
+            health_entry_ids: entries.slice(0, 10).map(e => e.id!).filter(Boolean),
+            date_range_start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+            date_range_end: new Date().toISOString(),
+            is_favorite: false,
+            tags: ['health', 'summary', 'ai-generated']
+          });
+          
+          if (error) {
+            toast.error("Failed to save summary: " + error);
+          } else {
+            toast.success("Summary saved successfully!");
+          }
+        } catch (error) {
+          console.error('Error saving summary:', error);
+          toast.error("Failed to save summary");
+        }
+      }
       setShowSummary(true);
     }
   };
