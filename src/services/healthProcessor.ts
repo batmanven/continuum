@@ -21,7 +21,15 @@ export class HealthProcessor {
   }
 
   private createHealthPrompt(userInput: string): string {
-    return `You are a medical AI assistant. Analyze the following health-related text and extract structured information.
+    return `You are a medical AI assistant designed to help organize health information. Analyze the following health-related text and extract structured information.
+
+IMPORTANT SAFETY GUIDELINES:
+1. You are NOT providing medical advice
+2. You are only organizing information
+3. Do not recommend treatments or medications
+4. Do not diagnose conditions
+5. Include disclaimers that this is not medical advice
+6. For serious symptoms, suggest consulting healthcare providers
 
 User input: "${userInput}"
 
@@ -73,7 +81,8 @@ Please extract and organize the information into the following JSON structure. O
   },
   "tags": ["headache", "fever", "medication", "stress"],
   "mentioned_date": "YYYY-MM-DD if mentioned",
-  "confidence": 0.85
+  "confidence": 0.85,
+  "disclaimer": "This is not medical advice. Always consult healthcare professionals."
 }
 
 IMPORTANT:
@@ -84,6 +93,7 @@ IMPORTANT:
 5. Include a confidence score (0-1) based on how clear the information is
 6. Return ONLY valid JSON - no explanations or extra text
 7. If information is unclear, omit that field rather than guessing
+8. ALWAYS include the disclaimer field
 
 Response:`;
   }

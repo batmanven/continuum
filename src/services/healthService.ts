@@ -44,6 +44,7 @@ export interface StructuredHealthData {
   tags?: string[];
   mentioned_date?: string;
   confidence?: number;
+  disclaimer?: string;
 }
 
 export interface HealthEntry {

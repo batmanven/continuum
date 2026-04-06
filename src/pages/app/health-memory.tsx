@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { 
   Send, 
   ClipboardList, 
@@ -19,7 +20,9 @@ import {
   Moon,
   Zap,
   Trash2,
-  Loader2
+  Loader2,
+  AlertTriangle,
+  Phone
 } from "lucide-react";
 import {
   Dialog,
@@ -54,7 +57,7 @@ const HealthMemory = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "ai",
-      content: "Hi! I'm your health companion. Tell me how you're feeling, and I'll organize it into your health timeline. 💚",
+      content: "Hi! I'm your health companion. Tell me how you're feeling, and I'll organize it into your health timeline. 💚\n\n⚠️ **Important**: I'm not a medical professional. For emergencies, call emergency services immediately. Always consult a doctor for medical advice.",
       timestamp: new Date().toISOString()
     },
   ]);
@@ -72,8 +75,33 @@ const HealthMemory = () => {
     scrollToBottom();
   }, [messages]);
 
+  const detectEmergencyKeywords = (text: string): boolean => {
+    const emergencyKeywords = [
+      'emergency', 'emergency room', 'er', '911', 'ambulance',
+      'chest pain', 'heart attack', 'stroke', 'difficulty breathing',
+      'severe pain', 'unconscious', 'fainting', 'bleeding heavily',
+      'suicide', 'kill myself', 'end my life', 'overdose',
+      'can\'t breathe', 'stop breathing', 'severe allergic'
+    ];
+    
+    return emergencyKeywords.some(keyword => 
+      text.toLowerCase().includes(keyword)
+    );
+  };
+
   const handleSend = async () => {
     if (!input.trim() || isProcessing) return;
+
+  
+    if (detectEmergencyKeywords(input)) {
+      setMessages(prev => [...prev, {
+        role: "ai",
+        content: "🚨 **EMERGENCY DETECTED**\n\nBased on your message, you may need immediate medical attention.\n\n**Please call emergency services immediately:**\n• 🇺🇸 **911** (US)\n• 🇮🇳 **112** (India)\n• 🇬🇧 **999** (UK)\n• Or your local emergency number\n\n**Go to nearest emergency room** if you can travel safely.\n\nThis is not medical advice - please seek professional help immediately.",
+        timestamp: new Date().toISOString()
+      }]);
+      setInput("");
+      return;
+    }
 
     const userMessage: Message = {
       role: "user",
@@ -103,22 +131,22 @@ const HealthMemory = () => {
     const lowerInput = userInput.toLowerCase();
     
     if (lowerInput.includes('headache') || lowerInput.includes('pain')) {
-      return `I've logged your symptoms. Here's what I noted:\n\n• **Primary concern**: ${extractSymptom(userInput)}\n• **Recorded**: Just now\n• **Added to timeline**: Today's entry\n\nThis has been added to your health timeline. Consider staying hydrated and resting. If symptoms persist, you might want to track patterns over time.`;
+      return `I've logged your symptoms. Here's what I noted:\n\n• **Primary concern**: ${extractSymptom(userInput)}\n• **Recorded**: Just now\n• **Added to timeline**: Today's entry\n\nThis has been added to your health timeline. Consider staying hydrated and resting. If symptoms persist or worsen, please consult a healthcare provider.\n\n⚠️ **Remember**: I'm not a medical professional. Always consult a doctor for medical advice.`;
     }
     
     if (lowerInput.includes('medicine') || lowerInput.includes('took') || lowerInput.includes('pill')) {
-      return `Medication recorded:\n\n• **Medication**: ${extractMedication(userInput)}\n• **Time**: Just now\n• **Added to medication log**\n\nI'll track how you feel in the coming hours. Let me know if symptoms change or if you experience any side effects.`;
+      return `Medication recorded:\n\n• **Medication**: ${extractMedication(userInput)}\n• **Time**: Just now\n• **Added to medication log**\n\nI'll track how you feel in the coming hours. Let me know if symptoms change or if you experience any side effects.\n\n⚠️ **Important**: Never take medication without consulting your healthcare provider. I'm not providing medical advice.`;
     }
     
     if (lowerInput.includes('tired') || lowerInput.includes('fatigue') || lowerInput.includes('energy')) {
-      return `Energy level logged:\n\n• **Status**: ${extractEnergyLevel(userInput)}\n• **Time**: Just now\n• **Pattern tracking**: Active\n\n💡 **Insight**: I'm monitoring your energy patterns. This will help identify trends and potential causes for fatigue.`;
+      return `Energy level logged:\n\n• **Status**: ${extractEnergyLevel(userInput)}\n• **Time**: Just now\n• **Pattern tracking**: Active\n\n💡 **Insight**: I'm monitoring your energy patterns. This will help identify trends and potential causes for fatigue.\n\n⚠️ **Note**: Persistent fatigue should be discussed with a healthcare provider.`;
     }
     
     if (lowerInput.includes('sleep') || lowerInput.includes('slept')) {
-      return `Sleep information recorded:\n\n• **Sleep details**: ${extractSleepInfo(userInput)}\n• **Logged**: Just now\n• **Sleep tracking**: Active\n\nGood sleep is crucial for recovery and overall health. I'll help you monitor sleep patterns over time.`;
+      return `Sleep information recorded:\n\n• **Sleep details**: ${extractSleepInfo(userInput)}\n• **Logged**: Just now\n• **Sleep tracking**: Active\n\nGood sleep is crucial for recovery and overall health. I'll help you monitor sleep patterns over time.\n\n⚠️ **Reminder**: Chronic sleep issues should be evaluated by a healthcare professional.`;
     }
     
-    return `I've recorded your health entry:\n\n• **Entry**: ${userInput}\n• **Time**: Just now\n• **Added to timeline**: Today\n\nThis information has been organized in your health timeline. The more details you provide, the better I can help identify patterns and insights.`;
+    return `I've recorded your health entry:\n\n• **Entry**: ${userInput}\n• **Time**: Just now\n• **Added to timeline**: Today\n\nThis information has been organized in your health timeline. The more details you provide, the better I can help identify patterns and insights.\n\n⚠️ **Important**: This is not medical advice. Always consult healthcare professionals for medical concerns.`;
   };
 
   const extractSymptom = (text: string): string => {
@@ -209,6 +237,14 @@ const HealthMemory = () => {
 
   return (
     <div className="max-w-7xl mx-auto">
+      {/* Emergency Warning Banner */}
+      <Alert className="mb-6 border-red-200 bg-red-50 opacity-0 animate-fade-in">
+        <AlertTriangle className="h-4 w-4 text-red-600" />
+        <AlertDescription className="text-red-800">
+          <strong>Medical Disclaimer:</strong> This is not medical advice. For emergencies, call emergency services immediately. Always consult a healthcare professional for medical concerns.
+        </AlertDescription>
+      </Alert>
+
       <div className="flex items-center justify-between mb-6 opacity-0 animate-fade-in">
         <div>
           <h1 className="font-display text-2xl font-semibold text-foreground">
