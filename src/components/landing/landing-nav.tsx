@@ -1,8 +1,13 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Heart } from "lucide-react";
+import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
 
 const LandingNav = () => {
+  const { user } = useSupabaseAuth();
+  const initials = user?.user_metadata?.name?.split(" ").map((n: string) => n[0]).join("").toUpperCase() || user?.email?.[0]?.toUpperCase() || "U";
+
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 glass border-b border-border/50">
       <div className="container mx-auto flex h-16 items-center justify-between px-6">
@@ -31,12 +36,30 @@ const LandingNav = () => {
         </div>
 
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" asChild>
-            <Link to="/login">Login</Link>
-          </Button>
-          <Button variant="hero" size="sm" asChild>
-            <Link to="/signup">Sign Up</Link>
-          </Button>
+          {user ? (
+            <>
+              <Button variant="default" size="sm" asChild>
+                <Link to="/app">Dashboard</Link>
+              </Button>
+              <div className="flex items-center gap-2">
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src={user.user_metadata?.avatar_url} />
+                  <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
+                    {initials}
+                  </AvatarFallback>
+                </Avatar>
+              </div>
+            </>
+          ) : (
+            <>
+              <Button variant="ghost" size="sm" asChild>
+                <Link to="/login">Login</Link>
+              </Button>
+              <Button variant="hero" size="sm" asChild>
+                <Link to="/signup">Sign Up</Link>
+              </Button>
+            </>
+          )}
         </div>
       </div>
     </nav>

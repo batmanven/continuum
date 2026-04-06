@@ -1,6 +1,7 @@
 import { Activity, Plus, FileUp, Brain, DollarSign } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
 
 const recentActivity = [
   { date: "Today", text: "Mild headache, took ibuprofen", type: "symptom" },
@@ -9,15 +10,14 @@ const recentActivity = [
 ];
 
 const Dashboard = () => {
-  const user = JSON.parse(
-    localStorage.getItem("continuum_user") || '{"name":"Priyansh"}',
-  );
+  const { user } = useSupabaseAuth();
+  const userName = user?.user_metadata?.name || user?.email || "User";
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
       <div className="opacity-0 animate-fade-in">
         <h1 className="font-display text-2xl font-semibold text-foreground">
-          Welcome back, {user.name}
+          Welcome back, {userName}
         </h1>
         <p className="text-muted-foreground text-sm mt-1">
           Here's your health overview
@@ -25,7 +25,6 @@ const Dashboard = () => {
       </div>
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Quick Actions */}
         <div
           className="sm:col-span-2 rounded-2xl border border-border/50 bg-card p-5 shadow-soft opacity-0 animate-fade-in"
           style={{ animationDelay: "100ms" }}
@@ -47,7 +46,6 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Health Summary */}
         <div
           className="rounded-2xl border border-border/50 bg-card p-5 shadow-soft opacity-0 animate-fade-in"
           style={{ animationDelay: "150ms" }}
@@ -63,7 +61,6 @@ const Dashboard = () => {
           </p>
         </div>
 
-        {/* Expenses */}
         <div
           className="rounded-2xl border border-border/50 bg-card p-5 shadow-soft opacity-0 animate-fade-in"
           style={{ animationDelay: "200ms" }}
@@ -81,7 +78,6 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Recent Activity */}
       <div
         className="rounded-2xl border border-border/50 bg-card p-5 shadow-soft opacity-0 animate-fade-in"
         style={{ animationDelay: "250ms" }}

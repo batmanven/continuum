@@ -4,19 +4,30 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Heart } from "lucide-react";
+import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
+import { toast } from "sonner";
 
 const Login = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const { signIn } = useSupabaseAuth();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    localStorage.setItem(
-      "continuum_user",
-      JSON.stringify({ name: "Priyansh", email }),
-    );
-    navigate("/app");
+    setLoading(true);
+
+    const { data, error } = await signIn(email, password);
+
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success("Welcome back!");
+      navigate("/app");
+    }
+
+    setLoading(false);
   };
 
   return (
@@ -68,8 +79,8 @@ const Login = () => {
               required
             />
           </div>
-          <Button variant="hero" className="w-full" type="submit">
-            Sign In
+          <Button variant="hero" className="w-full" type="submit" disabled={loading}>
+            {loading ? "Signing in..." : "Sign In"}
           </Button>
         </form>
 

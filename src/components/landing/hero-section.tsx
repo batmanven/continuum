@@ -40,11 +40,7 @@ const HeroSection = () => {
               Get Started <ArrowRight className="h-4 w-4" />
             </Link>
           </Button>
-          <Button variant="hero-outline" size="lg" asChild>
-            <Link to="/app" className="gap-2">
-              <Play className="h-4 w-4" /> View Demo
-            </Link>
-          </Button>
+         
         </div>
 
         <div

@@ -5,15 +5,16 @@ import { Button } from "@/components/ui/button";
 import { Moon, Sun, LogOut } from "lucide-react";
 import { useTheme } from "@/hooks/use-theme";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
 
 const AppLayout = () => {
   const { theme, toggle } = useTheme();
   const navigate = useNavigate();
-  const user = JSON.parse(localStorage.getItem("continuum_user") || '{"name":"Alex"}');
-  const initials = user.name?.split(" ").map((n: string) => n[0]).join("").toUpperCase() || "A";
+  const { user, signOut } = useSupabaseAuth();
+  const initials = user?.user_metadata?.name?.split(" ").map((n: string) => n[0]).join("").toUpperCase() || user?.email?.[0]?.toUpperCase() || "U";
 
-  const handleLogout = () => {
-    localStorage.removeItem("continuum_user");
+  const handleLogout = async () => {
+    await signOut();
     navigate("/");
   };
 
