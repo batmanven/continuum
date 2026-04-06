@@ -22,7 +22,8 @@ import {
   Trash2,
   Loader2,
   AlertTriangle,
-  Phone
+  Phone,
+  RefreshCw
 } from "lucide-react";
 import {
   Dialog,
@@ -32,6 +33,7 @@ import {
 } from "@/components/ui/dialog";
 import { useHealthMemory } from "@/hooks/useHealthMemory";
 import { HealthEntry } from "@/services/healthService";
+import { toast } from "sonner";
 
 interface Message {
   role: "user" | "ai";
@@ -54,13 +56,24 @@ const HealthMemory = () => {
     loadingSummary
   } = useHealthMemory();
 
-  const [messages, setMessages] = useState<Message[]>([
-    {
+  const [messages, setMessages] = useState<Message[]>(() => {
+    // Load messages from localStorage on initial load
+    const savedMessages = localStorage.getItem('health-chat-messages');
+    if (savedMessages) {
+      try {
+        const parsed = JSON.parse(savedMessages);
+        return parsed;
+      } catch (error) {
+        console.error('Error loading saved messages:', error);
+      }
+    }
+    // Return default welcome message if no saved messages
+    return [{
       role: "ai",
       content: "Hey! 👋 I'm your health buddy. Tell me how you're feeling and I'll organize it into your timeline. Simple as that! 💚",
       timestamp: new Date().toISOString()
-    },
-  ]);
+    }];
+  });
   const [input, setInput] = useState("");
   const [showSummary, setShowSummary] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -70,6 +83,15 @@ const HealthMemory = () => {
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
+
+  // Save messages to localStorage whenever they change
+  useEffect(() => {
+    try {
+      localStorage.setItem('health-chat-messages', JSON.stringify(messages));
+    } catch (error) {
+      console.error('Error saving messages:', error);
+    }
+  }, [messages]);
 
   useEffect(() => {
     scrollToBottom();
@@ -202,6 +224,20 @@ const HealthMemory = () => {
     }
   };
 
+  const handleClearChat = () => {
+    // Clear localStorage
+    localStorage.removeItem('health-chat-messages');
+    
+    // Reset to welcome message only
+    setMessages([{
+      role: "ai",
+      content: "Hey! 👋 I'm your health buddy. Tell me how you're feeling and I'll organize it into your timeline. Simple as that! 💚",
+      timestamp: new Date().toISOString()
+    }]);
+    
+    toast.success("Chat cleared successfully!");
+  };
+
   const handleGenerateSummary = async () => {
     const summaryData = await generateDoctorSummary();
     if (summaryData) {
@@ -248,6 +284,15 @@ const HealthMemory = () => {
           </p>
         </div>
         <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleClearChat}
+            className="gap-2"
+          >
+            <RefreshCw className="h-3.5 w-3.5" />
+            Clear Chat
+          </Button>
           <Button
             variant="hero-outline"
             size="sm"
