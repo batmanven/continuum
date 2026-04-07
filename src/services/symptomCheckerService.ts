@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase';
 export interface SymptomEntry {
   id?: string;
   user_id: string;
+  dependent_id?: string | null;
   symptom_name: string;
   severity: number;
   description?: string;
@@ -50,13 +51,15 @@ export interface SymptomInsight {
 export class SymptomCheckerService {
   async createSymptomEntry(
     userId: string,
-    symptomData: Omit<SymptomEntry, 'id' | 'user_id' | 'created_at' | 'updated_at'>
+    symptomData: Omit<SymptomEntry, 'id' | 'user_id' | 'created_at' | 'updated_at'>,
+    dependentId?: string | null
   ): Promise<{ data?: SymptomEntry; error?: string }> {
     try {
       const { data, error } = await supabase
         .from('symptom_entries')
         .insert({
           user_id: userId,
+          dependent_id: dependentId || null,
           ...symptomData,
           created_at: new Date().toISOString()
         })
@@ -78,13 +81,22 @@ export class SymptomCheckerService {
   async getUserSymptomEntries(
     userId: string,
     limit: number = 50,
-    offset: number = 0
+    offset: number = 0,
+    dependentId?: string | null
   ): Promise<{ data?: SymptomEntry[]; error?: string }> {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('symptom_entries')
         .select('*')
-        .eq('user_id', userId)
+        .eq('user_id', userId);
+
+      if (dependentId === null || dependentId === undefined) {
+        query = query.is('dependent_id', null);
+      } else {
+        query = query.eq('dependent_id', dependentId);
+      }
+
+      const { data, error } = await query
         .order('created_at', { ascending: false })
         .range(offset, offset + limit - 1);
 
@@ -102,10 +114,11 @@ export class SymptomCheckerService {
 
   async analyzeSymptomPatterns(
     userId: string,
-    symptomName?: string
+    symptomName?: string,
+    dependentId?: string | null
   ): Promise<{ patterns?: SymptomPattern[]; insights?: SymptomInsight[]; error?: string }> {
     try {
-      const { data: entries, error } = await this.getUserSymptomEntries(userId, 100, 0);
+      const { data: entries, error } = await this.getUserSymptomEntries(userId, 100, 0, dependentId);
       
       if (error || !entries) {
         return { error: 'Failed to fetch symptom data for analysis' };

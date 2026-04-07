@@ -10,6 +10,13 @@ export interface HealthProcessingResult {
   confidence?: number;
 }
 
+export interface UserContext {
+  name?: string;
+  gender?: string;
+  age?: number;
+  activeMedications?: string[];
+}
+
 export class HealthProcessor {
   private model = "gemini-flash-latest";
 
@@ -20,8 +27,21 @@ export class HealthProcessor {
       .replace(/[^\w\s\.\,\!\?\-\:\;\(\)\[\]\/\"\'\%\+\=\@\#\$\&\*\~]/g, '');
   }
 
-  private createHealthPrompt(userInput: string): string {
-    return `You are a medical AI assistant designed to help organize health information. Analyze the following health-related text and extract structured information.
+  private createHealthPrompt(userInput: string, userContext?: UserContext): string {
+    let patientInfo = '';
+    if (userContext) {
+      const parts: string[] = [];
+      if (userContext.gender) parts.push(`Gender: ${userContext.gender}`);
+      if (userContext.age) parts.push(`Age: ${userContext.age} years old`);
+      if (userContext.activeMedications && userContext.activeMedications.length > 0) {
+        parts.push(`Active Medications (For Adherence Tracking): ${userContext.activeMedications.join(', ')}`);
+      }
+      if (parts.length > 0) {
+        patientInfo = `\nPATIENT CONTEXT (use this to inform your analysis but do NOT repeat it back):\n${parts.join(', ')}\n`;
+      }
+    }
+
+    return `You are a medical AI assistant designed to help organize health information. Analyze the following health-related text and extract structured information.${patientInfo}
 
 IMPORTANT SAFETY GUIDELINES:
 1. You are NOT providing medical advice
@@ -30,6 +50,7 @@ IMPORTANT SAFETY GUIDELINES:
 4. Do not diagnose conditions
 5. Include disclaimers that this is not medical advice
 6. For serious symptoms, suggest consulting healthcare providers
+7. If the user mentions taking a drug, and it is in their Active Medications list, mark its purpose contextually for adherence tracking.
 
 User input: "${userInput}"
 
@@ -192,7 +213,7 @@ Response:`;
     return validated;
   }
 
-  async processHealthEntry(userInput: string): Promise<HealthProcessingResult> {
+  async processHealthEntry(userInput: string, base64Image?: string, mimeType: string = "image/jpeg", userContext?: UserContext): Promise<HealthProcessingResult> {
     try {
       
       const cleanedText = this.cleanText(userInput);
@@ -205,11 +226,24 @@ Response:`;
       }
 
       
-      const prompt = this.createHealthPrompt(cleanedText);
+      const prompt = this.createHealthPrompt(cleanedText, userContext);
       
+      let contents: any = prompt;
+      if (base64Image) {
+        contents = [
+          prompt,
+          {
+            inlineData: {
+              data: base64Image,
+              mimeType: mimeType
+            }
+          }
+        ];
+      }
+
       const result = await ai.models.generateContent({
         model: this.model,
-        contents: prompt
+        contents: contents
       });
       const text = result.text;
 
@@ -277,7 +311,7 @@ Response:`;
     return Math.min(confidence, 1);
   }
 
-  async generateHealthSummary(entries: any[]): Promise<{
+  async generateHealthSummary(entries: any[], userContext?: UserContext): Promise<{
     summary: string;
     insights: string[];
     recommendations: string[];
@@ -288,7 +322,17 @@ Response:`;
         `Date: ${entry.created_at?.split('T')[0]}, Type: ${entry.entry_type}, Content: ${entry.raw_content}`
       ).join('\n');
 
-      const prompt = `Based on these health entries, generate a concise health summary for a doctor:
+      let patientInfo = '';
+      if (userContext) {
+        const parts: string[] = [];
+        if (userContext.gender) parts.push(`Gender: ${userContext.gender}`);
+        if (userContext.age) parts.push(`Age: ${userContext.age}`);
+        if (parts.length > 0) {
+          patientInfo = `\nPatient Info: ${parts.join(', ')}\n`;
+        }
+      }
+
+      const prompt = `Based on these health entries, generate a concise health summary for a doctor:\n${patientInfo}
 
 ${entriesText}
 

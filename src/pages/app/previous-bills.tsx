@@ -17,10 +17,12 @@ import {
 } from "lucide-react";
 import { billService, BillRecord } from "@/services/billService";
 import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
+import { useProfile } from "@/contexts/ProfileContext";
 import { toast } from "sonner";
 
 const PreviousBills = () => {
   const { user } = useSupabaseAuth();
+  const { activeProfile } = useProfile();
   const navigate = useNavigate();
   const [bills, setBills] = useState<BillRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -31,14 +33,14 @@ const PreviousBills = () => {
     if (user) {
       loadBills();
     }
-  }, [user]);
+  }, [user, activeProfile.id]);
 
   const loadBills = async () => {
     if (!user) return;
     
     setLoading(true);
     try {
-      const { data, error } = await billService.getUserBills(user.id, 50, 0);
+      const { data, error } = await billService.getUserBills(user.id, 50, 0, activeProfile.id);
       if (error) {
         toast.error("Failed to load bills: " + error);
       } else if (data) {

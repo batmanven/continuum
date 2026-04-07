@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase';
 export interface DoctorSummary {
   id?: string;
   user_id: string;
+  dependent_id?: string | null;
   title: string;
   summary: string;
   insights: string[];
@@ -20,13 +21,15 @@ export interface DoctorSummary {
 export class DoctorSummaryService {
   async createDoctorSummary(
     userId: string,
-    summaryData: Omit<DoctorSummary, 'id' | 'user_id' | 'created_at' | 'updated_at'>
+    summaryData: Omit<DoctorSummary, 'id' | 'user_id' | 'created_at' | 'updated_at'>,
+    dependentId?: string | null
   ): Promise<{ data?: DoctorSummary; error?: string }> {
     try {
       const { data, error } = await supabase
         .from('doctor_summaries')
         .insert({
           user_id: userId,
+          dependent_id: dependentId || null,
           ...summaryData,
           generated_at: new Date().toISOString()
         })
@@ -48,13 +51,22 @@ export class DoctorSummaryService {
   async getUserDoctorSummaries(
     userId: string,
     limit: number = 20,
-    offset: number = 0
+    offset: number = 0,
+    dependentId?: string | null
   ): Promise<{ data?: DoctorSummary[]; error?: string }> {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('doctor_summaries')
         .select('*')
-        .eq('user_id', userId)
+        .eq('user_id', userId);
+
+      if (dependentId === null || dependentId === undefined) {
+        query = query.is('dependent_id', null);
+      } else {
+        query = query.eq('dependent_id', dependentId);
+      }
+
+      const { data, error } = await query
         .order('generated_at', { ascending: false })
         .range(offset, offset + limit - 1);
 
@@ -72,14 +84,23 @@ export class DoctorSummaryService {
 
   async getFavoriteDoctorSummaries(
     userId: string,
-    limit: number = 10
+    limit: number = 10,
+    dependentId?: string | null
   ): Promise<{ data?: DoctorSummary[]; error?: string }> {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('doctor_summaries')
         .select('*')
         .eq('user_id', userId)
-        .eq('is_favorite', true)
+        .eq('is_favorite', true);
+
+      if (dependentId === null || dependentId === undefined) {
+        query = query.is('dependent_id', null);
+      } else {
+        query = query.eq('dependent_id', dependentId);
+      }
+
+      const { data, error } = await query
         .order('generated_at', { ascending: false })
         .limit(limit);
 
@@ -98,14 +119,23 @@ export class DoctorSummaryService {
   async searchDoctorSummaries(
     userId: string,
     query: string,
-    limit: number = 20
+    limit: number = 20,
+    dependentId?: string | null
   ): Promise<{ data?: DoctorSummary[]; error?: string }> {
     try {
-      const { data, error } = await supabase
+      let dbQuery = supabase
         .from('doctor_summaries')
         .select('*')
         .eq('user_id', userId)
-        .or(`title.ilike.%${query}%,summary.ilike.%${query}%,insights.csarray.ilike.%${query}%,recommendations.csarray.ilike.%${query}%`)
+        .or(`title.ilike.%${query}%,summary.ilike.%${query}%,insights.csarray.ilike.%${query}%,recommendations.csarray.ilike.%${query}%`);
+
+      if (dependentId === null || dependentId === undefined) {
+        dbQuery = dbQuery.is('dependent_id', null);
+      } else {
+        dbQuery = dbQuery.eq('dependent_id', dependentId);
+      }
+
+      const { data, error } = await dbQuery
         .order('generated_at', { ascending: false })
         .limit(limit);
 
@@ -207,7 +237,10 @@ export class DoctorSummaryService {
     }
   }
 
-  async getSummaryStats(userId: string): Promise<{
+  async getSummaryStats(
+    userId: string,
+    dependentId?: string | null
+  ): Promise<{
     stats?: {
       total_summaries: number;
       favorite_summaries: number;
@@ -221,11 +254,19 @@ export class DoctorSummaryService {
       startOfMonth.setDate(1);
       startOfMonth.setHours(0, 0, 0, 0);
 
-      const { data, error } = await supabase
+      let query = supabase
         .from('doctor_summaries')
         .select('*')
         .eq('user_id', userId)
         .gte('generated_at', startOfMonth.toISOString());
+
+      if (dependentId === null || dependentId === undefined) {
+        query = query.is('dependent_id', null);
+      } else {
+        query = query.eq('dependent_id', dependentId);
+      }
+
+      const { data, error } = await query;
 
       if (error) {
         console.error('Error fetching summary stats:', error);
@@ -233,7 +274,7 @@ export class DoctorSummaryService {
       }
 
       
-      const { data: allSummaries } = await this.getUserDoctorSummaries(userId, 100, 0);
+      const { data: allSummaries } = await this.getUserDoctorSummaries(userId, 100, 0, dependentId);
       
       if (!allSummaries) {
         return { error: 'Failed to fetch summaries for stats' };

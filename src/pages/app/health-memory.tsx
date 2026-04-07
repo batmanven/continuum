@@ -23,7 +23,11 @@ import {
   AlertTriangle,
   Phone,
   RefreshCw,
-  Brain
+  Brain,
+  Mic,
+  Image as ImageIcon,
+  Camera,
+  XCircle
 } from "lucide-react";
 import {
   Dialog,
@@ -33,7 +37,9 @@ import {
 } from "@/components/ui/dialog";
 import { useHealthMemory } from "@/hooks/useHealthMemory";
 import { useSymptomChecker } from "@/hooks/useSymptomChecker";
+import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
 import { HealthEntry } from "@/services/healthService";
+import { doctorSummaryService } from "@/services/doctorSummaryService";
 import { toast } from "sonner";
 
 interface Message {
@@ -85,6 +91,12 @@ const HealthMemory = () => {
   const [showSummary, setShowSummary] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const recognitionRef = useRef<any>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -146,18 +158,89 @@ const HealthMemory = () => {
     return 5; 
   };
 
+  const handleToggleRecording = () => {
+    if (isRecording) {
+      recognitionRef.current?.stop();
+      setIsRecording(false);
+      return;
+    }
+
+    if (!("SpeechRecognition" in window || "webkitSpeechRecognition" in window)) {
+      toast.error("Speech recognition is not supported in this browser.");
+      return;
+    }
+
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    recognitionRef.current = new SpeechRecognition();
+    recognitionRef.current.continuous = true;
+    recognitionRef.current.interimResults = true;
+
+    let finalTranscript = input; 
+
+    recognitionRef.current.onresult = (event: any) => {
+       for (let i = event.resultIndex; i < event.results.length; ++i) {
+         if (event.results[i].isFinal) {
+           finalTranscript += event.results[i][0].transcript + ' ';
+           setInput(finalTranscript);
+         }
+       }
+    };
+    
+    recognitionRef.current.onerror = (event: any) => {
+        console.error("Speech recognition error", event.error);
+        setIsRecording(false);
+        if(event.error !== 'no-speech'){
+            toast.error("Microphone error: " + event.error);
+        }
+    };
+    
+    recognitionRef.current.onend = () => {
+        setIsRecording(false);
+    };
+
+    recognitionRef.current.start();
+    setIsRecording(true);
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("Image must be less than 5MB");
+        return;
+      }
+      setSelectedImage(file);
+      const url = URL.createObjectURL(file);
+      setImagePreview(url);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setSelectedImage(null);
+    setImagePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+    if (cameraInputRef.current) {
+      cameraInputRef.current.value = "";
+    }
+  };
+
   const handleSend = async () => {
-    if (!input.trim() || isProcessing) return;
+    if ((!input.trim() && !selectedImage) || isProcessing) return;
 
     const userMessage = {
       role: "user" as const,
-      content: input,
-      timestamp: new Date().toISOString()
+      content: input || (selectedImage ? "Attached an image for analysis." : ""),
+      timestamp: new Date().toISOString(),
+      ...(imagePreview ? { imageUrl: imagePreview } : {})
     };
 
-    setMessages(prev => [...prev, userMessage]);
-    const currentInput = input;
+    setMessages(prev => [...prev, userMessage as any]);
+    const currentInput = input || (selectedImage ? "Analyzed image." : "");
+    const currentImage = selectedImage;
     setInput("");
+    handleRemoveImage();
 
     
     const emergencyKeywords = [
@@ -196,7 +279,7 @@ const HealthMemory = () => {
     }
 
     
-    await addHealthEntry(currentInput, 'general');
+    await addHealthEntry(currentInput, currentImage || undefined);
 
     
     let aiResponse = generateAIResponse(currentInput, hasSymptoms, symptoms);
@@ -333,6 +416,7 @@ const HealthMemory = () => {
             Clear Chat
           </Button>
           <Button
+            id="tour-hm-summary-btn"
             variant="hero-outline"
             size="sm"
             onClick={handleGenerateSummary}
@@ -376,7 +460,7 @@ const HealthMemory = () => {
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Chat Section */}
         <div className="lg:col-span-2 space-y-4">
-          <Card className="opacity-0 animate-fade-in" style={{ animationDelay: "200ms" }}>
+          <Card id="tour-hm-chat" className="opacity-0 animate-fade-in" style={{ animationDelay: "200ms" }}>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Bot className="h-5 w-5" />
@@ -405,6 +489,11 @@ const HealthMemory = () => {
                       }`}
                     >
                       <p className="text-sm">{message.content}</p>
+                      {(message as any).imageUrl && (
+                        <div className="mt-2">
+                          <img src={(message as any).imageUrl} alt="Uploaded" className="max-w-[200px] rounded-md border border-border" />
+                        </div>
+                      )}
                       <p className="text-xs opacity-70 mt-1">
                         {new Date(message.timestamp).toLocaleTimeString()}
                       </p>
@@ -418,6 +507,19 @@ const HealthMemory = () => {
                 ))}
                 <div ref={messagesEndRef} />
               </div>
+              
+              {imagePreview && (
+                <div className="mb-4 flex items-start p-3 bg-muted/50 rounded-lg relative w-max">
+                  <img src={imagePreview} alt="Preview" className="h-20 w-auto rounded border border-border" />
+                  <button 
+                    onClick={handleRemoveImage}
+                    className="absolute -top-2 -right-2 bg-background rounded-full hover:bg-muted"
+                  >
+                    <XCircle className="h-5 w-5 text-muted-foreground" />
+                  </button>
+                </div>
+              )}
+
               <div className="flex gap-2">
                 <Input
                   value={input}
@@ -426,9 +528,52 @@ const HealthMemory = () => {
                   onKeyPress={(e) => e.key === "Enter" && handleSend()}
                   disabled={isProcessing}
                 />
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  className="hidden" 
+                  ref={fileInputRef} 
+                  onChange={handleFileSelect}
+                />
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  capture="environment"
+                  className="hidden" 
+                  ref={cameraInputRef} 
+                  onChange={handleFileSelect}
+                />
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className={isRecording ? "text-red-500 animate-pulse border-red-200 bg-red-50" : ""}
+                  onClick={handleToggleRecording}
+                  disabled={isProcessing}
+                  title="Voice log"
+                >
+                  <Mic className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => cameraInputRef.current?.click()}
+                  disabled={isProcessing}
+                  title="Take photo"
+                >
+                  <Camera className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isProcessing}
+                  title="Upload image"
+                >
+                  <ImageIcon className="h-4 w-4" />
+                </Button>
                 <Button
                   onClick={handleSend}
-                  disabled={!input.trim() || isProcessing}
+                  disabled={(!input.trim() && !selectedImage) || isProcessing}
                   size="icon"
                 >
                   {isProcessing ? (
@@ -444,7 +589,7 @@ const HealthMemory = () => {
 
         {/* Timeline Section */}
         <div className="space-y-4">
-          <Card className="opacity-0 animate-fade-in" style={{ animationDelay: "300ms" }}>
+          <Card id="tour-hm-timeline" className="opacity-0 animate-fade-in" style={{ animationDelay: "300ms" }}>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Calendar className="h-5 w-5" />

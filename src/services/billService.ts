@@ -4,6 +4,7 @@ import { BillData } from './billProcessor';
 export interface BillRecord {
   id?: string;
   user_id: string;
+  dependent_id?: string | null;
   raw_text: string;
   structured_data: BillData;
   file_url?: string;
@@ -20,13 +21,15 @@ export class BillService {
     rawText: string,
     structuredData: BillData,
     fileUrl?: string,
-    fileType?: string
+    fileType?: string,
+    dependentId?: string | null
   ): Promise<{ data?: BillRecord; error?: string }> {
     try {
       const { data, error } = await supabase
         .from('bills')
         .insert({
           user_id: userId,
+          dependent_id: dependentId || null,
           raw_text: rawText,
           structured_data: structuredData,
           file_url: fileUrl,
@@ -83,13 +86,22 @@ export class BillService {
   async getUserBills(
     userId: string,
     limit: number = 50,
-    offset: number = 0
+    offset: number = 0,
+    dependentId?: string | null
   ): Promise<{ data?: BillRecord[]; error?: string }> {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('bills')
         .select('*')
-        .eq('user_id', userId)
+        .eq('user_id', userId);
+
+      if (dependentId === null || dependentId === undefined) {
+        query = query.is('dependent_id', null);
+      } else {
+        query = query.eq('dependent_id', dependentId);
+      }
+
+      const { data, error } = await query
         .order('created_at', { ascending: false })
         .range(offset, offset + limit - 1);
 

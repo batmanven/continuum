@@ -22,7 +22,59 @@ import {
   X
 } from 'lucide-react';
 import { useSymptomChecker } from '@/hooks/useSymptomChecker';
-import { SymptomEntry } from '@/services/symptomCheckerService';
+import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
+import { SymptomEntry, SymptomPattern } from '@/services/symptomCheckerService';
+import { BodyHeatmap, BodyRegion } from '@/components/ui/BodyHeatmap';
+
+const mapSymptomToRegion = (symptom: string): BodyRegion[] => {
+  const s = symptom.toLowerCase();
+  const regions: BodyRegion[] = [];
+  
+  if (s.includes('head') || s.includes('migraine') || s.includes('fever') || s.includes('dizz') || s.includes('face') || s.includes('eye')) regions.push('head');
+  else if (s.includes('neck') || s.includes('throat') || s.includes('swallow')) regions.push('neck');
+  else if (s.includes('shoulder')) { regions.push('front-deltoids'); regions.push('back-deltoids'); }
+  else if (s.includes('chest') || s.includes('heart') || s.includes('breath') || s.includes('cough')) regions.push('chest');
+  else if (s.includes('stomach') || s.includes('abdo') || s.includes('nausea') || s.includes('cramp') || s.includes('digest') || s.includes('belly')) { regions.push('abs'); regions.push('obliques'); }
+  else if (s.includes('pelvi') || s.includes('groin') || s.includes('bladder')) regions.push('adductor');
+  
+  if (s.includes('back')) {
+    if (s.includes('upper')) regions.push('upper-back');
+    else if (s.includes('lower')) regions.push('lower-back');
+    else { regions.push('upper-back'); regions.push('lower-back'); }
+  }
+  
+  if (s.includes('arm') || s.includes('elbow') || s.includes('wrist')) {
+    regions.push('biceps'); regions.push('triceps');
+  }
+  
+  if (s.includes('hand') || s.includes('finger')) {
+    regions.push('forearm');
+  }
+
+  if (s.includes('leg') || s.includes('knee') || s.includes('thigh') || s.includes('calf')) {
+    regions.push('quadriceps'); regions.push('hamstring'); regions.push('calves');
+  }
+  
+  if (s.includes('foot') || s.includes('feet') || s.includes('toe') || s.includes('ankle')) {
+    regions.push('calves');
+  }
+  
+  return regions;
+};
+
+const computeHeatData = (patterns: SymptomPattern[]) => {
+  const data: Partial<Record<BodyRegion, number>> = {};
+  patterns.forEach(p => {
+    const regions = mapSymptomToRegion(p.symptom_name);
+    regions.forEach(r => {
+      const score = Math.min(10, p.avg_severity * (1 + (p.frequency * 0.1)));
+      if (!data[r] || score > data[r]!) {
+        data[r] = score;
+      }
+    });
+  });
+  return data;
+};
 
 const SymptomChecker = () => {
   const {
@@ -40,8 +92,14 @@ const SymptomChecker = () => {
     clearError
   } = useSymptomChecker();
 
+  const { user } = useSupabaseAuth();
+  const userGender = (user?.user_metadata?.gender === 'female' ? 'female' : 'male') as 'male' | 'female';
+
   const [showAddForm, setShowAddForm] = useState(false);
+  const [hoveredRegion, setHoveredRegion] = useState<BodyRegion | null>(null);
+  const [selectedRegion, setSelectedRegion] = useState<BodyRegion | null>(null);
   const [editingEntry, setEditingEntry] = useState<SymptomEntry | null>(null);
+  const heatData = computeHeatData(patterns);
   const [formData, setFormData] = useState({
     symptom_name: '',
     severity: [5],
@@ -154,8 +212,9 @@ const SymptomChecker = () => {
         </div>
         <div className="flex gap-2">
           <Button
+            id="tour-sc-analyze"
             variant="outline"
-            onClick={analyzePatterns}
+            onClick={() => analyzePatterns()}
             disabled={analyzing}
             className="gap-2"
           >
@@ -166,7 +225,7 @@ const SymptomChecker = () => {
             )}
             Analyze Patterns
           </Button>
-          <Button onClick={() => setShowAddForm(true)} className="gap-2">
+          <Button id="tour-sc-add-btn" onClick={() => setShowAddForm(true)} className="gap-2">
             <Plus className="h-4 w-4" />
             Add Symptom
           </Button>
@@ -188,41 +247,90 @@ const SymptomChecker = () => {
         </Card>
       )}
 
-      {/* Insights Section */}
-      {insights.length > 0 && (
-        <div className="space-y-4 opacity-0 animate-fade-in" style={{ animationDelay: "100ms" }}>
-          <h2 className="text-lg font-semibold text-foreground">Pattern Insights</h2>
-          <div className="grid gap-3">
-            {insights.map((insight, index) => (
-              <Card key={index} className="border-blue-200 bg-blue-50">
-                <CardContent className="p-4">
-                  <div className="flex items-start gap-3">
-                    <Brain className="h-5 w-5 text-blue-600 mt-0.5" />
-                    <div className="flex-1">
-                      <p className="text-sm text-blue-800">{insight.message}</p>
-                      <div className="flex items-center gap-2 mt-2">
-                        <Badge variant="secondary" className="text-xs">
-                          {insight.type}
-                        </Badge>
-                        <span className="text-xs text-blue-600">
-                          {Math.round(insight.confidence * 100)}% confidence
-                        </span>
+      {/* Insights & Heatmap Section */}
+      <div className="grid lg:grid-cols-3 gap-6 opacity-0 animate-fade-in" style={{ animationDelay: "100ms" }}>
+          
+          {/* Heatmap Column */}
+          <Card id="tour-sc-heatmap" className="lg:col-span-1 border-primary/20 bg-primary/5">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg flex items-center justify-between">
+                <span>Body Heatmap</span>
+                {selectedRegion && (
+                   <Button variant="ghost" size="sm" onClick={() => setSelectedRegion(null)} className="h-6 px-2 text-xs">
+                     Clear Selection
+                   </Button>
+                )}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col items-center">
+                <BodyHeatmap 
+                  heatData={heatData} 
+                  hoveredRegion={hoveredRegion}
+                  selectedRegion={selectedRegion}
+                  onRegionHover={setHoveredRegion}
+                  onRegionClick={(r) => setSelectedRegion(r === selectedRegion ? null : r)}
+                  gender={userGender}
+                />
+                <div className="mt-4 text-center">
+                  <p className="text-sm font-medium text-foreground capitalize">
+                     {hoveredRegion ? hoveredRegion.replace(/([A-Z])/g, ' $1').trim() : (selectedRegion ? selectedRegion.replace(/([A-Z])/g, ' $1').trim() : 'Hover a region')}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1 px-4 text-balance">
+                    Red indicates higher symptom frequency and severity.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Insights Column */}
+          <div className="lg:col-span-2 space-y-4">
+            <h2 className="text-lg font-semibold text-foreground">Pattern Insights</h2>
+            <div className="grid gap-3">
+              {insights.length > 0 ? insights.map((insight, index) => (
+                <Card key={index} className="border-blue-200 bg-blue-50">
+                  <CardContent className="p-4">
+                    <div className="flex items-start gap-3">
+                      <Brain className="h-5 w-5 text-blue-600 mt-0.5" />
+                      <div className="flex-1">
+                        <p className="text-sm text-blue-800">{insight.message}</p>
+                        <div className="flex items-center gap-2 mt-2">
+                          <Badge variant="secondary" className="text-xs">
+                            {insight.type}
+                          </Badge>
+                          <span className="text-xs text-blue-600">
+                            {Math.round(insight.confidence * 100)}% confidence
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                  </CardContent>
+                </Card>
+              )) : (
+                <Card className="border-dashed">
+                   <CardContent className="p-8 text-center text-muted-foreground">
+                      <Activity className="h-8 w-8 mx-auto mb-2 opacity-20" />
+                      <p>Not enough data for insights yet. Keep tracking!</p>
+                   </CardContent>
+                </Card>
+              )}
+            </div>
           </div>
         </div>
-      )}
 
       {/* Patterns Section */}
       {patterns.length > 0 && (
         <div className="space-y-4 opacity-0 animate-fade-in" style={{ animationDelay: "200ms" }}>
           <h2 className="text-lg font-semibold text-foreground">Symptom Patterns</h2>
           <div className="grid gap-4">
-            {patterns.map((pattern, index) => (
+            {patterns
+              .filter(p => {
+                if (!selectedRegion) return true;
+                const regions = mapSymptomToRegion(p.symptom_name);
+                return regions.includes(selectedRegion);
+              })
+              .map((pattern, index) => (
               <Card key={index}>
                 <CardHeader>
                   <div className="flex items-center justify-between">

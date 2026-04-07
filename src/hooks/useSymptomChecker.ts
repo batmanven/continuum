@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { symptomCheckerService, SymptomEntry, SymptomPattern, SymptomInsight } from '@/services/symptomCheckerService';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
+import { useProfile } from '@/contexts/ProfileContext';
 import { toast } from 'sonner';
 
 interface UseSymptomCheckerReturn {
@@ -23,6 +24,7 @@ interface UseSymptomCheckerReturn {
 
 export const useSymptomChecker = (): UseSymptomCheckerReturn => {
   const { user } = useSupabaseAuth();
+  const { activeProfile } = useProfile();
   const [entries, setEntries] = useState<SymptomEntry[]>([]);
   const [patterns, setPatterns] = useState<SymptomPattern[]>([]);
   const [insights, setInsights] = useState<SymptomInsight[]>([]);
@@ -33,8 +35,9 @@ export const useSymptomChecker = (): UseSymptomCheckerReturn => {
   useEffect(() => {
     if (user) {
       loadEntries();
+      analyzePatterns();
     }
-  }, [user]);
+  }, [user, activeProfile.id]);
 
   const loadEntries = async () => {
     if (!user) return;
@@ -43,7 +46,7 @@ export const useSymptomChecker = (): UseSymptomCheckerReturn => {
     setError(null);
     
     try {
-      const { data, error } = await symptomCheckerService.getUserSymptomEntries(user.id, 50, 0);
+      const { data, error } = await symptomCheckerService.getUserSymptomEntries(user.id, 50, 0, activeProfile.id);
       
       if (error) {
         setError(error);
@@ -158,17 +161,18 @@ export const useSymptomChecker = (): UseSymptomCheckerReturn => {
     setError(null);
     
     try {
-      const { patterns, insights, error } = await symptomCheckerService.analyzeSymptomPatterns(user.id, symptomName);
+      const { patterns: newPatterns, insights: newInsights, error: analyzeError } = 
+        await symptomCheckerService.analyzeSymptomPatterns(user.id, symptomName, activeProfile.id);
       
-      if (error) {
-        setError(error);
+      if (analyzeError) {
+        setError(analyzeError);
         toast.error('Failed to analyze patterns');
-      } else if (patterns && insights) {
-        setPatterns(patterns);
-        setInsights(insights);
+      } else if (newPatterns && newInsights) {
+        setPatterns(newPatterns);
+        setInsights(newInsights);
         
-        if (insights.length > 0) {
-          toast.success(`Found ${insights.length} insights from your symptom patterns`);
+        if (newInsights.length > 0) {
+          toast.success(`Found ${newInsights.length} insights for your symptoms`);
         }
       }
     } catch (error) {

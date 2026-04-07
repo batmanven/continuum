@@ -24,13 +24,16 @@ export function useSupabaseAuth() {
     return () => subscription.unsubscribe()
   }, [])
 
-  const signUp = async (email: string, password: string, name: string) => {
+  const signUp = async (email: string, password: string, name: string, gender?: string, dateOfBirth?: string, phone?: string) => {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: {
           name,
+          gender: gender || '',
+          date_of_birth: dateOfBirth || '',
+          phone: phone || '',
         },
       },
     })
@@ -50,11 +53,32 @@ export function useSupabaseAuth() {
     return { error }
   }
 
-  const updateProfile = async (name: string) => {
+  const updateProfile = async (profileData: { name?: string; gender?: string; dateOfBirth?: string; phone?: string }) => {
+    const updatePayload: Record<string, string> = {};
+    if (profileData.name !== undefined) updatePayload.name = profileData.name;
+    if (profileData.gender !== undefined) updatePayload.gender = profileData.gender;
+    if (profileData.dateOfBirth !== undefined) updatePayload.date_of_birth = profileData.dateOfBirth;
+    if (profileData.phone !== undefined) updatePayload.phone = profileData.phone;
+
     const { data, error } = await supabase.auth.updateUser({
-      data: {
-        name,
-      },
+      data: updatePayload,
+    })
+    return { data, error }
+  }
+
+  const verifyOtp = async (email: string, token: string) => {
+    const { data, error } = await supabase.auth.verifyOtp({
+      email,
+      token,
+      type: 'email',
+    })
+    return { data, error }
+  }
+
+  const resendOtp = async (email: string) => {
+    const { data, error } = await supabase.auth.resend({
+      type: 'signup',
+      email,
     })
     return { data, error }
   }
@@ -67,5 +91,7 @@ export function useSupabaseAuth() {
     signIn,
     signOut,
     updateProfile,
+    verifyOtp,
+    resendOtp,
   }
 }

@@ -2,17 +2,22 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/hooks/use-theme";
+import { ProfileProvider } from "@/contexts/ProfileContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import PublicRoute from "@/components/PublicRoute";
 import Landing from "./pages";
 import Login from "./pages/login";
 import Signup from "./pages/sign-up";
+import VerifyEmail from "./pages/verify-email";
+import PublicPassport from "./pages/passport";
 import AppLayout from "./components/app/AppLayout";
 import NotFound from "./pages/not-found";
 import Dashboard from "./pages/app/dashboard";
 import PreviousBills from "./pages/app/previous-bills";
 import DoctorSummaries from "./pages/app/doctor-summaries";
 import SettingsPage from "./pages/app/settings";
+import GuardiansDashboard from "./pages/app/guardians";
+import MedicationsDashboard from "./pages/app/medications";
 import HealthMemory from "./pages/app/health-memory";
 import BillExplainer from "./pages/app/bill-explainer";
 import SymptomChecker from "./pages/app/symptom-checker";
@@ -29,18 +34,23 @@ const App = () => (
             <Route path="/" element={<Landing />} />
             <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
             <Route path="/signup" element={<PublicRoute><Signup /></PublicRoute>} />
-            <Route path="/app" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
+            <Route path="/verify-email" element={<PublicRoute><VerifyEmail /></PublicRoute>} />
+            <Route path="/passport/:token" element={<PublicPassport />} />
+            <Route path="/app" element={<ProtectedRoute><ProfileProvider><AppLayout /></ProfileProvider></ProtectedRoute>}>
               <Route index element={<Dashboard />} />
               <Route path="health-memory" element={<HealthMemory />} />
               <Route path="bill-explainer" element={<BillExplainer />} />
               <Route path="previous-bills" element={<PreviousBills />} />
               <Route path="doctor-summaries" element={<DoctorSummaries />} />
               <Route path="symptom-checker" element={<SymptomChecker />} />
+              <Route path="medications" element={<MedicationsDashboard />} />
+              <Route path="guardians" element={<GuardiansDashboard />} />
               <Route path="settings" element={<SettingsPage />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
+        <Toaster position="top-center" richColors />
       </TooltipProvider>
     </QueryClientProvider>
   </ThemeProvider>

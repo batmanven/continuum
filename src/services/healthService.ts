@@ -50,6 +50,7 @@ export interface StructuredHealthData {
 export interface HealthEntry {
   id?: string;
   user_id: string;
+  dependent_id?: string | null;
   entry_type: 'symptom' | 'medication' | 'appointment' | 'lab_result' | 'mood' | 'energy' | 'sleep' | 'general';
   raw_content: string;
   structured_data?: StructuredHealthData;
@@ -63,13 +64,15 @@ export class HealthService {
   async createHealthEntry(
     userId: string,
     rawContent: string,
-    entryType: HealthEntry['entry_type'] = 'general'
+    entryType: HealthEntry['entry_type'] = 'general',
+    dependentId?: string | null
   ): Promise<{ data?: HealthEntry; error?: string }> {
     try {
       const { data, error } = await supabase
         .from('health_entries')
         .insert({
           user_id: userId,
+          dependent_id: dependentId || null,
           entry_type: entryType,
           raw_content: rawContent,
           ai_processed: false
@@ -120,13 +123,22 @@ export class HealthService {
   async getUserHealthEntries(
     userId: string,
     limit: number = 50,
-    offset: number = 0
+    offset: number = 0,
+    dependentId?: string | null
   ): Promise<{ data?: HealthEntry[]; error?: string }> {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('health_entries')
         .select('*')
-        .eq('user_id', userId)
+        .eq('user_id', userId);
+
+      if (dependentId === null || dependentId === undefined) {
+        query = query.is('dependent_id', null);
+      } else {
+        query = query.eq('dependent_id', dependentId);
+      }
+
+      const { data, error } = await query
         .order('created_at', { ascending: false })
         .range(offset, offset + limit - 1);
 

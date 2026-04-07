@@ -18,11 +18,13 @@ import {
   Tag,
   Loader2,
   FileText,
-  Plus
+  Plus,
+  Download
 } from "lucide-react";
-import { doctorSummaryService, DoctorSummary } from "@/services/doctorSummaryService";
 import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
+import { useProfile } from "@/contexts/ProfileContext";
 import { toast } from "sonner";
+import { doctorSummaryService, DoctorSummary } from "@/services/doctorSummaryService";
 import {
   Dialog,
   DialogContent,
@@ -32,6 +34,7 @@ import {
 
 const DoctorSummaries = () => {
   const { user } = useSupabaseAuth();
+  const { activeProfile } = useProfile();
   const navigate = useNavigate();
   const [summaries, setSummaries] = useState<DoctorSummary[]>([]);
   const [loading, setLoading] = useState(true);
@@ -47,7 +50,7 @@ const DoctorSummaries = () => {
       loadSummaries();
       loadStats();
     }
-  }, [user]);
+  }, [user, filterFavorite, activeProfile.id]);
 
   const loadSummaries = async () => {
     if (!user) return;
@@ -55,8 +58,8 @@ const DoctorSummaries = () => {
     setLoading(true);
     try {
       const { data, error } = filterFavorite 
-        ? await doctorSummaryService.getFavoriteDoctorSummaries(user.id, 20)
-        : await doctorSummaryService.getUserDoctorSummaries(user.id, 20, 0);
+        ? await doctorSummaryService.getFavoriteDoctorSummaries(user.id, 20, activeProfile.id)
+        : await doctorSummaryService.getUserDoctorSummaries(user.id, 20, 0, activeProfile.id);
         
       if (error) {
         toast.error("Failed to load summaries: " + error);
@@ -75,7 +78,7 @@ const DoctorSummaries = () => {
     if (!user) return;
     
     try {
-      const { stats, error } = await doctorSummaryService.getSummaryStats(user.id);
+      const { stats, error } = await doctorSummaryService.getSummaryStats(user.id, activeProfile.id);
       if (error) {
         console.error("Error loading stats:", error);
       } else if (stats) {
@@ -92,7 +95,7 @@ const DoctorSummaries = () => {
     setLoading(true);
     try {
       if (searchTerm.trim()) {
-        const { data, error } = await doctorSummaryService.searchDoctorSummaries(user.id, searchTerm, 20);
+        const { data, error } = await doctorSummaryService.searchDoctorSummaries(user.id, searchTerm, 20, activeProfile.id);
         if (error) {
           toast.error("Failed to search summaries: " + error);
         } else if (data) {
@@ -153,6 +156,38 @@ const DoctorSummaries = () => {
 
   const handleGenerateNewSummary = () => {
     navigate("/app/health-memory");
+  };
+
+  const [isExporting, setIsExporting] = useState(false);
+
+  const handleExportPDF = async () => {
+    if (!selectedSummary) return;
+    
+    setIsExporting(true);
+    const element = document.getElementById('doctor-summary-print-area');
+    if (!element) {
+      setIsExporting(false);
+      return;
+    }
+    
+    try {
+      const html2pdf = (await import('html2pdf.js')).default;
+      const opt = {
+        margin:       10,
+        filename:     `${selectedSummary.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`,
+        image:        { type: 'jpeg' as const, quality: 0.98 },
+        html2canvas:  { scale: 2 },
+        jsPDF:        { unit: 'mm' as const, format: 'a4' as const, orientation: 'portrait' as const }
+      };
+      
+      await html2pdf().set(opt).from(element).save();
+      toast.success("PDF exported successfully");
+    } catch (error) {
+      console.error("PDF export error:", error);
+      toast.error("Failed to export PDF");
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -411,8 +446,9 @@ const DoctorSummaries = () => {
           </DialogHeader>
           {selectedSummary && (
             <div className="space-y-4 text-sm">
-              <div className="rounded-xl bg-secondary/50 p-4">
-                <h4 className="font-semibold text-foreground mb-2">
+              <div id="doctor-summary-print-area" className="p-4 space-y-4 text-foreground bg-background">
+                <div className="rounded-xl bg-secondary/50 p-4">
+                  <h4 className="font-semibold text-foreground mb-2">
                   Patient Summary
                 </h4>
                 <p className="text-muted-foreground">
@@ -441,12 +477,23 @@ const DoctorSummaries = () => {
                   </ul>
                 </div>
               )}
+              </div>
 
-              <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <div className="flex items-center justify-between text-xs text-muted-foreground mt-4">
                 <span>
                   Generated: {selectedSummary.generated_at ? formatDate(selectedSummary.generated_at) : "Unknown"}
                 </span>
                 <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleExportPDF}
+                    disabled={isExporting}
+                    className="gap-1"
+                  >
+                    {isExporting ? <Loader2 className="h-3 w-3 animate-spin" /> : <Download className="h-3 w-3" />}
+                    Export PDF
+                  </Button>
                   <Button
                     variant="outline"
                     size="sm"

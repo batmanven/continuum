@@ -8,6 +8,8 @@ import {
   History,
   ClipboardList,
   Activity,
+  Users,
+  Pill,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import {
@@ -24,6 +26,8 @@ import {
 
 const items = [
   { title: "Dashboard", url: "/app", icon: LayoutDashboard },
+  { title: "Guardians", url: "/app/guardians", icon: Users },
+  { title: "Medications", url: "/app/medications", icon: Pill },
   { title: "Health Memory", url: "/app/health-memory", icon: Brain },
   { title: "Bill Explainer", url: "/app/bill-explainer", icon: FileText },
   { title: "Previous Bills", url: "/app/previous-bills", icon: History },
@@ -59,6 +63,7 @@ export function AppSidebar() {
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     <NavLink
+                      id={`tour-nav-${item.title.toLowerCase().replace(/\s+/g, '-')}`}
                       to={item.url}
                       end={item.url === "/app"}
                       className="hover:bg-sidebar-accent/50"

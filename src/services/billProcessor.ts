@@ -1,5 +1,8 @@
 import { GoogleGenAI } from "@google/genai";
 import Tesseract from 'tesseract.js';
+import * as pdfjsLib from 'pdfjs-dist';
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
 
 const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GOOGLE_AI_API_KEY });
 
@@ -196,8 +199,21 @@ IMPORTANT:
 
       
       if (file.type === 'application/pdf') {
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        let extractedText = '';
         
-        throw new Error('PDF support coming soon. Please use text files or images for now.');
+        for (let i = 1; i <= pdf.numPages; i++) {
+          const page = await pdf.getPage(i);
+          const textContent = await page.getTextContent();
+          const pageText = textContent.items.map((item: any) => item.str).join(' ');
+          extractedText += pageText + '\n';
+        }
+        
+        if (!extractedText.trim()) {
+           throw new Error('Could not extract text from this PDF. It might be scanned/image-based.');
+        }
+        return extractedText;
       }
 
       throw new Error(`Unsupported file type: ${file.type}. Please use text files, images, or paste manually.`);
