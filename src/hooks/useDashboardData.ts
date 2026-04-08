@@ -3,6 +3,7 @@ import { healthService, HealthEntry } from '@/services/healthService';
 import { billService, BillRecord } from '@/services/billService';
 import { doctorSummaryService, DoctorSummary } from '@/services/doctorSummaryService';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
+import { useProfile } from '@/contexts/ProfileContext';
 
 export interface DashboardStats {
   healthStats: {
@@ -39,6 +40,7 @@ export interface DashboardStats {
 
 export const useDashboardData = () => {
   const { user } = useSupabaseAuth();
+  const { activeProfile } = useProfile();
   const [data, setData] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -47,7 +49,7 @@ export const useDashboardData = () => {
     if (user) {
       loadDashboardData();
     }
-  }, [user]);
+  }, [user, activeProfile?.id]);
 
   const loadDashboardData = async () => {
     if (!user) return;
@@ -62,9 +64,9 @@ export const useDashboardData = () => {
         billsResult,
         summariesResult
       ] = await Promise.allSettled([
-        healthService.getUserHealthEntries(user.id, 50, 0),
-        billService.getUserBills(user.id, 20, 0),
-        doctorSummaryService.getUserDoctorSummaries(user.id, 10, 0)
+        healthService.getUserHealthEntries(user.id, 50, 0, activeProfile.id),
+        billService.getUserBills(user.id, 20, 0, activeProfile.id),
+        doctorSummaryService.getUserDoctorSummaries(user.id, 10, 0, activeProfile.id)
       ]);
 
       

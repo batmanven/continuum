@@ -157,13 +157,22 @@ export class HealthService {
   async searchHealthEntries(
     userId: string,
     query: string,
-    limit: number = 20
+    limit: number = 20,
+    dependentId?: string | null
   ): Promise<{ data?: HealthEntry[]; error?: string }> {
     try {
-      const { data, error } = await supabase
+      let dbQuery = supabase
         .from('health_entries')
         .select('*')
-        .eq('user_id', userId)
+        .eq('user_id', userId);
+
+      if (dependentId === null || dependentId === undefined) {
+        dbQuery = dbQuery.is('dependent_id', null);
+      } else {
+        dbQuery = dbQuery.eq('dependent_id', dependentId);
+      }
+
+      const { data, error } = await dbQuery
         .or(`raw_content.ilike.%${query}%,structured_data->>symptoms.ilike.%${query}%`)
         .order('created_at', { ascending: false })
         .limit(limit);
@@ -183,14 +192,23 @@ export class HealthService {
   async getHealthEntriesByType(
     userId: string,
     entryType: HealthEntry['entry_type'],
-    limit: number = 30
+    limit: number = 30,
+    dependentId?: string | null
   ): Promise<{ data?: HealthEntry[]; error?: string }> {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('health_entries')
         .select('*')
         .eq('user_id', userId)
-        .eq('entry_type', entryType)
+        .eq('entry_type', entryType);
+
+      if (dependentId === null || dependentId === undefined) {
+        query = query.is('dependent_id', null);
+      } else {
+        query = query.eq('dependent_id', dependentId);
+      }
+
+      const { data, error } = await query
         .order('created_at', { ascending: false })
         .limit(limit);
 
@@ -225,7 +243,7 @@ export class HealthService {
     }
   }
 
-  async getHealthSummary(userId: string, days: number = 30): Promise<{
+  async getHealthSummary(userId: string, days: number = 30, dependentId?: string | null): Promise<{
     summary?: any;
     error?: string;
   }> {
@@ -233,11 +251,19 @@ export class HealthService {
       const startDate = new Date();
       startDate.setDate(startDate.getDate() - days);
 
-      const { data, error } = await supabase
+      let query = supabase
         .from('health_entries')
         .select('*')
         .eq('user_id', userId)
-        .gte('created_at', startDate.toISOString())
+        .gte('created_at', startDate.toISOString());
+
+      if (dependentId === null || dependentId === undefined) {
+        query = query.is('dependent_id', null);
+      } else {
+        query = query.eq('dependent_id', dependentId);
+      }
+
+      const { data, error } = await query
         .order('created_at', { ascending: true });
 
       if (error) {

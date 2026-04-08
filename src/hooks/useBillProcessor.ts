@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { billProcessor, BillData } from '@/services/billProcessor';
 import { billService, BillRecord } from '@/services/billService';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
+import { useProfile } from '@/contexts/ProfileContext';
 import { toast } from 'sonner';
 
 export interface UseBillProcessorReturn {
@@ -16,6 +17,7 @@ export interface UseBillProcessorReturn {
 
 export const useBillProcessor = (): UseBillProcessorReturn => {
   const { user } = useSupabaseAuth();
+  const { activeProfile } = useProfile();
   const [isProcessing, setIsProcessing] = useState(false);
   const [isExtractingText, setIsExtractingText] = useState(false);
   const [result, setResult] = useState<BillRecord | null>(null);
@@ -88,7 +90,8 @@ export const useBillProcessor = (): UseBillProcessorReturn => {
         finalText,
         processingResult.data,
         fileUrl,
-        fileType
+        fileType,
+        activeProfile.id
       );
 
       if (dbResult.error) {

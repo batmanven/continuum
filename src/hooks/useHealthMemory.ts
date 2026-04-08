@@ -193,7 +193,7 @@ export const useHealthMemory = (): UseHealthMemoryReturn => {
     
     setIsLoading(true);
     try {
-      const { data, error } = await healthService.searchHealthEntries(user.id, query, 20);
+      const { data, error } = await healthService.searchHealthEntries(user.id, query, 20, activeProfile.id);
       if (error) {
         toast.error("Failed to search entries: " + error);
       } else if (data) {
@@ -212,7 +212,7 @@ export const useHealthMemory = (): UseHealthMemoryReturn => {
     
     setIsLoading(true);
     try {
-      const { data, error } = await healthService.getHealthEntriesByType(user.id, type, 30);
+      const { data, error } = await healthService.getHealthEntriesByType(user.id, type, 30, activeProfile.id);
       if (error) {
         toast.error("Failed to filter entries: " + error);
       } else if (data) {
@@ -232,7 +232,7 @@ export const useHealthMemory = (): UseHealthMemoryReturn => {
     setLoadingSummary(true);
     try {
       
-      const { data: recentEntries } = await healthService.getUserHealthEntries(user.id, 30, 0);
+      const { data: recentEntries } = await healthService.getUserHealthEntries(user.id, 30, 0, activeProfile.id);
       
       if (!recentEntries || recentEntries.length === 0) {
         toast.error("No health entries found for summary");

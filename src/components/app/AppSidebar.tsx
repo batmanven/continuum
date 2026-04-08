@@ -69,8 +69,7 @@ export function AppSidebar() {
                       className="hover:bg-sidebar-accent/50"
                       activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
                     >
-                      {collapsed && <div className="h-2 w-2 rounded-full bg-current opacity-60" />}
-                      {!collapsed && <item.icon className="mr-2 h-4 w-4 shrink-0" />}
+                      <item.icon className={`${collapsed ? "" : "mr-2"} h-4 w-4 shrink-0`} />
                       {!collapsed && <span>{item.title}</span>}
                     </NavLink>
                   </SidebarMenuButton>

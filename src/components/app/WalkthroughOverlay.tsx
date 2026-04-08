@@ -23,6 +23,7 @@ const ROUTE_LABELS: Record<string, string> = {
   '/app/previous-bills': 'Previous Bills',
   '/app/doctor-summaries': 'Doctor Summaries',
   '/app/symptom-checker': 'Symptom Checker',
+  '/app/settings': 'Settings',
 };
 
 // ─── Step groups keyed by section name ─────────────────────────────
@@ -88,8 +89,8 @@ const TOUR_SECTIONS: TourSection[] = [
       {
         element: '#tour-nav-guardians',
         popover: {
-          title: '👨‍👩‍👧‍👦 Guardians',
-          description: 'Manage health profiles for your <strong>entire family</strong> — children, elderly parents, or anyone you care for.',
+          title: '👨‍👩‍👧‍👦 Family Management',
+          description: 'Manage health profiles for your <strong>entire family</strong> — children, elderly parents, or anyone you care for. This is where you create the "Circle of Care".',
           side: "right", align: 'start'
         }
       },
@@ -97,15 +98,15 @@ const TOUR_SECTIONS: TourSection[] = [
         element: '#tour-guard-add',
         popover: {
           title: '➕ Add Family Members',
-          description: 'Click here to create a new dependent profile. Fill in their <strong>name, relationship, date of birth, and gender</strong>. Once added, they\'ll appear in the Profile Switcher dropdown!',
+          description: 'Create a new dependent profile with mandatory <strong>blood group, gender, and relationship</strong>. Once added, the entire app adapts its intelligence to their specific needs.',
           side: "bottom", align: 'end'
         }
       },
       {
         element: '#tour-guard-cards',
         popover: {
-          title: '🛡️ Profile Cards & Health Passports',
-          description: 'Each card represents a family member. You can generate a secure <strong>QR-based Emergency Health Passport</strong> for any profile. First responders can scan it to view <strong>allergies, medications, blood type & emergency contacts</strong> — without needing login access.',
+          title: '🛡️ Emergency Health Passports',
+          description: 'Generate high-contrast, QR-based <strong>Medical Passports</strong>. First responders can instantly access critical allergies, medications, and ICE contacts — even if you\'re unable to unlock your phone.',
           side: "top", align: 'center'
         }
       },
@@ -258,33 +259,64 @@ const TOUR_SECTIONS: TourSection[] = [
       {
         element: '#tour-nav-symptom-checker',
         popover: {
-          title: '🫀 Symptom Checker',
-          description: 'Track symptoms with <strong>severity, triggers, and duration</strong>. AI discovers patterns over time and maps them to an interactive anatomy model.',
+          title: '🫀 Intelligence-Driven Symptom Tracking',
+          description: 'Go beyond simple logging. Track symptoms with <strong>severity, triggers, and duration</strong> while AI discovers hidden correlations with your sleep and stress levels.',
           side: "right", align: 'start'
         }
       },
       {
         element: '#tour-sc-add-btn',
         popover: {
-          title: '➕ Log a Symptom',
-          description: 'Click here to record a new symptom. Enter the <strong>symptom name, severity (1-10 slider), description, triggers</strong> (comma-separated), and <strong>duration</strong>. You can also note your <strong>stress level</strong> and <strong>sleep hours</strong> for correlation analysis.',
+          title: '➕ Detail-Rich Logging',
+          description: 'Log new symptoms with high precision. Capture not just what hurts, but what triggered it and how it affected your day.',
           side: "bottom", align: 'end'
         }
       },
       {
         element: '#tour-sc-analyze',
         popover: {
-          title: '🔬 Analyze Patterns',
-          description: 'Click this to run <strong>AI pattern analysis</strong> across all your logged symptoms. It detects <strong>recurring patterns, trigger correlations</strong> (stress, sleep, weather), <strong>time-of-day trends</strong>, and whether each symptom is <strong>improving, worsening, or stable</strong>.',
+          title: '🔬 Discover Patterns',
+          description: 'Our proprietary analysis engine group symptoms into <strong>Patterns</strong>. See if your headaches correlate with "Lisinopril" doses or "Late night working" sessions automatically.',
           side: "bottom", align: 'start'
         }
       },
       {
         element: '#tour-sc-heatmap',
         popover: {
-          title: '🔥 Body Heatmap',
-          description: 'Your symptoms are mapped onto an <strong>interactive anatomical model</strong>. Red zones indicate higher severity/frequency. Toggle between <strong>male/female</strong> and <strong>front/back</strong> views. Click any body region to filter symptoms affecting that specific area.',
+          title: '🔥 Clinical Heatmap',
+          description: 'Visualize your pain points on an <strong>interactive anatomical model</strong>. Deeper red zones indicate chronic or severe issues. Toggle views to pinpoint issues across the entire body.',
           side: "right", align: 'center'
+        }
+      },
+    ]
+  },
+  {
+    key: 'settings',
+    label: 'Settings',
+    route: '/app/settings',
+    steps: [
+      {
+        element: '#tour-nav-settings',
+        popover: {
+          title: '⚙️ Settings & Preferences',
+          description: 'Customize your experience and manage your primary profile data here.',
+          side: "right", align: 'start'
+        }
+      },
+      {
+        element: '#tour-settings-blood',
+        popover: {
+          title: '🩸 Critical Medical Data',
+          description: 'Keep your <strong>Blood Group</strong> and other vital info up-to-date. This data is synced automatically with your <strong>Emergency Passport</strong>.',
+          side: "top", align: 'start'
+        }
+      },
+      {
+        element: '#tour-settings-save',
+        popover: {
+          title: '💾 Automatic Synchronization',
+          description: 'When you save changes here, your <strong>public health passport</strong> is instantly updated across all devices.',
+          side: "bottom", align: 'end'
         }
       },
     ]
@@ -467,30 +499,48 @@ export function WalkthroughOverlay() {
           opacity: 0.7 !important;
         }
         .continuum-tour-popover .driver-popover-navigation-btns {
-          gap: 8px !important;
+          gap: 12px !important;
+          margin-top: 24px !important;
         }
         .continuum-tour-popover .driver-popover-navigation-btns button {
-          border-radius: 10px !important;
-          font-size: 13px !important;
-          padding: 8px 18px !important;
-          font-weight: 600 !important;
-          transition: all 0.15s ease !important;
+          border-radius: 12px !important;
+          font-size: 13.5px !important;
+          padding: 10px 22px !important;
+          font-weight: 700 !important;
+          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+          text-transform: none !important;
+          letter-spacing: -0.01em !important;
+          border: none !important;
+          text-shadow: none !important;
         }
         .continuum-tour-popover .driver-popover-next-btn {
           background: hsl(var(--primary)) !important;
           color: hsl(var(--primary-foreground)) !important;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
+          box-shadow: 0 4px 14px 0 rgba(16, 185, 129, 0.39) !important;
+          font-weight: 800 !important;
         }
         .continuum-tour-popover .driver-popover-next-btn:hover {
-          filter: brightness(1.1) !important;
+          transform: translateY(-1px) !important;
+          box-shadow: 0 6px 20px rgba(16, 185, 129, 0.45) !important;
+          filter: brightness(1.05) !important;
         }
         .continuum-tour-popover .driver-popover-prev-btn {
-          background: transparent !important;
-          color: hsl(var(--muted-foreground)) !important;
+          background: hsl(var(--secondary)) !important;
+          color: hsl(var(--secondary-foreground)) !important;
           border: 1px solid hsl(var(--border)) !important;
+          box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important;
+        }
+        .continuum-tour-popover .driver-popover-prev-btn:hover {
+          background: hsl(var(--secondary)/0.8) !important;
+          border-color: hsl(var(--primary)/0.3) !important;
         }
         .continuum-tour-popover .driver-popover-close-btn {
           color: hsl(var(--muted-foreground)) !important;
+          font-size: 20px !important;
+          font-weight: 300 !important;
+        }
+        .continuum-tour-popover .driver-popover-close-btn:hover {
+          color: hsl(var(--destructive)) !important;
         }
       `}</style>
 

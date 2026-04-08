@@ -40,6 +40,7 @@ import { useSymptomChecker } from "@/hooks/useSymptomChecker";
 import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
 import { HealthEntry } from "@/services/healthService";
 import { doctorSummaryService } from "@/services/doctorSummaryService";
+import { useProfile } from "@/contexts/ProfileContext";
 import { toast } from "sonner";
 
 interface Message {
@@ -70,23 +71,9 @@ const HealthMemory = () => {
     insights,
     analyzing
   } = useSymptomChecker();
-
-  const [messages, setMessages] = useState<Message[]>(() => {
-    const savedMessages = localStorage.getItem('health-chat-messages');
-    if (savedMessages) {
-      try {
-        const parsed = JSON.parse(savedMessages);
-        return parsed;
-      } catch (error) {
-        console.error('Error loading saved messages:', error);
-      }
-    }
-    return [{
-      role: "ai",
-      content: "Hey! I'm your health buddy. I can help you track symptoms, medications, mood, and sleep. I'll also analyze patterns in your symptoms! What's on your mind today?",
-      timestamp: new Date().toISOString()
-    }];
-  });
+  const { activeProfile } = useProfile();
+  
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [showSummary, setShowSummary] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -99,22 +86,47 @@ const HealthMemory = () => {
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
-  
+  // Load profile-specific messages
   useEffect(() => {
-    try {
-      localStorage.setItem('health-chat-messages', JSON.stringify(messages));
-    } catch (error) {
-      console.error('Error saving messages:', error);
+    const storageKey = `health-chat-messages-${activeProfile.id}`;
+    const savedMessages = localStorage.getItem(storageKey);
+    if (savedMessages) {
+      try {
+        setMessages(JSON.parse(savedMessages));
+      } catch (e) {
+        setMessages([{
+          role: "ai",
+          content: "Hey! I'm your health buddy. I can help you track symptoms, medications, mood, and sleep. I'll also analyze patterns in your symptoms! What's on your mind today?",
+          timestamp: new Date().toISOString()
+        }]);
+      }
+    } else {
+      setMessages([{
+        role: "ai",
+        content: "Hey! I'm your health buddy. I can help you track symptoms, medications, mood, and sleep. I'll also analyze patterns in your symptoms! What's on your mind today?",
+        timestamp: new Date().toISOString()
+      }]);
     }
-  }, [messages]);
+  }, [activeProfile.id]);
+
+  useEffect(() => {
+    if (messages.length > 0) {
+      try {
+        const storageKey = `health-chat-messages-${activeProfile.id}`;
+        localStorage.setItem(storageKey, JSON.stringify(messages));
+      } catch (error) {
+        console.error('Error saving messages:', error);
+      }
+    }
+  }, [messages, activeProfile.id]);
 
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
 
   const detectSymptomKeywords = (text: string): { hasSymptoms: boolean; symptoms: string[] } => {
     const symptomKeywords = [
@@ -338,7 +350,8 @@ const HealthMemory = () => {
   };
 
   const handleClearChat = () => {
-    localStorage.removeItem('health-chat-messages');
+    const storageKey = `health-chat-messages-${activeProfile.id}`;
+    localStorage.removeItem(storageKey);
     
     setMessages([{
       role: "ai",

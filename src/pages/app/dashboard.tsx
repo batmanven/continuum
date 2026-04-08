@@ -4,11 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
+import { useProfile } from "@/contexts/ProfileContext";
 import { useDashboardData } from "@/hooks/useDashboardData";
 
 const Dashboard = () => {
   const { user } = useSupabaseAuth();
-  const userName = user?.user_metadata?.name || user?.email || "User";
+  const { activeProfile } = useProfile();
+  const userName = activeProfile.name || user?.user_metadata?.name || user?.email || "User";
   const { data, loading, error } = useDashboardData();
 
   const getMoodIcon = (trend: string) => {

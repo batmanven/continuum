@@ -72,7 +72,7 @@ export const useSymptomChecker = (): UseSymptomCheckerReturn => {
     }
 
     try {
-      const { data, error } = await symptomCheckerService.createSymptomEntry(user.id, entryData);
+      const { data, error } = await symptomCheckerService.createSymptomEntry(user.id, entryData, activeProfile.id);
       
       if (error) {
         setError(error);

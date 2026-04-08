@@ -1,24 +1,42 @@
-import { Brain, FileText, ClipboardList } from "lucide-react";
+import { Brain, FileText, ClipboardList, Users, Activity, Shield } from "lucide-react";
 
 const features = [
   {
     icon: Brain,
     title: "Health Memory",
     description:
-      "Automatically builds your health timeline from simple conversations",
+      "Automatically builds a structured health timeline from simple daily conversations.",
     color: "text-primary bg-primary/10",
   },
   {
+    icon: Users,
+    title: "Family Profiles",
+    description: "Manage health records for your entire family — children, parents, and dependents.",
+    color: "text-blue-500 bg-blue-500/10",
+  },
+  {
+    icon: Activity,
+    title: "Symptom Insights",
+    description: "Track patterns with an interactive heatmap and discover hidden health trends.",
+    color: "text-red-500 bg-red-500/10",
+  },
+  {
+    icon: Shield,
+    title: "Emergency Passports",
+    description: "QR-based medical records for first responders, accessible even without a login.",
+    color: "text-emerald-500 bg-emerald-500/10",
+  },
+  {
     icon: FileText,
-    title: "Medical Bill Explainer",
-    description: "Upload bills and understand costs instantly",
-    color: "text-accent-foreground bg-accent/20",
+    title: "Bill Explainer",
+    description: "Upload complex medical bills and get plain-language breakdowns of costs.",
+    color: "text-amber-500 bg-amber-500/10",
   },
   {
     icon: ClipboardList,
-    title: "Doctor-Ready Summaries",
-    description: "Generate clean reports before appointments",
-    color: "text-info bg-info/10",
+    title: "Doctor Summaries",
+    description: "Generate AI-powered patient reports to share before your next appointment.",
+    color: "text-purple-500 bg-purple-500/10",
   },
 ];
 

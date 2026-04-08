@@ -24,7 +24,7 @@ export function useSupabaseAuth() {
     return () => subscription.unsubscribe()
   }, [])
 
-  const signUp = async (email: string, password: string, name: string, gender?: string, dateOfBirth?: string, phone?: string) => {
+  const signUp = async (email: string, password: string, name: string, gender?: string, dateOfBirth?: string, phone?: string, bloodGroup?: string) => {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -34,6 +34,7 @@ export function useSupabaseAuth() {
           gender: gender || '',
           date_of_birth: dateOfBirth || '',
           phone: phone || '',
+          blood_type: bloodGroup || 'Not specified',
         },
       },
     })
@@ -53,12 +54,13 @@ export function useSupabaseAuth() {
     return { error }
   }
 
-  const updateProfile = async (profileData: { name?: string; gender?: string; dateOfBirth?: string; phone?: string }) => {
+  const updateProfile = async (profileData: { name?: string; gender?: string; dateOfBirth?: string; phone?: string; bloodGroup?: string }) => {
     const updatePayload: Record<string, string> = {};
     if (profileData.name !== undefined) updatePayload.name = profileData.name;
     if (profileData.gender !== undefined) updatePayload.gender = profileData.gender;
     if (profileData.dateOfBirth !== undefined) updatePayload.date_of_birth = profileData.dateOfBirth;
     if (profileData.phone !== undefined) updatePayload.phone = profileData.phone;
+    if (profileData.bloodGroup !== undefined) updatePayload.blood_type = profileData.bloodGroup;
 
     const { data, error } = await supabase.auth.updateUser({
       data: updatePayload,

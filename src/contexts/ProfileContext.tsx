@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { supabase } from '@/lib/supabase';
+import { toast } from "sonner";
 
 export interface Dependent {
   id: string;
@@ -8,6 +9,9 @@ export interface Dependent {
   relationship: string;
   gender: string | null;
   date_of_birth: string | null;
+  blood_type: string | null;
+  phone: string | null;
+  email: string | null;
 }
 
 export type ActiveProfile = {
@@ -16,6 +20,9 @@ export type ActiveProfile = {
   isSelf: boolean;
   gender?: string;
   date_of_birth?: string;
+  blood_type?: string;
+  phone?: string;
+  email?: string;
 };
 
 interface ProfileContextType {
@@ -42,7 +49,10 @@ export const ProfileProvider: React.FC<{ children: React.ReactNode }> = ({ child
       .eq('user_id', user.id)
       .order('created_at', { ascending: true });
       
-    if (!error && data) {
+    if (error) {
+      console.error("Error fetching dependents:", error);
+      toast.error("Failed to load family members.");
+    } else if (data) {
       setDependents(data);
     }
     setIsLoading(false);
@@ -65,7 +75,10 @@ export const ProfileProvider: React.FC<{ children: React.ReactNode }> = ({ child
         name: user?.user_metadata?.name || 'Self',
         isSelf: true,
         gender: user?.user_metadata?.gender,
-        date_of_birth: user?.user_metadata?.date_of_birth
+        date_of_birth: user?.user_metadata?.date_of_birth,
+        blood_type: user?.user_metadata?.blood_type,
+        phone: user?.user_metadata?.phone,
+        email: user?.email
       };
     }
     
@@ -76,7 +89,10 @@ export const ProfileProvider: React.FC<{ children: React.ReactNode }> = ({ child
         name: dependent.name,
         isSelf: false,
         gender: dependent.gender || undefined,
-        date_of_birth: dependent.date_of_birth || undefined
+        date_of_birth: dependent.date_of_birth || undefined,
+        blood_type: dependent.blood_type || undefined,
+        phone: dependent.phone || undefined,
+        email: dependent.email || undefined
       };
     }
     
@@ -86,7 +102,10 @@ export const ProfileProvider: React.FC<{ children: React.ReactNode }> = ({ child
       name: user?.user_metadata?.name || 'Self',
       isSelf: true,
       gender: user?.user_metadata?.gender,
-      date_of_birth: user?.user_metadata?.date_of_birth
+      date_of_birth: user?.user_metadata?.date_of_birth,
+      blood_type: user?.user_metadata?.blood_type,
+      phone: user?.user_metadata?.phone,
+      email: user?.email
     };
   }, [activeProfileId, user, dependents]);
 

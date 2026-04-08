@@ -4,23 +4,23 @@ const steps = [
   {
     icon: MessageSquare,
     step: "01",
-    title: "Log your health",
+    title: "Setup Family Profiles",
     description:
-      "Tell us how you're feeling in plain language — like texting a friend.",
+      "Create digital profiles for yourself and your loved ones in seconds.",
   },
   {
     icon: Sparkles,
     step: "02",
-    title: "Let AI organize it",
+    title: "Chat & Log Data",
     description:
-      "Our AI structures your entries into a clear, searchable timeline.",
+      "Talk to our AI about symptoms, or upload bills. We handle the heavy lifting.",
   },
   {
     icon: BarChart3,
     step: "03",
-    title: "Get insights & summaries",
+    title: "Proactive Insights",
     description:
-      "Receive patterns, trends, and doctor-ready reports automatically.",
+      "Receive real-time trend alerts and doctor-ready reports automatically.",
   },
 ];
 
