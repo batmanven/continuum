@@ -42,7 +42,11 @@ const MedicationsDashboard = () => {
   const loadMedications = async () => {
     if (!user) return;
     setLoading(true);
-    const { data, error } = await medicationService.getMedications(user.id, activeProfile.id);
+    const { data, error } = await medicationService.getMedications(
+      user.id, 
+      activeProfile.id,
+      activeProfile.linked_user_id
+    );
     if (data) setMedications(data);
     setLoading(false);
   };

@@ -75,8 +75,16 @@ const TOUR_SECTIONS: TourSection[] = [
         element: '#tour-nav-dashboard',
         popover: {
           title: '📊 Dashboard',
-          description: 'Your central command center. View <strong>health entry counts</strong>, <strong>mood trends</strong>, <strong>sleep quality</strong>, <strong>medical expenses</strong>, recent activity feed, and quick-action shortcuts — all at a glance.',
+          description: 'Your central command center. View <strong>health trends</strong>, <strong>expenses</strong>, and <strong>insights</strong> at a glance.',
           side: "right", align: 'start'
+        }
+      },
+      {
+        element: '#tour-dashboard-completion',
+        popover: {
+          title: '🛡️ Secure Your Identity',
+          description: 'Always keep an eye on this <strong>Completion Alert</strong>. It identifies missing clinical information that is vital for first responders to save your life in an emergency.',
+          side: "bottom", align: "center"
         }
       },
     ]
@@ -89,24 +97,56 @@ const TOUR_SECTIONS: TourSection[] = [
       {
         element: '#tour-nav-guardians',
         popover: {
-          title: '👨‍👩‍👧‍👦 Family Management',
-          description: 'Manage health profiles for your <strong>entire family</strong> — children, elderly parents, or anyone you care for. This is where you create the "Circle of Care".',
+          title: '👨‍👩‍👧‍👦 Circle of Care',
+          description: 'Manage health profiles for your <strong>entire family</strong>. Unlike traditional apps, Continuum allows you to securely "Link" existing users to view their real-time medical data.',
           side: "right", align: 'start'
         }
       },
       {
         element: '#tour-guard-add',
         popover: {
-          title: '➕ Add Family Members',
-          description: 'Create a new dependent profile with mandatory <strong>blood group, gender, and relationship</strong>. Once added, the entire app adapts its intelligence to their specific needs.',
+          title: '🔗 Smart Account Linking',
+          description: 'When adding a member, choose <em>"Connect Existing User"</em> to link their actual Continuum account via <strong>OTP Verification</strong>. This ensures a high-trust connection before any sensitive data is shared.',
           side: "bottom", align: 'end'
+        },
+        onHighlightStarted: () => {
+          // Trigger the modal to open in the background so we can show next steps
+          window.dispatchEvent(new CustomEvent('continuum-tour:open-add-modal'));
+        }
+      },
+      {
+        element: '#tour-guard-connect-btn',
+        popover: {
+          title: '🤝 Connect Real Users',
+          description: 'Use this option if the person already has a Continuum account. You only need their email or phone number to request a secure link.',
+          side: "top", align: 'center'
+        }
+      },
+      {
+        element: '#tour-guard-manual-btn',
+        popover: {
+          title: '📝 Manual vs Shadow Profiles',
+          description: 'Use this for children or relatives without accounts. <strong>Pro Tip:</strong> If you enter their email here, we\'ll create a "Shadow Account" so they can claim their data later!',
+          side: "top", align: 'center'
+        }
+      },
+      {
+        element: '#tour-guard-cards',
+        popover: {
+          title: '🔄 Deep Data Synchronization',
+          description: 'Once linked, the <strong>"Active Profile"</strong> indicator (the glowing border and badge) confirms you are viewing their <strong>actual medical data</strong> — including theirs real medications and symptoms — in real-time.',
+          side: "top", align: 'center'
+        },
+        onHighlightStarted: () => {
+          // Close the modal when we move to the next part of the tour
+          window.dispatchEvent(new CustomEvent('continuum-tour:close-add-modal'));
         }
       },
       {
         element: '#tour-guard-cards',
         popover: {
           title: '🛡️ Emergency Health Passports',
-          description: 'Generate high-contrast, QR-based <strong>Medical Passports</strong>. First responders can instantly access critical allergies, medications, and ICE contacts — even if you\'re unable to unlock your phone.',
+          description: 'Generate QR-based <strong>Medical Passports</strong> for any profile. First responders can instantly access critical info — even if you or your dependent are incapacitated.',
           side: "top", align: 'center'
         }
       },
@@ -291,32 +331,32 @@ const TOUR_SECTIONS: TourSection[] = [
     ]
   },
   {
-    key: 'settings',
-    label: 'Settings',
-    route: '/app/settings',
+    key: 'profile',
+    label: 'Profile',
+    route: '/app/profile',
     steps: [
       {
-        element: '#tour-nav-settings',
+        element: '#tour-nav-profile',
         popover: {
-          title: '⚙️ Settings & Preferences',
-          description: 'Customize your experience and manage your primary profile data here.',
+          title: '👤 Your Medical ID',
+          description: 'This is your official **Medical Profile**. It is a read-only view of exactly what first responders and guardians see.',
           side: "right", align: 'start'
         }
       },
       {
-        element: '#tour-settings-blood',
+        element: '#tour-profile-provenance',
         popover: {
-          title: '🩸 Critical Medical Data',
-          description: 'Keep your <strong>Blood Group</strong> and other vital info up-to-date. This data is synced automatically with your <strong>Emergency Passport</strong>.',
-          side: "top", align: 'start'
+          title: '🔍 Data Provenance',
+          description: 'Every clinical detail here is interactive. Hover over any entry to see its **Source and Verification Date** (e.g., AI Extraction or Manual Verification).',
+          side: "top", align: 'center'
         }
       },
       {
-        element: '#tour-settings-save',
+        element: '#tour-profile-settings',
         popover: {
-          title: '💾 Automatic Synchronization',
-          description: 'When you save changes here, your <strong>public health passport</strong> is instantly updated across all devices.',
-          side: "bottom", align: 'end'
+          title: '⚙️ Management Mode',
+          description: 'Need to make changes? Use the **Settings Gear** to switch to Editing Mode and update your medical credentials.',
+          side: "left", align: 'start'
         }
       },
     ]

@@ -21,6 +21,7 @@ import MedicationsDashboard from "./pages/app/medications";
 import HealthMemory from "./pages/app/health-memory";
 import BillExplainer from "./pages/app/bill-explainer";
 import SymptomChecker from "./pages/app/symptom-checker";
+import ProfilePage from "./pages/app/profile";
 import { Toaster } from "sonner";
 
 const queryClient = new QueryClient();
@@ -45,6 +46,7 @@ const App = () => (
               <Route path="symptom-checker" element={<SymptomChecker />} />
               <Route path="medications" element={<MedicationsDashboard />} />
               <Route path="guardians" element={<GuardiansDashboard />} />
+              <Route path="profile" element={<ProfilePage />} />
               <Route path="settings" element={<SettingsPage />} />
             </Route>
             <Route path="*" element={<NotFound />} />

@@ -56,6 +56,11 @@ const Signup = () => {
       return;
     }
 
+    if (!email && !phoneNumber) {
+      toast.error("Please provide either an email or a phone number");
+      return;
+    }
+
     setLoading(true);
 
     const { data, error } = await signUp(email, password, name, gender, dateOfBirth, combinedPhone);
@@ -63,14 +68,19 @@ const Signup = () => {
     if (error) {
       toast.error(error.message);
     } else {
-      toast.success("Account created! Please check your inbox for your 8-digit verification code.");
-      navigate(`/verify-email?email=${encodeURIComponent(email)}`);
+      if (email) {
+        toast.success("Account created! Please check your inbox for verification.");
+        navigate(`/verify-email?email=${encodeURIComponent(email)}`);
+      } else {
+        toast.success("Account created! Verification code sent to your phone.");
+        navigate(`/verify-email?phone=${encodeURIComponent(combinedPhone)}`);
+      }
     }
 
     setLoading(false);
   };
 
-  const isFormValid = name && email && password && gender && dateOfBirth && !phoneError;
+  const isFormValid = name && (email || phoneNumber) && password && gender && dateOfBirth && !phoneError;
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-mesh px-4 py-8">
@@ -108,7 +118,7 @@ const Signup = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="name">Full Name</Label>
+                <Label htmlFor="name">Full Name <span className="text-primary">*</span></Label>
                 <Input
                   id="name"
                   placeholder="Alex Johnson"
@@ -119,7 +129,7 @@ const Signup = () => {
               </div>
 
               <div className="space-y-2">
-                <Label>Gender</Label>
+                <Label>Gender <span className="text-primary">*</span></Label>
                 <div className="flex gap-2">
                   {['male', 'female', 'other'].map((g) => (
                     <button
@@ -139,7 +149,7 @@ const Signup = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="dob">Date of Birth</Label>
+                <Label htmlFor="dob">Date of Birth <span className="text-primary">*</span></Label>
                 <Input
                   id="dob"
                   type="date"
@@ -165,7 +175,6 @@ const Signup = () => {
                   placeholder="you@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  required
                 />
               </div>
 
@@ -200,7 +209,7 @@ const Signup = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">Password <span className="text-primary">*</span></Label>
                 <Input
                   id="password"
                   type="password"

@@ -1,4 +1,4 @@
-import { Activity, Plus, FileUp, Brain, DollarSign, TrendingUp, TrendingDown, Minus, Calendar, Star, FileText, Heart, Moon } from "lucide-react";
+import { Activity, Plus, FileUp, Brain, DollarSign, TrendingUp, TrendingDown, Minus, Calendar, Star, FileText, Heart, Moon, User, Shield } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -62,16 +62,59 @@ const Dashboard = () => {
     );
   }
 
+  const isProfileComplete = user?.user_metadata?.name && 
+                             user?.user_metadata?.gender && 
+                             user?.user_metadata?.date_of_birth && 
+                             user?.user_metadata?.phone && 
+                             user?.user_metadata?.blood_type;
+
+  const missingFields = [
+    { key: 'name', label: 'Full Name', val: user?.user_metadata?.name },
+    { key: 'gender', label: 'Gender', val: user?.user_metadata?.gender },
+    { key: 'dob', label: 'Date of Birth', val: user?.user_metadata?.date_of_birth },
+    { key: 'phone', label: 'Phone', val: user?.user_metadata?.phone },
+    { key: 'blood', label: 'Blood Group', val: user?.user_metadata?.blood_type },
+  ].filter(f => !f.val);
+
   return (
     <div className="max-w-5xl mx-auto space-y-6">
-      <div className="opacity-0 animate-fade-in">
-        <h1 className="font-display text-2xl font-semibold text-foreground">
-          Welcome back, {userName}
-        </h1>
-        <p className="text-muted-foreground text-sm mt-1">
-          Here's your health overview
-        </p>
+      <div className="opacity-0 animate-fade-in flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="font-display text-3xl font-bold text-foreground tracking-tight">
+            Welcome back, {userName}
+          </h1>
+          <p className="text-muted-foreground text-sm mt-1">
+            Your clinical health summary as of {new Date().toLocaleDateString()}
+          </p>
+        </div>
       </div>
+
+      {!isProfileComplete && (
+        <Card id="tour-dashboard-completion" className="border-primary/20 bg-primary/5 overflow-hidden relative group">
+          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+            <User className="h-24 w-24 -rotate-12" />
+          </div>
+          <CardContent className="p-6">
+            <div className="flex flex-col md:flex-row items-center gap-6">
+              <div className="h-16 w-16 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                <Shield className="h-8 w-8" />
+              </div>
+              <div className="flex-1 text-center md:text-left space-y-2">
+                <h3 className="font-bold text-lg">Secure Your Medical Identity</h3>
+                <p className="text-sm text-muted-foreground max-w-xl">
+                  Your emergency profile is missing <span className="text-primary font-bold">{missingFields.length} critical fields</span> ({missingFields.map(f => f.label).join(', ')}). 
+                  Completing this ensures first responders have accurate info in a crisis.
+                </p>
+              </div>
+              <Link to="/app/settings">
+                <Button variant="hero" className="rounded-xl px-8 shadow-lg shadow-primary/20">
+                  Complete Profile
+                </Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Stats Cards */}
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
