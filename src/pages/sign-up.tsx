@@ -48,7 +48,7 @@ const Signup = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     const combinedPhone = phoneNumber ? `${countryCode} ${phoneNumber}` : "";
 
     if (combinedPhone && !validatePhone(combinedPhone)) {
@@ -69,7 +69,6 @@ const Signup = () => {
       toast.error(error.message);
     } else {
       if (email) {
-        toast.success("Account created! Please check your inbox for verification.");
         navigate(`/verify-email?email=${encodeURIComponent(email)}`);
       } else {
         toast.success("Account created! Verification code sent to your phone.");
@@ -136,11 +135,10 @@ const Signup = () => {
                       key={g}
                       type="button"
                       onClick={() => setGender(g)}
-                      className={`flex-1 px-3 py-2 text-sm rounded-lg border transition-colors capitalize ${
-                        gender === g
-                          ? 'bg-primary text-primary-foreground border-primary'
-                          : 'bg-card border-border/60 text-muted-foreground hover:text-foreground hover:border-foreground/30'
-                      }`}
+                      className={`flex-1 px-3 py-2 text-sm rounded-lg border transition-colors capitalize ${gender === g
+                        ? 'bg-primary text-primary-foreground border-primary'
+                        : 'bg-card border-border/60 text-muted-foreground hover:text-foreground hover:border-foreground/30'
+                        }`}
                     >
                       {g}
                     </button>
