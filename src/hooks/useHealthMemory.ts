@@ -65,14 +65,24 @@ export const useHealthMemory = (): UseHealthMemoryReturn => {
     
     setIsLoading(true);
     try {
-      const { data, error } = await healthService.getUserHealthEntries(user.id, 50, 0, activeProfile.id);
+      const { data, error } = await healthService.getUserHealthEntries(
+        user.id, 
+        50, 
+        0, 
+        activeProfile.id,
+        activeProfile.linked_user_id
+      );
       if (error) {
         toast.error("Failed to load health entries: " + error);
       } else if (data) {
         setEntries(data);
       }
 
-      const { data: medsData } = await medicationService.getMedications(user.id, activeProfile.id);
+      const { data: medsData } = await medicationService.getMedications(
+        user.id, 
+        activeProfile.id,
+        activeProfile.linked_user_id
+      );
       if (medsData) {
         setActiveMeds(medsData.filter(m => m.active).map(m => m.name));
       }

@@ -16,16 +16,21 @@ export interface MedicationRecord {
 }
 
 export const medicationService = {
-  async getMedications(userId: string, dependentId: string | null) {
+  async getMedications(userId: string, dependentId: string | null, linkedUserId?: string | null) {
+    // Deep Sync Logic: If this profile is linked to another user, 
+    // fetch their primary medications (where dependent_id is null for THEM)
+    const targetUserId = linkedUserId || userId;
+    const targetDepId = linkedUserId ? null : dependentId;
+
     let query = supabase
       .from('medications')
       .select('*')
-      .eq('user_id', userId);
+      .eq('user_id', targetUserId);
 
-    if (dependentId === null || dependentId === undefined) {
+    if (targetDepId === null || targetDepId === undefined) {
       query = query.is('dependent_id', null);
     } else {
-      query = query.eq('dependent_id', dependentId);
+      query = query.eq('dependent_id', targetDepId);
     }
 
     const { data, error } = await query.order('created_at', { ascending: false });

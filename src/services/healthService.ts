@@ -124,18 +124,22 @@ export class HealthService {
     userId: string,
     limit: number = 50,
     offset: number = 0,
-    dependentId?: string | null
+    dependentId?: string | null,
+    linkedUserId?: string | null
   ): Promise<{ data?: HealthEntry[]; error?: string }> {
     try {
+      const targetUserId = linkedUserId || userId;
+      const targetDepId = linkedUserId ? null : (dependentId || null);
+
       let query = supabase
         .from('health_entries')
         .select('*')
-        .eq('user_id', userId);
+        .eq('user_id', targetUserId);
 
-      if (dependentId === null || dependentId === undefined) {
+      if (targetDepId === null) {
         query = query.is('dependent_id', null);
       } else {
-        query = query.eq('dependent_id', dependentId);
+        query = query.eq('dependent_id', targetDepId);
       }
 
       const { data, error } = await query
@@ -193,19 +197,23 @@ export class HealthService {
     userId: string,
     entryType: HealthEntry['entry_type'],
     limit: number = 30,
-    dependentId?: string | null
+    dependentId?: string | null,
+    linkedUserId?: string | null
   ): Promise<{ data?: HealthEntry[]; error?: string }> {
     try {
+      const targetUserId = linkedUserId || userId;
+      const targetDepId = linkedUserId ? null : (dependentId || null);
+
       let query = supabase
         .from('health_entries')
         .select('*')
-        .eq('user_id', userId)
+        .eq('user_id', targetUserId)
         .eq('entry_type', entryType);
 
-      if (dependentId === null || dependentId === undefined) {
+      if (targetDepId === null) {
         query = query.is('dependent_id', null);
       } else {
-        query = query.eq('dependent_id', dependentId);
+        query = query.eq('dependent_id', targetDepId);
       }
 
       const { data, error } = await query

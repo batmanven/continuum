@@ -12,6 +12,8 @@ export interface Dependent {
   blood_type: string | null;
   phone: string | null;
   email: string | null;
+  linked_user_id: string | null;
+  invitation_status: string | null;
 }
 
 export type ActiveProfile = {
@@ -23,6 +25,7 @@ export type ActiveProfile = {
   blood_type?: string;
   phone?: string;
   email?: string;
+  linked_user_id?: string | null;
 };
 
 interface ProfileContextType {
@@ -92,7 +95,8 @@ export const ProfileProvider: React.FC<{ children: React.ReactNode }> = ({ child
         date_of_birth: dependent.date_of_birth || undefined,
         blood_type: dependent.blood_type || undefined,
         phone: dependent.phone || undefined,
-        email: dependent.email || undefined
+        email: dependent.email || undefined,
+        linked_user_id: dependent.linked_user_id || null
       };
     }
     

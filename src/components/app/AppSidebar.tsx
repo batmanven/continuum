@@ -10,6 +10,7 @@ import {
   Activity,
   Users,
   Pill,
+  User,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import {
@@ -33,7 +34,7 @@ const items = [
   { title: "Previous Bills", url: "/app/previous-bills", icon: History },
   { title: "Doctor Summaries", url: "/app/doctor-summaries", icon: ClipboardList },
   { title: "Symptom Checker", url: "/app/symptom-checker", icon: Activity },
-  { title: "Settings", url: "/app/settings", icon: Settings },
+  { title: "Profile", url: "/app/profile", icon: User },
 ];
 
 export function AppSidebar() {
