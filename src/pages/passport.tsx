@@ -4,7 +4,7 @@ import { passportService, HealthPassport } from "@/services/passportService";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ShieldAlert, AlertTriangle, Droplets, Phone, Pill, Heart, Loader2 } from "lucide-react";
+import { ShieldAlert, AlertTriangle, Droplets, Phone, Pill, Heart, Loader2, Mail } from "lucide-react";
 
 const PublicPassport = () => {
   const { token } = useParams<{ token: string }>();
@@ -104,17 +104,25 @@ const PublicPassport = () => {
 
               <div className="flex-1 bg-emerald-600/5 dark:bg-emerald-500/10 rounded-3xl p-6 border-2 border-emerald-600/20 flex flex-col items-center justify-center transition-transform hover:scale-[1.02]">
                 <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-black uppercase tracking-[0.2em] mb-4">Emergency Contact</p>
-                <div className="flex items-center gap-4">
-                  <Phone className="h-8 w-8 text-emerald-600 fill-emerald-600" />
-                  <p className="text-2xl font-black text-foreground tracking-tight">
-                    {shared_data.owner_contact}
-                  </p>
+                <div className="flex flex-col items-center gap-3">
+                  <div className="flex items-center gap-3">
+                    <Phone className="h-6 w-6 text-emerald-600 fill-emerald-600" />
+                    <p className="text-xl font-black text-foreground tracking-tight">
+                      {shared_data.owner_phone || shared_data.owner_contact}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3 opacity-60">
+                    <Mail className="h-4 w-4 text-emerald-600" />
+                    <p className="text-xs font-bold text-foreground">
+                      {shared_data.owner_email || (shared_data.owner_contact?.includes('@') ? shared_data.owner_contact : 'Not provided')}
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
 
             <Button asChild size="lg" className="h-16 px-10 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xl rounded-2xl shadow-xl shadow-emerald-600/20 active:scale-95 transition-all w-full sm:w-auto">
-              <a href={`tel:${shared_data.owner_contact}`} className="flex items-center gap-3">
+              <a href={`tel:${shared_data.owner_phone || shared_data.owner_contact}`} className="flex items-center gap-3">
                 <Phone className="h-6 w-6 fill-white" />
                 CALL CONTACT NOW
               </a>

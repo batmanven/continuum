@@ -54,13 +54,29 @@ export function useSupabaseAuth() {
     return { error }
   }
 
-  const updateProfile = async (profileData: { name?: string; gender?: string; dateOfBirth?: string; phone?: string; bloodGroup?: string }) => {
-    const updatePayload: Record<string, string> = {};
+  const updateProfile = async (profileData: { 
+    name?: string; 
+    gender?: string; 
+    dateOfBirth?: string; 
+    phone?: string; 
+    bloodGroup?: string;
+    ice_contacts?: any[];
+    ice_name?: string;
+    ice_phone?: string;
+    ice_relationship?: string;
+  }) => {
+    const updatePayload: Record<string, any> = {};
     if (profileData.name !== undefined) updatePayload.name = profileData.name;
     if (profileData.gender !== undefined) updatePayload.gender = profileData.gender;
     if (profileData.dateOfBirth !== undefined) updatePayload.date_of_birth = profileData.dateOfBirth;
     if (profileData.phone !== undefined) updatePayload.phone = profileData.phone;
     if (profileData.bloodGroup !== undefined) updatePayload.blood_type = profileData.bloodGroup;
+    
+    // ICE Data
+    if (profileData.ice_contacts !== undefined) updatePayload.ice_contacts = profileData.ice_contacts;
+    if (profileData.ice_name !== undefined) updatePayload.ice_name = profileData.ice_name;
+    if (profileData.ice_phone !== undefined) updatePayload.ice_phone = profileData.ice_phone;
+    if (profileData.ice_relationship !== undefined) updatePayload.ice_relationship = profileData.ice_relationship;
 
     const { data, error } = await supabase.auth.updateUser({
       data: updatePayload,

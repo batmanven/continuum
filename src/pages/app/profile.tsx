@@ -16,7 +16,8 @@ import {
   Info,
   History,
   AlertCircle,
-  FileText
+  FileText,
+  LogOut
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
@@ -29,9 +30,12 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
+import { useProfile } from "@/contexts/ProfileContext";
+
 const ProfilePage = () => {
   const navigate = useNavigate();
-  const { user } = useSupabaseAuth();
+  const { user, signOut } = useSupabaseAuth();
+  const { dependents } = useProfile();
   const [passport, setPassport] = useState<HealthPassport | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -110,22 +114,22 @@ const ProfilePage = () => {
   const phone = user?.user_metadata?.phone || "Not linked";
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6 pb-20">
+    <div className="max-w-5xl mx-auto space-y-6 pb-20 pt-8">
       {/* Profile Header (Read-Only) */}
       <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-primary/10 via-background to-accent/10 border border-primary/10 p-8 shadow-sm">
-        <div className="absolute top-0 right-0 p-8 flex gap-4">
+        <div className="flex justify-end mb-6">
            <Button 
              id="tour-profile-settings"
              variant="outline" 
              size="icon" 
-             className="rounded-full bg-background/50 hover:bg-primary hover:text-white transition-all shadow-lg border-primary/20 z-50 pointer-events-auto"
+             className="rounded-xl bg-background/50 hover:bg-primary hover:text-white transition-all shadow-md border-primary/20"
              onClick={() => navigate('/app/settings')}
            >
               <SettingsIcon className="h-4 w-4" />
            </Button>
         </div>
         
-        <div className="relative z-10 flex flex-col md:flex-row items-center gap-8">
+        <div className="relative z-10 flex flex-col md:flex-row items-center gap-8 border-t border-primary/5 pt-6 md:pt-0 md:border-t-0">
           <div className="h-28 w-28 rounded-3xl bg-primary flex items-center justify-center text-primary-foreground text-4xl font-bold shadow-2xl shadow-primary/20 ring-4 ring-background">
             {name.charAt(0).toUpperCase()}
           </div>
@@ -268,30 +272,56 @@ const ProfilePage = () => {
             </CardHeader>
             <CardContent className="space-y-6">
                 <div className="space-y-4">
-                   <div className="space-y-1">
-                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Primary (Mobile)</p>
-                      <p className="font-mono text-sm">{phone}</p>
-                   </div>
-                   <div className="space-y-1">
-                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Email Identity</p>
-                      <p className="text-sm">{email}</p>
-                   </div>
+                    <div className="space-y-1">
+                       <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Primary ICE Contact</p>
+                       <p className="font-bold text-sm text-foreground">{user?.user_metadata?.ice_contacts?.[0]?.name || "Self (No ICE Set)"}</p>
+                    </div>
+                    <div className="space-y-1">
+                       <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">ICE Phone Number</p>
+                       <p className="font-mono text-sm">{user?.user_metadata?.ice_contacts?.[0]?.phone || "No phone linked"}</p>
+                    </div>
                 </div>
                 
                 <Separator className="opacity-40" />
 
                 <div className="space-y-3">
                    <Label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Emergency Circle</Label>
-                   <div className="space-y-2">
-                      <div className="flex items-center gap-3 p-2 rounded-xl bg-orange-500/5 border border-orange-500/10">
-                         <div className="h-8 w-8 rounded-lg bg-orange-500/10 text-orange-600 flex items-center justify-center text-xs font-bold">
-                            KL
-                         </div>
-                         <div>
-                            <p className="text-xs font-bold">Kaushal Loya</p>
-                            <p className="text-[9px] text-muted-foreground text-orange-600">Primary Guardian</p>
-                         </div>
-                      </div>
+                   <div className="space-y-3">
+                      {/* ICE Contacts (Strictly from ice_contacts array) */}
+                      {(user?.user_metadata?.ice_contacts || []).map((contact: any, i: number) => (
+                        <div key={`ice-${i}`} className="flex items-center gap-3 p-3 rounded-xl bg-orange-500/5 border border-orange-500/10 transition-all hover:bg-orange-500/10">
+                           <div className="h-10 w-10 rounded-xl bg-orange-500/10 text-orange-600 flex items-center justify-center text-sm font-bold">
+                              {contact.name.split(' ').map((n: string) => n[0]).join('')}
+                           </div>
+                           <div className="flex-1">
+                              <p className="text-sm font-bold">{contact.name}</p>
+                              <p className="text-[10px] text-muted-foreground text-orange-600">
+                                 {contact.relationship} • {contact.phone}
+                              </p>
+                           </div>
+                        </div>
+                      ))}
+
+                      {/* Dependents */}
+                      {dependents.map((dep, i) => (
+                        <div key={`dep-${i}`} className="flex items-center gap-3 p-3 rounded-xl bg-primary/5 border border-primary/10 transition-all hover:bg-primary/10">
+                           <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center text-sm font-bold">
+                              {dep.name.charAt(0)}
+                           </div>
+                           <div className="flex-1">
+                              <p className="text-sm font-bold">{dep.name}</p>
+                              <p className="text-[10px] text-muted-foreground text-primary uppercase tracking-widest font-black">
+                                 Linked {dep.relationship}
+                              </p>
+                           </div>
+                        </div>
+                      ))}
+
+                      {(!user?.user_metadata?.ice_contacts?.length && !dependents.length) && (
+                        <div className="p-4 rounded-xl border border-dashed border-border/60 text-center">
+                          <p className="text-xs text-muted-foreground italic">No emergency contacts or circle members found.</p>
+                        </div>
+                      )}
                    </div>
                 </div>
             </CardContent>

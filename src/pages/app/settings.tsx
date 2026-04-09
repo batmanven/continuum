@@ -6,16 +6,21 @@ import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Heart, 
-  ShieldCheck, 
-  Mail, 
-  Activity, 
-  Shield, 
+import {
+  Heart,
+  ShieldCheck,
+  Mail,
+  Activity,
+  Shield,
   Phone as PhoneIcon,
   User,
   Settings,
-  ArrowLeft
+  ArrowLeft,
+  Plus,
+  Trash2,
+  PlusCircle,
+  Pencil,
+  Check
 } from "lucide-react";
 import { useTheme } from "@/hooks/use-theme";
 import { useNavigate } from "react-router-dom";
@@ -34,23 +39,30 @@ const SettingsPage = () => {
   const [dateOfBirth, setDateOfBirth] = useState("");
   const [countryCode, setCountryCode] = useState("+91");
   const [phoneNumber, setPhoneNumber] = useState("");
+  const [iceName, setIceName] = useState("");
+  const [icePhone, setIcePhone] = useState("");
+  const [iceRelationship, setIceRelationship] = useState("");
+  const [iceContacts, setIceContacts] = useState<any[]>([]);
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    console.log("User data in settings:", user);
     if (user) {
       const userName = user?.user_metadata?.name || "";
       const userEmail = user?.email || "";
       const userGender = user?.user_metadata?.gender || "";
       const userDob = user?.user_metadata?.date_of_birth || "";
       const userBlood = user?.user_metadata?.blood_type || "";
-      console.log("Setting name:", userName, "email:", userEmail);
+
       setName(userName);
       setEmail(userEmail);
       setGender(userGender);
       setBloodGroup(userBlood);
       setDateOfBirth(userDob);
-      
+
+      // Load ICE Data
+      setIceContacts(user?.user_metadata?.ice_contacts || []);
+
       const userPhone = user?.user_metadata?.phone || "";
       if (userPhone) {
         const parts = userPhone.split(" ");
@@ -64,14 +76,50 @@ const SettingsPage = () => {
     }
   }, [user]);
 
-  const handleLogout = async () => {
-    try {
-      await signOut();
-      toast.success("Logged out successfully");
-      navigate("/");
-    } catch (error) {
-      toast.error("Error logging out");
-      console.error("Logout error:", error);
+
+  const addIceContact = () => {
+    if (!iceName || !icePhone) {
+      toast.error("Contact name and phone are required");
+      return;
+    }
+    const newContact = {
+      name: iceName.trim(),
+      phone: icePhone.trim(),
+      relationship: iceRelationship.trim()
+    };
+
+    if (editingIndex !== null) {
+      const updated = [...iceContacts];
+      updated[editingIndex] = newContact;
+      setIceContacts(updated);
+      setEditingIndex(null);
+      toast.success("Contact updated");
+    } else {
+      setIceContacts(prev => [...prev, newContact]);
+      toast.success("Contact added to your circle");
+    }
+
+    // Clear inputs
+    setIceName("");
+    setIcePhone("");
+    setIceRelationship("");
+  };
+
+  const startEditingIceContact = (index: number) => {
+    const contact = iceContacts[index];
+    setIceName(contact.name);
+    setIcePhone(contact.phone);
+    setIceRelationship(contact.relationship);
+    setEditingIndex(index);
+  };
+
+  const removeIceContact = (index: number) => {
+    setIceContacts(prev => prev.filter((_, i) => i !== index));
+    if (editingIndex === index) {
+      setEditingIndex(null);
+      setIceName("");
+      setIcePhone("");
+      setIceRelationship("");
     }
   };
 
@@ -84,12 +132,13 @@ const SettingsPage = () => {
     setIsSaving(true);
     try {
       const combinedPhone = phoneNumber ? `${countryCode} ${phoneNumber}` : "";
-      const { error: profileError } = await updateProfile({ 
-        name: name.trim(), 
-        gender, 
-        dateOfBirth, 
+      const { error: profileError } = await updateProfile({
+        name: name.trim(),
+        gender,
+        dateOfBirth,
         phone: combinedPhone,
-        bloodGroup 
+        bloodGroup,
+        ice_contacts: iceContacts
       });
 
       if (profileError) throw profileError;
@@ -99,7 +148,10 @@ const SettingsPage = () => {
       if (passport) {
         await passportService.updatePassportData(passport.id, {
           name: name.trim(),
+          owner_email: user!.email,
+          owner_phone: combinedPhone || "Not linked",
           owner_contact: combinedPhone || user!.email,
+          ice_contacts: iceContacts,
           blood_type: bloodGroup || "Not specified",
           emergency_notes: passport.shared_data.emergency_notes || "Generated via Continuum Health",
           allergies: passport.shared_data.allergies || [],
@@ -117,26 +169,30 @@ const SettingsPage = () => {
   };
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6 pb-20">
+    <div className="max-w-5xl mx-auto space-y-6 pb-32 pt-8">
       {/* Premium Profile Header */}
       <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-primary/10 via-background to-accent/10 border border-primary/10 p-8 mb-8 shadow-sm">
-        <div className="absolute top-0 right-0 p-8 flex gap-4 z-50 pointer-events-auto">
-           <Button 
-             variant="outline" 
-             size="sm" 
-             className="rounded-xl bg-background/50 hover:bg-muted transition-all gap-2"
-             onClick={() => navigate('/app/profile')}
-           >
-              <ArrowLeft className="h-4 w-4" />
-              Back to Profile
-           </Button>
+        <div className="flex justify-between items-start mb-6">
+          <Button
+            variant="outline"
+            size="sm"
+            className="rounded-xl bg-background/50 hover:bg-muted transition-all gap-2"
+            onClick={() => navigate('/app/profile')}
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Profile
+          </Button>
+
+          <Badge variant="outline" className="text-muted-foreground h-6 px-3">
+            Editing Mode
+          </Badge>
         </div>
-        
-        <div className="relative z-10 flex flex-col md:flex-row items-center gap-8">
+
+        <div className="relative z-10 flex flex-col md:flex-row items-center gap-8 border-t border-primary/5 pt-6 md:pt-0 md:border-t-0">
           <div className="h-28 w-28 rounded-3xl bg-primary flex items-center justify-center text-primary-foreground text-4xl font-bold shadow-2xl shadow-primary/20 ring-4 ring-background">
             {name ? name.charAt(0).toUpperCase() : user?.email?.charAt(0).toUpperCase()}
           </div>
-          
+
           <div className="text-center md:text-left space-y-2">
             <div className="flex flex-wrap items-center justify-center md:justify-start gap-3">
               <h1 className="font-display text-4xl font-bold text-foreground tracking-tight">
@@ -160,7 +216,7 @@ const SettingsPage = () => {
             <CardHeader className="bg-muted/30 pb-4">
               <div className="flex items-center gap-3">
                 <div className="h-8 w-8 rounded-lg bg-red-500/10 text-red-600 flex items-center justify-center">
-                   <Activity className="h-4 w-4" />
+                  <Activity className="h-4 w-4" />
                 </div>
                 <CardTitle className="text-xl">Clinical Bio</CardTitle>
               </div>
@@ -197,11 +253,10 @@ const SettingsPage = () => {
                       key={g}
                       type="button"
                       onClick={() => setGender(g)}
-                      className={`py-3 text-sm font-bold rounded-xl border transition-all capitalize ${
-                        gender === g
+                      className={`py-3 text-sm font-bold rounded-xl border transition-all capitalize ${gender === g
                           ? 'bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/20'
                           : 'bg-muted/20 border-transparent text-muted-foreground hover:bg-muted/40'
-                      }`}
+                        }`}
                     >
                       {g}
                     </button>
@@ -225,15 +280,121 @@ const SettingsPage = () => {
                       key={bg}
                       type="button"
                       onClick={() => setBloodGroup(bg)}
-                      className={`aspect-square sm:aspect-auto sm:h-12 flex items-center justify-center text-xs font-bold rounded-xl border transition-all ${
-                        bloodGroup === bg
+                      className={`aspect-square sm:aspect-auto sm:h-12 flex items-center justify-center text-xs font-bold rounded-xl border transition-all ${bloodGroup === bg
                           ? 'bg-red-500 text-white border-red-500 shadow-lg shadow-red-500/30 scale-105'
                           : 'bg-muted/20 border-transparent text-muted-foreground hover:bg-red-500/10 hover:text-red-600'
-                      }`}
+                        }`}
                     >
                       {bg}
                     </button>
                   ))}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Emergency Contact (ICE) Card */}
+          <Card id="tour-settings-care-circle" className="rounded-[2rem] border-border/40 shadow-soft overflow-hidden">
+            <CardHeader className="bg-emerald-500/5 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="h-8 w-8 rounded-lg bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
+                  <ShieldCheck className="h-4 w-4" />
+                </div>
+                <CardTitle className="text-xl">Primary Emergency Circle</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-6 space-y-6">
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Add trusted responders to your **Emergency Passport**. These people will be contacted
+                in order during a medical crisis.
+              </p>
+
+              {/* Existing Contacts List */}
+              <div className="space-y-3">
+                {iceContacts.map((contact, index) => (
+                  <div key={index} className="flex items-center justify-between p-4 rounded-2xl bg-muted/30 border border-border/40 group hover:border-emerald-500/30 transition-all">
+                    <div className="flex items-center gap-4">
+                      <div className="h-10 w-10 rounded-xl bg-background flex items-center justify-center text-sm font-bold border border-border/40">
+                        {contact.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-foreground">{contact.name}</p>
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-widest">{contact.relationship} • {contact.phone}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-muted-foreground hover:text-primary"
+                        onClick={() => startEditingIceContact(index)}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-muted-foreground hover:text-destructive"
+                        onClick={() => removeIceContact(index)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <Separator className="opacity-40" />
+
+              <div className="space-y-4">
+                <h4 className="text-sm font-bold flex items-center gap-2">
+                  {editingIndex !== null ? (
+                    <Pencil className="h-4 w-4 text-amber-500" />
+                  ) : (
+                    <PlusCircle className="h-4 w-4 text-emerald-500" />
+                  )}
+                  {editingIndex !== null ? "Edit Contact" : "Add New Contact"}
+                </h4>
+
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Full Name</Label>
+                    <Input
+                      value={iceName}
+                      onChange={(e) => setIceName(e.target.value)}
+                      placeholder="e.g. Jane Doe"
+                      className="h-11 rounded-xl bg-muted/20 border-transparent focus:border-primary focus:bg-background transition-all"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Relationship</Label>
+                    <Input
+                      value={iceRelationship}
+                      onChange={(e) => setIceRelationship(e.target.value)}
+                      placeholder="e.g. Spouse"
+                      className="h-11 rounded-xl bg-muted/20 border-transparent focus:border-primary focus:bg-background transition-all"
+                    />
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Verified Phone</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        type="tel"
+                        value={icePhone}
+                        onChange={(e) => setIcePhone(e.target.value)}
+                        placeholder="+1 234 567 890"
+                        className="flex-1 h-11 rounded-xl bg-muted/20 border-transparent focus:border-primary focus:bg-background transition-all font-mono"
+                      />
+                      <Button
+                        id="tour-settings-add-contact-btn"
+                        size="icon"
+                        className={`h-11 w-11 rounded-xl shadow-lg ${editingIndex !== null ? 'bg-amber-500 hover:bg-amber-600 shadow-amber-500/20' : 'shadow-primary/20'}`}
+                        onClick={addIceContact}
+                      >
+                        {editingIndex !== null ? <Check className="h-5 w-5" /> : <Plus className="h-5 w-5" />}
+                      </Button>
+                    </div>
+                  </div>
                 </div>
               </div>
             </CardContent>
@@ -245,24 +406,24 @@ const SettingsPage = () => {
           <Card className="rounded-[2rem] border-border/40 shadow-soft">
             <CardHeader className="pb-4">
               <div className="flex items-center gap-3">
-                 <div className="h-8 w-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
-                   <PhoneIcon className="h-4 w-4" />
+                <div className="h-8 w-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                  <PhoneIcon className="h-4 w-4" />
                 </div>
                 <CardTitle className="text-xl">Contact & Security</CardTitle>
               </div>
             </CardHeader>
             <CardContent className="space-y-6">
-               <div className="space-y-2">
-                  <Label className="text-xs font-bold uppercase tracking-wider opacity-60">Primary Email</Label>
-                  <div className="px-4 py-3 rounded-xl bg-muted/30 border border-border/40 text-sm text-foreground/70 flex items-center justify-between">
-                    {email}
-                    <Badge variant="outline" className="text-[10px] h-5">Primary</Badge>
-                  </div>
-               </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-bold uppercase tracking-wider opacity-60">Primary Email</Label>
+                <div className="px-4 py-3 rounded-xl bg-muted/30 border border-border/40 text-sm text-foreground/70 flex items-center justify-between">
+                  {email}
+                  <Badge variant="outline" className="text-[10px] h-5">Primary</Badge>
+                </div>
+              </div>
 
-               <div className="space-y-2">
-                  <Label className="text-xs font-bold uppercase tracking-wider opacity-60">Verified Phone</Label>
-                  <div className="flex gap-2">
+              <div className="space-y-2">
+                <Label className="text-xs font-bold uppercase tracking-wider opacity-60">Verified Phone</Label>
+                <div className="flex gap-2">
                   <Select value={countryCode} onValueChange={setCountryCode}>
                     <SelectTrigger className="w-[80px] h-12 rounded-xl bg-muted/20 border-transparent">
                       <SelectValue />
@@ -283,34 +444,21 @@ const SettingsPage = () => {
                     className="flex-1 h-12 rounded-xl bg-muted/20 border-transparent focus:border-primary transition-all font-mono"
                   />
                 </div>
-               </div>
+              </div>
 
-               <Separator className="opacity-50" />
-
-               <div className="space-y-4 pt-2">
-                 <Button 
-                   variant="outline" 
-                   className="w-full h-11 rounded-xl border-dashed border-border/60 hover:border-primary/40 hover:bg-primary/5 group"
-                 >
-                   <ShieldCheck className="h-4 w-4 mr-2 text-muted-foreground group-hover:text-primary transition-colors" />
-                   Security Checkpoint
-                 </Button>
-                 
-                 <Button 
-                   variant="destructive" 
-                   onClick={handleLogout}
-                   className="w-full h-11 rounded-xl bg-red-500/5 text-red-600 border-red-500/10 hover:bg-red-500 hover:text-white transition-all"
-                 >
-                    Logout of Continuum
-                 </Button>
-               </div>
+              <Separator className="opacity-50" />
             </CardContent>
           </Card>
-          
-          <Button 
+        </div>
+      </div>
+
+      {/* Premium Fixed Bottom Bar */}
+      <div className="fixed bottom-0 left-0 right-0 z-[100] p-4 bg-background/80 backdrop-blur-xl border-t border-border/40 shadow-[0_-10px_30px_rgba(0,0,0,0.1)] flex justify-center">
+        <div className="max-w-5xl w-full flex justify-end px-4">
+          <Button
             id="tour-settings-save"
-            variant="hero" 
-            className="w-full h-14 rounded-[1.5rem] shadow-xl shadow-primary/30 text-lg font-bold"
+            variant="hero"
+            className="h-12 px-12 rounded-2xl shadow-xl shadow-primary/30 text-base font-bold transition-all hover:scale-105 active:scale-95"
             onClick={handleSaveProfile}
             disabled={isSaving}
           >

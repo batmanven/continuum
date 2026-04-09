@@ -8,7 +8,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Users, QrCode, Plus, User, Shield, AlertTriangle, Activity, Pencil, Trash2, Home, Heart, Search, Loader2, ShieldCheck } from "lucide-react";
+import { Users, QrCode, Plus, User, Shield, AlertTriangle, Activity, Pencil, Trash2, Home, Heart, Search, Loader2, ShieldCheck, Copy } from "lucide-react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -296,8 +296,17 @@ const GuardiansDashboard = () => {
     // Basic shared data bundle
     const sharedData = {
       name,
+      owner_email: user.email,
+      owner_phone: user.user_metadata?.phone || "Not linked",
       owner_contact: user.user_metadata?.phone || user.email,
-      emergency_notes: "Generated via Continuum Health",
+      ice_name: user.user_metadata?.name || "Guardian",
+      ice_phone: user.user_metadata?.phone || "Not linked",
+      ice_contacts: (user.user_metadata?.ice_contacts || []).concat({
+        name: user.user_metadata?.name || "Primary Guardian",
+        phone: user.user_metadata?.phone || "Not linked",
+        relationship: "Guardian"
+      }),
+      emergency_notes: "Generated via Continuum Health • Dependent of " + (user.user_metadata?.name || user.email),
       blood_type,
       allergies: [],
       medications: [] // Placeholder for Phase 3 integration
@@ -336,6 +345,8 @@ const GuardiansDashboard = () => {
 
     const { error } = await passportService.updatePassportData(passport.id, {
       name,
+      owner_email: user.email,
+      owner_phone: user.user_metadata?.phone || "Not linked",
       owner_contact: user.user_metadata?.phone || user.email,
       blood_type,
       emergency_notes: passport.shared_data.emergency_notes || "Generated via Continuum Health",
@@ -402,12 +413,6 @@ const GuardiansDashboard = () => {
                 )}
               </div>
             </div>
-            {passport && (
-              <Badge variant="default" className="bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 border-emerald-500/20">
-                <Shield className="h-3 w-3 mr-1" />
-                Protected
-              </Badge>
-            )}
             {isActive && (
               <Badge variant="default" className="bg-primary text-primary-foreground animate-pulse shadow-sm h-5 px-1.5 text-[10px] uppercase font-bold tracking-wider">
                 Active
@@ -429,12 +434,26 @@ const GuardiansDashboard = () => {
             {passport ? (
               <div className="flex flex-col gap-3">
                  <div className="flex items-center justify-between">
-                  <p className="text-xs text-muted-foreground max-w-[200px] truncate">
+                  <p className="text-xs text-muted-foreground max-w-[150px] truncate">
                     Active Link: {passportLink}
                   </p>
-                  <Button variant="outline" size="sm" onClick={() => setViewToken(passport.public_token)}>
-                    View QR
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="h-8 px-2 hover:bg-primary/10 hover:text-primary border-primary/20"
+                      onClick={() => {
+                        navigator.clipboard.writeText(passportLink);
+                        toast.success("Link copied to clipboard!");
+                      }}
+                      title="Copy Link"
+                    >
+                      <Copy className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button variant="outline" size="sm" className="h-8" onClick={() => setViewToken(passport.public_token)}>
+                      View QR
+                    </Button>
+                  </div>
                 </div>
                 <Button 
                   variant="ghost" 

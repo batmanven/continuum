@@ -23,6 +23,7 @@ const ROUTE_LABELS: Record<string, string> = {
   '/app/previous-bills': 'Previous Bills',
   '/app/doctor-summaries': 'Doctor Summaries',
   '/app/symptom-checker': 'Symptom Checker',
+  '/app/profile': 'Profile',
   '/app/settings': 'Settings',
 };
 
@@ -357,6 +358,45 @@ const TOUR_SECTIONS: TourSection[] = [
           title: '⚙️ Management Mode',
           description: 'Need to make changes? Use the **Settings Gear** to switch to Editing Mode and update your medical credentials.',
           side: "left", align: 'start'
+        }
+      },
+    ]
+  },
+  {
+    key: 'settings',
+    label: 'Settings',
+    route: '/app/settings',
+    steps: [
+      {
+        element: '#tour-nav-settings',
+        popover: {
+          title: '⚙️ Clinical Settings',
+          description: 'Update your official medical identity, including gender, blood group, and contact information.',
+          side: "right", align: 'start'
+        }
+      },
+      {
+        element: '#tour-settings-care-circle',
+        popover: {
+          title: '🤝 Emergency Care Circle',
+          description: 'Continuum now supports **multiple emergency contacts**. Add family, friends, or medical proxies to your care network.',
+          side: "top", align: 'center'
+        }
+      },
+      {
+        element: '#tour-settings-add-contact-btn',
+        popover: {
+          title: '➕ Multi-Contact Editing',
+          description: 'Add as many responders as you need. You can also click the **Pencil icon** on existing contacts to update them instantly.',
+          side: "left", align: 'center'
+        }
+      },
+      {
+        element: '#tour-settings-save',
+        popover: {
+          title: '💾 Sticky Save Bar',
+          description: 'Changes are never lost! This **fixed save bar** is always available so you can synchronize your medical record the second you\'re done editing.',
+          side: "top", align: 'center'
         }
       },
     ]
