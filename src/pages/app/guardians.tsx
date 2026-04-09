@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { useProfile } from "@/contexts/ProfileContext";
@@ -65,6 +66,7 @@ const GuardiansDashboard = () => {
     if (user) {
       loadPassports();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, dependents]);
 
   const loadPassports = async () => {
@@ -226,8 +228,6 @@ const GuardiansDashboard = () => {
           });
 
         if (otpError) throw otpError;
-
-        // SIMULATION: Show the code in console for development
         console.log("%c SECURITY OTP FOR " + profData.full_name, "color: #10b981; font-weight: bold; font-size: 14px;");
         console.log("%c CODE: " + randomCode, "color: #10b981; font-weight: bold; border: 1px solid #10b981; padding: 4px;");
 

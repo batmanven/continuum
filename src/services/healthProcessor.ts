@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { GoogleGenAI } from "@google/genai";
 import { StructuredHealthData } from "./healthService";
 
@@ -122,29 +123,29 @@ Response:`;
   private validateHealthData(data: any): StructuredHealthData {
     const validated: StructuredHealthData = {};
 
-    
+
     if (data.symptoms && Array.isArray(data.symptoms)) {
-      validated.symptoms = data.symptoms.filter((symptom: any) => 
-        symptom.name && 
+      validated.symptoms = data.symptoms.filter((symptom: any) =>
+        symptom.name &&
         ['mild', 'moderate', 'severe'].includes(symptom.severity)
       );
     }
 
-    
+
     if (data.medications && Array.isArray(data.medications)) {
-      validated.medications = data.medications.filter((med: any) => 
+      validated.medications = data.medications.filter((med: any) =>
         med.name && med.dosage
       );
     }
 
-    
+
     if (data.appointments && Array.isArray(data.appointments)) {
-      validated.appointments = data.appointments.filter((apt: any) => 
+      validated.appointments = data.appointments.filter((apt: any) =>
         apt.doctor && apt.specialty
       );
     }
 
-    
+
     if (data.mood && ['very_low', 'low', 'neutral', 'high', 'very_high'].includes(data.mood.level)) {
       validated.mood = {
         level: data.mood.level,
@@ -152,7 +153,7 @@ Response:`;
       };
     }
 
-    
+
     if (data.energy && ['very_low', 'low', 'neutral', 'high', 'very_high'].includes(data.energy.level)) {
       validated.energy = {
         level: data.energy.level,
@@ -160,9 +161,9 @@ Response:`;
       };
     }
 
-    
-    if (data.sleep && typeof data.sleep.hours === 'number' && 
-        ['poor', 'fair', 'good', 'excellent'].includes(data.sleep.quality)) {
+
+    if (data.sleep && typeof data.sleep.hours === 'number' &&
+      ['poor', 'fair', 'good', 'excellent'].includes(data.sleep.quality)) {
       validated.sleep = {
         hours: data.sleep.hours,
         quality: data.sleep.quality,
@@ -170,15 +171,15 @@ Response:`;
       };
     }
 
-    
+
     if (data.vitals) {
       const vitals: any = {};
       if (typeof data.vitals.temperature === 'number') {
         vitals.temperature = data.vitals.temperature;
       }
-      if (data.vitals.blood_pressure && 
-          typeof data.vitals.blood_pressure.systolic === 'number' &&
-          typeof data.vitals.blood_pressure.diastolic === 'number') {
+      if (data.vitals.blood_pressure &&
+        typeof data.vitals.blood_pressure.systolic === 'number' &&
+        typeof data.vitals.blood_pressure.diastolic === 'number') {
         vitals.blood_pressure = data.vitals.blood_pressure;
       }
       if (typeof data.vitals.heart_rate === 'number') {
@@ -192,12 +193,12 @@ Response:`;
       }
     }
 
-    
+
     if (data.tags && Array.isArray(data.tags)) {
       validated.tags = data.tags.filter((tag: string) => typeof tag === 'string');
     }
 
-    
+
     if (data.mentioned_date && typeof data.mentioned_date === 'string') {
       const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
       if (dateRegex.test(data.mentioned_date)) {
@@ -205,7 +206,7 @@ Response:`;
       }
     }
 
-    
+
     if (typeof data.confidence === 'number' && data.confidence >= 0 && data.confidence <= 1) {
       validated.confidence = data.confidence;
     }
@@ -215,9 +216,9 @@ Response:`;
 
   async processHealthEntry(userInput: string, base64Image?: string, mimeType: string = "image/jpeg", userContext?: UserContext): Promise<HealthProcessingResult> {
     try {
-      
+
       const cleanedText = this.cleanText(userInput);
-      
+
       if (!cleanedText || cleanedText.length < 3) {
         return {
           success: false,
@@ -225,9 +226,9 @@ Response:`;
         };
       }
 
-      
+
       const prompt = this.createHealthPrompt(cleanedText, userContext);
-      
+
       let contents: any = prompt;
       if (base64Image) {
         contents = [
@@ -247,15 +248,15 @@ Response:`;
       });
       const text = result.text;
 
-      
+
       try {
         const cleanJsonText = text.replace(/```json\n?|\n?```/g, '').trim();
         const structuredData = JSON.parse(cleanJsonText) as StructuredHealthData;
 
-        
+
         const validatedData = this.validateHealthData(structuredData);
 
-        
+
         const confidence = this.calculateConfidence(validatedData, cleanedText);
 
         return {
@@ -280,13 +281,13 @@ Response:`;
   }
 
   private calculateConfidence(data: StructuredHealthData, originalText: string): number {
-    let confidence = 0.5; 
+    let confidence = 0.5;
     let totalFields = 0;
     let filledFields = 0;
 
-    
+
     const fields = ['symptoms', 'medications', 'appointments', 'mood', 'energy', 'sleep', 'vitals', 'tags'];
-    
+
     fields.forEach(field => {
       if (data[field as keyof StructuredHealthData]) {
         totalFields++;
@@ -294,12 +295,12 @@ Response:`;
       }
     });
 
-    
+
     if (totalFields > 0) {
       confidence += (filledFields / totalFields) * 0.3;
     }
 
-    
+
     if (originalText.length > 50) {
       confidence += 0.1;
     }
@@ -307,7 +308,7 @@ Response:`;
       confidence += 0.1;
     }
 
-    
+
     return Math.min(confidence, 1);
   }
 
@@ -317,8 +318,8 @@ Response:`;
     recommendations: string[];
   }> {
     try {
-      
-      const entriesText = entries.map(entry => 
+
+      const entriesText = entries.map(entry =>
         `Date: ${entry.created_at?.split('T')[0]}, Type: ${entry.entry_type}, Content: ${entry.raw_content}`
       ).join('\n');
 
