@@ -178,26 +178,33 @@ const BillExplainer = () => {
                   <DialogTitle>Estimated Insurance Coverage</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4 pt-4">
-                  <div className="space-y-2">
-                    <Label>Deductible Remaining (₹)</Label>
-                    <Input 
-                      type="number" 
-                      value={insuranceSettings.deductibleRemaining} 
-                      onChange={(e) => setInsuranceSettings({...insuranceSettings, deductibleRemaining: Number(e.target.value)})}
-                    />
-                    <p className="text-xs text-muted-foreground">Amount you must pay out-of-pocket before insurance kicks in.</p>
+                  {/*
+                    Tour anchors: these ids are used by WalkthroughOverlay to position
+                    the guided tour popover directly on the relevant form section —
+                    same pattern as #tour-guard-connect-btn / #tour-guard-manual-btn.
+                  */}
+                  <div id="tour-insurance-deductible-copay" className="space-y-4">
+                    <div className="space-y-2">
+                      <Label>Deductible Remaining (₹)</Label>
+                      <Input 
+                        type="number" 
+                        value={insuranceSettings.deductibleRemaining} 
+                        onChange={(e) => setInsuranceSettings({...insuranceSettings, deductibleRemaining: Number(e.target.value)})}
+                      />
+                      <p className="text-xs text-muted-foreground">Amount you must pay out-of-pocket before insurance kicks in.</p>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Standard Copay / Coinsurace (%)</Label>
+                      <Input 
+                        type="number" 
+                        min="0" max="100"
+                        value={insuranceSettings.copayPercentage} 
+                        onChange={(e) => setInsuranceSettings({...insuranceSettings, copayPercentage: Number(e.target.value)})}
+                      />
+                      <p className="text-xs text-muted-foreground">Percentage of costs you pay after deductible.</p>
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label>Standard Copay / Coinsurace (%)</Label>
-                    <Input 
-                      type="number" 
-                      min="0" max="100"
-                      value={insuranceSettings.copayPercentage} 
-                      onChange={(e) => setInsuranceSettings({...insuranceSettings, copayPercentage: Number(e.target.value)})}
-                    />
-                    <p className="text-xs text-muted-foreground">Percentage of costs you pay after deductible.</p>
-                  </div>
-                  <div className="space-y-2 pt-2">
+                  <div id="tour-insurance-categories" className="space-y-2 pt-2">
                     <Label>Covered Categories</Label>
                     <div className="flex flex-wrap gap-2 pt-1">
                       {['consultation', 'tests', 'procedures', 'medicine', 'other'].map(cat => (

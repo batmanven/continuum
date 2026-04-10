@@ -155,8 +155,6 @@ const TOUR_SECTIONS: TourSection[] = [
       },
       // ── Modal steps: element is resolved after the modal opens ──
       {
-        // No `element` here — we use a floating popover centered on the modal
-        // The modal container is highlighted via onHighlightStarted
         element: "#tour-guard-connect-btn",
         popover: {
           title: "🔗 Smart Account Linking",
@@ -167,7 +165,6 @@ const TOUR_SECTIONS: TourSection[] = [
         },
         onHighlightStarted: (_el, _step, _opts) => {
           emit(EVENTS.OPEN_ADD_MODAL);
-          // Allow modal to mount + animate before driver tries to find the element
           setTimeout(() => emit(EVENTS.REFRESH), MODAL_SETTLE_MS);
         },
         onDeselected: (_el, _step, _opts) => emit(EVENTS.CLOSE_ADD_MODAL),
@@ -338,22 +335,35 @@ const TOUR_SECTIONS: TourSection[] = [
           side: "bottom",
           align: "end",
         },
+        // Close the dialog if the user backed up here from the dialog steps.
+        onHighlightStarted: (_el, _step, _opts) => emit(EVENTS.CLOSE_INSURANCE),
+      },
+      // ── Insurance dialog step 1: Deductible & Copay ────────────────
+      // Targets #tour-insurance-deductible-copay inside the open dialog —
+      // exact same pattern as #tour-guard-connect-btn inside the add-family modal.
+      {
+        element: "#tour-insurance-deductible-copay",
+        popover: {
+          title: "💰 Deductible & Copay",
+          description:
+            "Set your <strong>Deductible Remaining</strong> — the amount you pay before insurance kicks in — and your <strong>Copay / Coinsurance %</strong>, the share you pay on covered charges after the deductible.",
+          side: "right",
+          align: "start",
+        },
+        onHighlightStarted: (_el, _step, _opts) => emit(EVENTS.OPEN_INSURANCE),
         onDeselected: (_el, _step, _opts) => emit(EVENTS.CLOSE_INSURANCE),
       },
-      // ── Insurance dialog step: waits for dialog to mount ──
+      // ── Insurance dialog step 2: Covered Categories ────────────────
       {
-        element: 'div[role="dialog"]',
+        element: "#tour-insurance-categories",
         popover: {
-          title: "🛡️ Insurance Settings",
+          title: "🏷️ Covered Categories",
           description:
-            "Configure your insurance plan here — set your <strong>copay percentage</strong>, <strong>remaining deductible</strong>, and select which <strong>categories are covered</strong>. AI uses this to accurately estimate <strong>what you pay vs. what insurance covers</strong>.",
-          side: "left",
-          align: "center",
+            "Select which charge types your plan covers — <strong>Consultation, Tests, Procedures, Medicine, Other</strong>. Unchecked categories count as fully out-of-pocket when estimating your bill.",
+          side: "right",
+          align: "start",
         },
-        onHighlightStarted: (_el, _step, _opts) => {
-          emit(EVENTS.OPEN_INSURANCE);
-          setTimeout(() => emit(EVENTS.REFRESH), MODAL_SETTLE_MS);
-        },
+        onHighlightStarted: (_el, _step, _opts) => emit(EVENTS.OPEN_INSURANCE),
         onDeselected: (_el, _step, _opts) => emit(EVENTS.CLOSE_INSURANCE),
       },
     ],
@@ -608,14 +618,47 @@ function waitForElement(
       const found = document.querySelector(selector);
       if (found) {
         observer.disconnect();
+        clearTimeout(timeoutId);
         resolve(found);
       }
     });
     observer.observe(document.body, { childList: true, subtree: true });
-    setTimeout(() => {
+    const timeoutId = setTimeout(() => {
       observer.disconnect();
       resolve(null);
     }, timeoutMs);
+  });
+}
+
+/**
+ * Waits until `selector` is in the DOM AND has non-zero painted dimensions.
+ * Driver.js reads getBoundingClientRect() to position the popover — if the
+ * element exists but is still at 0×0 (CSS open transition not yet started),
+ * driver falls back to centering the popover (the "floating" bug).
+ * Polling via requestAnimationFrame fires after each browser paint, so
+ * dimensions are always real when we resolve.
+ */
+function waitForElementPainted(
+  selector: string,
+  timeoutMs = 3000
+): Promise<Element | null> {
+  return new Promise((resolve) => {
+    const deadline = Date.now() + timeoutMs;
+
+    function check() {
+      const el = document.querySelector(selector);
+      if (el) {
+        const { width, height } = el.getBoundingClientRect();
+        if (width > 0 && height > 0) return resolve(el);
+      }
+      if (Date.now() < deadline) {
+        requestAnimationFrame(check);
+      } else {
+        resolve(el ?? null);
+      }
+    }
+
+    requestAnimationFrame(check);
   });
 }
 
@@ -679,22 +722,33 @@ export function WalkthroughOverlay() {
         const proceed = async () => {
           const selector = typeof step.element === "string" ? step.element : null;
 
-          // If the target element isn't in the DOM yet (e.g. inside a modal),
-          // fire onHighlightStarted so the app can open it, then wait for mount.
-          if (selector && !document.querySelector(selector)) {
-            step.onHighlightStarted?.(document.body, step, {
-              config: driverObj.getConfig(),
-              state: driverObj.getState(),
-              driver: driverObj,
-            });
-            const found = await waitForElement(selector);
-            if (!found) {
-              console.warn(`[Tour] element not found: ${selector} — showing floating popover`);
+          if (selector) {
+            const alreadyInDom = document.querySelector(selector);
+
+            if (!alreadyInDom) {
+              // Element isn't mounted yet (e.g. modal not open).
+              // Fire onHighlightStarted so the app opens the modal,
+              // then wait for the element to appear in the DOM.
+              step.onHighlightStarted?.(document.body, step, {
+                config: driverObj.getConfig(),
+                state: driverObj.getState(),
+                driver: driverObj,
+              });
+              const found = await waitForElement(selector);
+              if (!found) {
+                console.warn(`[Tour] element not found: ${selector} — floating popover fallback`);
+              }
             }
+
+            // Whether already in DOM or just mounted, wait until the element
+            // has real painted dimensions. This prevents the "dialog exists but
+            // driver.js still centers the popover" bug caused by CSS open
+            // transitions where getBoundingClientRect() returns 0×0 initially.
+            await waitForElementPainted(selector);
           }
 
-          // Unhide popover + overlay before moving so they reappear in sync
-          // with the new page rather than fading in after a visible blank gap.
+          // Unhide popover + overlay before moving so they appear already
+          // positioned on the new page, not fading in from the wrong place.
           setTourVisible(true);
           driverObj.moveTo(targetIdx);
         };
@@ -702,7 +756,7 @@ export function WalkthroughOverlay() {
         const needsNav = targetRoute && window.location.pathname !== targetRoute;
         if (needsNav) {
           // Hide the stale popover + stage highlight immediately so the user
-          // doesn't see the old step content over the newly-rendered page.
+          // doesn't see the old step content floating over the new page.
           setTourVisible(false);
           navigate(targetRoute);
           setTimeout(proceed, NAV_SETTLE_MS);
@@ -777,7 +831,11 @@ export function WalkthroughOverlay() {
         /* Hide the entire driver overlay + popover during cross-route transitions.
            We toggle the continuum-tour-hidden class on <body> from React state. */
         body.continuum-tour-hidden .driver-overlay,
-        body.continuum-tour-hidden .driver-popover-wrapper {
+        body.continuum-tour-hidden .driver-popover-wrapper,
+        body.continuum-tour-hidden .driver-popover,
+        body.continuum-tour-hidden .driver-stage-no-animation,
+        body.continuum-tour-hidden #driver-highlighted-element-stage,
+        body.continuum-tour-hidden #driver-popover-item {
           opacity: 0 !important;
           pointer-events: none !important;
           transition: none !important;
