@@ -630,14 +630,6 @@ function waitForElement(
   });
 }
 
-/**
- * Waits until `selector` is in the DOM AND has non-zero painted dimensions.
- * Driver.js reads getBoundingClientRect() to position the popover — if the
- * element exists but is still at 0×0 (CSS open transition not yet started),
- * driver falls back to centering the popover (the "floating" bug).
- * Polling via requestAnimationFrame fires after each browser paint, so
- * dimensions are always real when we resolve.
- */
 function waitForElementPainted(
   selector: string,
   timeoutMs = 3000
@@ -662,19 +654,14 @@ function waitForElementPainted(
   });
 }
 
-// ─── Component ─────────────────────────────────────────────────────
 
 export function WalkthroughOverlay() {
   const isInitialized = useRef(false);
   const driverRef = useRef<Driver | null>(null);
   const location = useLocation();
   const navigate = useNavigate();
-  // Controls visibility of the popover + stage during cross-route navigation.
-  // We hide immediately on navigate and restore once the new page has settled,
-  // preventing the stale step from ghosting over the incoming page.
   const [tourVisible, setTourVisible] = useState(true);
 
-  // Sync visibility state → body class so our CSS can hide/show driver elements.
   useEffect(() => {
     document.body.classList.toggle("continuum-tour-hidden", !tourVisible);
     return () => document.body.classList.remove("continuum-tour-hidden");
@@ -771,8 +758,8 @@ export function WalkthroughOverlay() {
         smoothScroll: true,
         allowClose: true,
         doneBtnText: "Finish Tour 🎉",
-        nextBtnText: "Next →",
-        prevBtnText: "← Back",
+        nextBtnText: "Next",
+        prevBtnText: "Back",
         popoverClass: "continuum-tour-popover",
         stagePadding: 10,
         stageRadius: 12,
@@ -791,7 +778,6 @@ export function WalkthroughOverlay() {
         },
 
         onDestroyed: () => {
-          // Clean up any lingering modals and restore visibility
           emit(EVENTS.CLOSE_ADD_MODAL);
           emit(EVENTS.CLOSE_INSURANCE);
           setTourVisible(true);
