@@ -30,7 +30,7 @@ const AppLayout = () => {
   }, [location.pathname]);
 
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={false}>
       <div className="h-screen flex w-full bg-background overflow-hidden selection:bg-primary/20">
         <AppSidebar />
         <div className="flex-1 flex flex-col h-full min-w-0 relative overflow-hidden">
