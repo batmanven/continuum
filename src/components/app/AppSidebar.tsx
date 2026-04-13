@@ -50,8 +50,8 @@ const bottomItems = [
 ];
 
 export function AppSidebar() {
-  const { state, setOpen } = useSidebar();
-  const collapsed = state === "collapsed";
+  const { state, setOpen, isMobile } = useSidebar();
+  const collapsed = !isMobile && state === "collapsed";
   const location = useLocation();
 
   const renderNavItems = (navItems: typeof items) => (
