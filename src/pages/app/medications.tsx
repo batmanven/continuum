@@ -249,7 +249,7 @@ const MedicationsDashboard = () => {
         if (!open) { setInteractionWarning(null); setIsAnalyzing(false); }
         setShowAddModal(open);
       }}>
-        <DialogContent className="glass-premium border-border/20 rounded-[2rem] p-8 max-w-md shadow-2xl">
+        <DialogContent aria-describedby={undefined} className="glass-premium border-border/20 rounded-[2rem] p-8 max-w-md shadow-2xl">
           <DialogHeader className="mb-6">
             <DialogTitle className="text-xl font-display font-bold tracking-tight">
               {interactionWarning ? "Safety Warning" : "Add Prescription"}

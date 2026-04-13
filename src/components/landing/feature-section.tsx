@@ -1,4 +1,4 @@
-import { Brain, FileText, ClipboardList, Users, Activity, Shield } from "lucide-react";
+import { Brain, FileText, ClipboardList, Users, Activity, Shield, Stethoscope } from "lucide-react";
 
 const features = [
   {
@@ -7,6 +7,12 @@ const features = [
     description:
       "Automatically builds a structured health timeline from simple daily conversations.",
     color: "text-primary bg-primary/10",
+  },
+  {
+    icon: Stethoscope,
+    title: "Online Clinic",
+    description: "Connect with verified doctors for 1-to-1 consultations without visiting hospitals.",
+    color: "text-emerald-600 bg-emerald-600/10",
   },
   {
     icon: Users,

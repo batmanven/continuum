@@ -19,6 +19,11 @@ const PublicRoute = ({ children, redirectTo = "/app" }: PublicRouteProps) => {
   }
 
   if (user) {
+    const returnTo = sessionStorage.getItem('returnTo');
+    if (returnTo) {
+      sessionStorage.removeItem('returnTo');
+      return <Navigate to={returnTo} replace />;
+    }
     return <Navigate to={redirectTo} replace />;
   }
 

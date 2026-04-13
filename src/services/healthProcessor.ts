@@ -445,7 +445,7 @@ Return a JSON array of entries:
     "entry_type": "symptom|medication|sleep|mood|energy|general",
     "structured_data": { 
       "symptom_name": "string",
-      "severity": "mild|moderate|severe"
+      "severity": 1-10
     }
   }
 ]
@@ -467,6 +467,91 @@ Return ONLY JSON.`;
     } catch (error) {
       console.error('Conversation summary error:', error);
       return [];
+    }
+  }
+
+  async analyzeHealthReport(report: { type: string, content: string, metadata?: any }): Promise<{
+    summary: string;
+    critical_findings: string[];
+    next_steps: string[];
+  }> {
+    try {
+      const prompt = `Act as an expert clinical analyst. Analyze this medical report:
+      Type: ${report.type}
+      Content: ${report.content}
+      
+      Requirements:
+      1. Provide a concise, high-level summary of the report.
+      2. Identify any critical or abnormal findings.
+      3. Suggest appropriate clinical next steps for a doctor to consider.
+      
+      Format as JSON:
+      {
+        "summary": "Report overview",
+        "critical_findings": ["item 1", "item 2"],
+        "next_steps": ["step 1", "step 2"]
+      }
+      
+      Return ONLY valid JSON.`;
+
+      const result = await ai.models.generateContent({
+        model: this.model,
+        contents: prompt
+      });
+      const text = result.text;
+      const cleanJsonText = text.replace(/```json\n?|\n?```/g, '').trim();
+      return JSON.parse(cleanJsonText);
+    } catch (error) {
+      console.error('Report analysis error:', error);
+      return {
+        summary: "Unable to analyze report.",
+        critical_findings: ["Error processing report"],
+        next_steps: ["Review manually"]
+      };
+    }
+  }
+
+  async parsePrescriptionCard(base64Image: string): Promise<{
+    medication_name?: string;
+    dosage?: string;
+    frequency?: string;
+    duration?: string;
+    instructions?: string;
+  }[] | null> {
+    try {
+      const prompt = `Analyze this image of a prescription. Extract ALL medication details into a structured array.
+      
+      JSON Structure:
+      [
+        {
+          "medication_name": "string",
+          "dosage": "string",
+          "frequency": "string",
+          "duration": "string",
+          "instructions": "string"
+        }
+      ]
+      
+      Return ONLY JSON. Extract every distinct medication mentioned.`;
+
+      const result = await ai.models.generateContent({
+        model: this.model,
+        contents: [
+          prompt,
+          {
+            inlineData: {
+              data: base64Image.split(',')[1] || base64Image,
+              mimeType: "image/jpeg"
+            }
+          }
+        ]
+      });
+      const text = result.text;
+      const cleanJsonText = text.replace(/```json\n?|\n?```/g, '').trim();
+      return JSON.parse(cleanJsonText);
+    } catch (error) {
+      console.error('Prescription parsing error:', error);
+      return null;
     }
   }
 }

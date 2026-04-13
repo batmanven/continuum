@@ -1,19 +1,13 @@
 import { useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
-  Brain,
-  FileText,
+  MessageSquare,
   Settings,
   Heart,
-  History,
-  ClipboardList,
-  Activity,
-  Users,
-  Pill,
   User,
-  Zap,
-  Stethoscope,
-  MessageSquare,
+  Users,
+  Clock,
+  CheckCircle,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import {
@@ -30,26 +24,16 @@ import {
 } from "@/components/ui/sidebar";
 
 const items = [
-  { title: "Dashboard", url: "/app", icon: LayoutDashboard },
-  { title: "Guardians", url: "/app/guardians", icon: Users },
-  { title: "Medications", url: "/app/medications", icon: Pill },
-  { title: "Health Memory", url: "/app/health-memory", icon: Brain },
-  { title: "Bill Explainer", url: "/app/bill-explainer", icon: FileText },
-  { title: "Doctor Summaries", url: "/app/doctor-summaries", icon: ClipboardList },
-  { title: "Symptom Checker", url: "/app/symptom-checker", icon: Activity },
-];
-
-const clinicItems = [
-  { title: "Find Doctors", url: "/app/doctor-search", icon: Stethoscope },
-  { title: "My Consultations", url: "/app/chats", icon: MessageSquare },
+  { title: "Dashboard", url: "/doctor", icon: LayoutDashboard },
+  { title: "Consultations", url: "/doctor/chats", icon: MessageSquare },
 ];
 
 const bottomItems = [
-  { title: "Profile", url: "/app/profile", icon: User },
-  { title: "Settings", url: "/app/settings", icon: Settings },
+  { title: "Profile", url: "/doctor/profile", icon: User },
+  { title: "Settings", url: "/doctor/settings", icon: Settings },
 ];
 
-export function AppSidebar() {
+export function DoctorSidebar() {
   const { state, setOpen } = useSidebar();
   const collapsed = state === "collapsed";
   const location = useLocation();
@@ -57,7 +41,7 @@ export function AppSidebar() {
   const renderNavItems = (navItems: typeof items) => (
     <SidebarMenu className="gap-1.5">
       {navItems.map((item) => {
-        const isActive = location.pathname === item.url || (item.url === "/app" && location.pathname === "/app/");
+        const isActive = location.pathname === item.url || (item.url === "/doctor" && location.pathname === "/doctor/");
         return (
           <SidebarMenuItem key={item.title}>
             <SidebarMenuButton 
@@ -66,7 +50,6 @@ export function AppSidebar() {
               tooltip={collapsed ? item.title : undefined}
             >
               <NavLink
-                id={`tour-nav-${item.title.toLowerCase().replace(/\s+/g, '-')}`}
                 to={item.url}
                 className={`flex items-center w-full transition-all group py-1 ${
                   collapsed ? "justify-center px-0" : "gap-3 px-2"
@@ -111,37 +94,26 @@ export function AppSidebar() {
     >
       <SidebarHeader className="h-20 border-b border-border/10 bg-muted/20 p-4 px-6 flex items-center overflow-hidden">
         <div className={`flex items-center gap-3 min-w-0 transition-all duration-500 ${collapsed ? 'opacity-0 translate-x-[-10px]' : 'opacity-100 translate-x-0'}`}>
-          <div className="flex shrink-0 items-center justify-center rounded-2xl bg-primary shadow-lg shadow-primary/20 h-10 w-10">
-            <Heart className="h-5 w-5 text-primary-foreground fill-primary-foreground/20" />
+          <div className="flex shrink-0 items-center justify-center rounded-2xl bg-emerald-600 shadow-lg shadow-emerald-600/20 h-10 w-10">
+            <Heart className="h-5 w-5 text-white fill-white/20" />
           </div>
           <div className="flex flex-col">
             <span className="text-sm font-display font-bold tracking-tight text-foreground whitespace-nowrap">
               Continuum
             </span>
-            <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-primary whitespace-nowrap">
-              Health Hub
+            <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-emerald-600 whitespace-nowrap">
+              Doctor Portal
             </span>
           </div>
         </div>
       </SidebarHeader>
       
       <SidebarContent className="flex flex-col justify-between h-full py-4 transition-all duration-500 px-2">
-        <div>
-          <SidebarGroup className="p-0">
-            <SidebarGroupContent>
-              {renderNavItems(items)}
-            </SidebarGroupContent>
-          </SidebarGroup>
-          
-          <SidebarGroup className="p-0 mt-6">
-            <div className={`px-2 py-2 transition-all ${collapsed ? 'text-xs' : ''}`}>
-              <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-muted-foreground/70">Online Clinic</span>
-            </div>
-            <SidebarGroupContent>
-              {renderNavItems(clinicItems)}
-            </SidebarGroupContent>
-          </SidebarGroup>
-        </div>
+        <SidebarGroup className="p-0">
+          <SidebarGroupContent>
+            {renderNavItems(items)}
+          </SidebarGroupContent>
+        </SidebarGroup>
 
         <SidebarGroup className="mt-auto pb-4 p-0">
           <SidebarGroupContent>
@@ -152,6 +124,3 @@ export function AppSidebar() {
     </Sidebar>
   );
 }
-
-
-

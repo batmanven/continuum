@@ -222,7 +222,7 @@ const BillExplainer = () => {
                   <ShieldCheck className="h-3.5 w-3.5 mr-2" /> Insurance Settings
                 </Button>
               </DialogTrigger>
-              <DialogContent className="glass-premium border-border/20 rounded-[2.5rem] p-10 max-w-2xl text-foreground">
+              <DialogContent aria-describedby={undefined} className="glass-premium border-border/20 rounded-[2.5rem] p-10 max-w-2xl text-foreground">
                  <DialogHeader className="mb-8">
                    <div className="h-12 w-12 rounded-2xl bg-muted flex items-center justify-center mb-4 border border-border/20">
                      <Shield className="h-6 w-6 text-amber-500" />
@@ -614,7 +614,7 @@ const BillResultDisplay = ({ result, onReset, isViewMode = false, insuranceSetti
       </div>
 
       <Dialog open={showDisputeLetter} onOpenChange={setShowDisputeLetter}>
-        <DialogContent className="glass-premium border-white/10 rounded-[3rem] p-10 max-w-2xl shadow-3xl">
+        <DialogContent aria-describedby={undefined} className="glass-premium border-white/10 rounded-[3rem] p-10 max-w-2xl shadow-3xl">
           <DialogHeader className="mb-6">
             <div className="h-12 w-12 rounded-2xl bg-muted flex items-center justify-center mb-4 border border-border/20">
               <Handshake className="h-6 w-6 text-amber-500" />

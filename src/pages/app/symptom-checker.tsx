@@ -146,6 +146,7 @@ const SymptomChecker = () => {
     symptom_name: '',
     severity:     [5],
     description:  '',
+    body_part:    null as string | null,
     triggers:     '',
     duration:     '',
     stress_level: [5],
@@ -153,27 +154,29 @@ const SymptomChecker = () => {
   });
 
   // ─── Suggestions: plain variables, recomputed every render, zero stale-closure risk ───
-  const regionKey = normalizeRegionKey(selectedRegion);
+  // Use selectedRegion for suggestions; if not set, try to get from formData.body_part
+  const activeRegion = selectedRegion || (formData.body_part as BodyRegion | null) || null;
+  const regionKey = normalizeRegionKey(activeRegion);
 
   const suggestedTriggers = [
     ...new Set([
+      ...(TRIGGER_MAP[regionKey] ?? []),
       ...(formData.severity[0] > 7 ? ['Severe Trauma', 'Acute Overexertion'] : []),
       ...GLOBAL_TRIGGERS,
-      ...(TRIGGER_MAP[regionKey] ?? []),
     ])
   ];
 
   const suggestedNotes = [
     ...new Set([
+      ...(NOTES_MAP[regionKey] ?? []),
       ...(formData.severity[0] > 7 ? ['Acute pain', 'Severe distress', 'Possible emergency'] : []),
       ...GLOBAL_NOTES,
-      ...(NOTES_MAP[regionKey] ?? []),
     ])
   ];
   // ────────────────────────────────────────────────────────────────────────────────────────
 
   const resetForm = () => {
-    setFormData({ symptom_name: '', severity: [5], description: '', triggers: '', duration: '', stress_level: [5], sleep_hours: [7] });
+    setFormData({ symptom_name: '', severity: [5], description: '', body_part: null, triggers: '', duration: '', stress_level: [5], sleep_hours: [7] });
     setEditingEntry(null);
     setSelectedRegion(null);
     setShowAddForm(false);
@@ -185,6 +188,7 @@ const SymptomChecker = () => {
       symptom_name: formData.symptom_name,
       severity:     formData.severity[0],
       description:  formData.description || undefined,
+      body_part:    selectedRegion || formData.body_part || null,
       triggers:     formData.triggers ? formData.triggers.split(',').map(t => t.trim()) : undefined,
       duration:     formData.duration || undefined,
       stress_level: formData.stress_level[0],
@@ -201,10 +205,13 @@ const SymptomChecker = () => {
 
   const handleEdit = (entry: SymptomEntry) => {
     setEditingEntry(entry);
+    const bodyPartRegion = entry.body_part ? (entry.body_part.toLowerCase().trim() as BodyRegion) : null;
+    setSelectedRegion(bodyPartRegion);
     setFormData({
       symptom_name: entry.symptom_name,
       severity:     [entry.severity],
       description:  entry.description || '',
+      body_part:    entry.body_part || null,
       triggers:     entry.triggers?.join(', ') || '',
       duration:     entry.duration || '',
       stress_level: [entry.stress_level || 5],
@@ -314,7 +321,7 @@ const SymptomChecker = () => {
                   setSelectedRegion(normalized);
                   const regionName = normalized.replace(/-/g, ' ');
                   const capitalized = regionName.charAt(0).toUpperCase() + regionName.slice(1);
-                  setFormData(prev => ({ ...prev, symptom_name: `${capitalized} Issue` }));
+                  setFormData(prev => ({ ...prev, symptom_name: `${capitalized} Issue`, body_part: normalized }));
                   setShowAddForm(true);
                 }}
                 gender={userGender}

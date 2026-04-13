@@ -7,6 +7,7 @@ export interface SymptomEntry {
   symptom_name: string;
   severity: number;
   description?: string;
+  body_part?: string | null;
   triggers?: string[];
   duration?: string;
   start_time?: string;
