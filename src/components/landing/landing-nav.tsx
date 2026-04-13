@@ -4,6 +4,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Heart, LogOut } from "lucide-react";
 import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
 import { toast } from "sonner";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const LandingNav = () => {
   const { user, signOut } = useSupabaseAuth();
@@ -46,11 +52,11 @@ const LandingNav = () => {
           </a>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 md:gap-4">
           {user ? (
             <>
               <Button variant="default" size="sm" asChild>
-                <Link to="/app">Dashboard</Link>
+                <Link to="/app">Patient Dashboard</Link>
               </Button>
               <div className="flex items-center gap-2">
                 <Avatar className="h-8 w-8">
@@ -72,11 +78,37 @@ const LandingNav = () => {
             </>
           ) : (
             <>
-              <Button variant="ghost" size="sm" asChild>
-                <Link to="/login">Login</Link>
-              </Button>
-              <Button variant="hero" size="sm" asChild>
-                <Link to="/signup">Sign Up</Link>
+              <div className="hidden md:flex items-center gap-2">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm">Login</Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem asChild>
+                      <Link to="/login" className="cursor-pointer">Patient Login</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/doctor/login" className="cursor-pointer">Doctor Login</Link>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="hero" size="sm">Sign Up</Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem asChild>
+                      <Link to="/signup" className="cursor-pointer">Patient Sign Up</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/doctor/signup" className="cursor-pointer">Doctor Sign Up</Link>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+              <Button variant="ghost" size="icon" asChild className="md:hidden">
+                <Link to="/login" className="text-sm">Login</Link>
               </Button>
             </>
           )}

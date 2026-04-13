@@ -106,7 +106,7 @@ export const useDashboardData = () => {
       
       const recentActivity = processRecentActivity(healthEntries, bills, summaries);
 
-      const continuumScore = calculateContinuumScore(healthStats, medications, summaries);
+      const continuumScore = calculateContinuumScore(healthStats, medications, summaries, healthEntries);
 
       setData({
         healthStats,
@@ -367,9 +367,9 @@ export const useDashboardData = () => {
     return 'Other';
   };
 
-  const calculateContinuumScore = (healthStats: any, medications: any[], summaries: DoctorSummary[]) => {
+  const calculateContinuumScore = (healthStats: any, medications: any[], summaries: DoctorSummary[], healthEntries: HealthEntry[]) => {
     // If no data exists yet, return a perfect initial score with an informing label
-    if (healthStats.totalEntries === 0 && medications.length === 0 && summaries.length === 0) {
+    if (healthStats.totalEntries === 0 && medications.length === 0 && summaries.length === 0 && healthEntries.length === 0) {
       return { 
         score: 100, 
         status: 'stable' as const, 
@@ -380,7 +380,39 @@ export const useDashboardData = () => {
     let score = 80; // Baseline for active accounts
     const breakdown: Array<{ label: string; impact: number; details?: string[] }> = [];
 
-    // 1. Individual Symptom Impact (Calibrated for Sensitivity)
+    // 1. Health Timeline Impact (Overall Timeline Activity)
+    if (healthEntries.length > 0) {
+      const recentTimeline = healthEntries.filter(e => {
+         if (!e.created_at) return false;
+         const entryDate = new Date(e.created_at);
+         const now = new Date();
+         const diffTime = Math.abs(now.getTime() - entryDate.getTime());
+         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+         return diffDays <= 7;
+      });
+
+      if (recentTimeline.length > 0) {
+          const symptomTimeline = recentTimeline.filter(e => e.entry_type === 'symptom');
+          if (symptomTimeline.length > 3) {
+              score -= 10;
+              breakdown.push({ label: 'Frequent Symptoms', impact: -10, details: ['High frequency of symptom logging recently.'] });
+          } else if (symptomTimeline.length > 0) {
+              score -= 5;
+              breakdown.push({ label: 'Recent Symptoms', impact: -5, details: ['Some symptoms logged in the past week.'] });
+          } else {
+             score += 5;
+             breakdown.push({ label: 'No Recent Symptoms', impact: 5, details: ['No symptoms logged in the past week.'] });
+          }
+      } else {
+          score += 10;
+          breakdown.push({ label: 'Timeline Stability', impact: 10, details: ['No recent health concerns reported.'] });
+      }
+    } else {
+       score += 10;
+       breakdown.push({ label: 'Timeline Stability', impact: 10, details: ['No initial health concerns reported.'] });
+    }
+
+    // 1b. Individual Symptom Impact (Calibrated for Sensitivity)
     if (healthStats.recentSymptoms.length > 0) {
       const uniqueSymptoms = [...new Set(healthStats.recentSymptoms)];
       uniqueSymptoms.forEach(symptom => {
@@ -394,12 +426,9 @@ export const useDashboardData = () => {
 
       // Partial Stability: If only one symptom is logged, don't remove the entire bonus
       if (uniqueSymptoms.length === 1) {
-        score += 5;
-        breakdown.push({ label: 'Partial Stability', impact: 5, details: ['Tracking remains consistent with minor deviations.'] });
+        score += 3;
+        breakdown.push({ label: 'Partial Stability', impact: 3, details: ['Tracking remains consistent with minor deviations.'] });
       }
-    } else {
-      score += 10;
-      breakdown.push({ label: 'Clinical Stability', impact: 10, details: ['No acute symptoms tracked this period.'] });
     }
 
     // 2. Tracking Consistency

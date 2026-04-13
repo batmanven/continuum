@@ -33,8 +33,14 @@ const VerifyEmail = () => {
       toast.error(error.message || "Invalid verification code.");
       setLoading(false);
     } else {
-      toast.success("Email successfully confirmed. You may now log in!");
-      navigate("/login");
+      toast.success("Email successfully confirmed. You may now continue!");
+      const returnTo = sessionStorage.getItem('returnTo');
+      if (returnTo) {
+        sessionStorage.removeItem('returnTo');
+        navigate(returnTo);
+      } else {
+        navigate("/app"); // Because OTP automatically sets the session
+      }
     }
   };
 

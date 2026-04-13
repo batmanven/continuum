@@ -540,7 +540,7 @@ const GuardiansDashboard = () => {
       </div>
 
       <Dialog open={showAddModal} onOpenChange={handleCloseModal}>
-        <DialogContent className="max-w-3xl p-0 overflow-hidden rounded-[2.5rem] border-border/20 shadow-2xl glass-premium text-foreground">
+        <DialogContent aria-describedby={undefined} className="max-w-3xl p-0 overflow-hidden rounded-[2.5rem] border-border/20 shadow-2xl glass-premium text-foreground">
           <div className="grid md:grid-cols-5 min-h-[500px]">
             {/* Sidebar/Info Column */}
             <div className="md:col-span-2 bg-primary p-8 text-primary-foreground hidden md:flex flex-col justify-between relative overflow-hidden">
@@ -785,7 +785,7 @@ const GuardiansDashboard = () => {
       </Dialog>
 
       <Dialog open={!!viewToken} onOpenChange={() => setViewToken(null)}>
-        <DialogContent className="max-w-md flex flex-col items-center pt-8 glass-premium border-white/10 rounded-[3rem] p-10">
+        <DialogContent aria-describedby={undefined} className="max-w-md flex flex-col items-center pt-8 glass-premium border-white/10 rounded-[3rem] p-10">
           <DialogHeader className="text-center w-full mb-6">
             <div className="h-12 w-12 rounded-2xl bg-white/5 flex items-center justify-center mx-auto mb-4 border border-white/10">
               <Shield className="h-6 w-6 text-primary" />

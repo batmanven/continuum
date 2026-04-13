@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Heart } from "lucide-react";
+import { Heart, ArrowLeft } from "lucide-react";
 import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
 import { toast } from "sonner";
 
@@ -24,7 +24,13 @@ const Login = () => {
       toast.error(error.message);
     } else {
       toast.success("Welcome back!");
-      navigate("/app");
+      const returnTo = sessionStorage.getItem('returnTo');
+      if (returnTo) {
+        sessionStorage.removeItem('returnTo');
+        navigate(returnTo);
+      } else {
+        navigate("/app");
+      }
     }
 
     setLoading(false);
@@ -32,6 +38,15 @@ const Login = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-mesh px-4">
+      <div className="absolute top-4 left-4 z-50">
+        <button
+          onClick={() => navigate('/')}
+          className="flex items-center gap-2 text-slate-600 hover:text-slate-900 font-medium"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back
+        </button>
+      </div>
       <div className="absolute top-20 left-10 w-72 h-72 rounded-full bg-primary/5 blur-3xl" />
       <div className="absolute bottom-20 right-10 w-64 h-64 rounded-full bg-accent/5 blur-3xl" />
 

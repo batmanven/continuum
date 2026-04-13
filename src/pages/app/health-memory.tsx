@@ -262,20 +262,28 @@ const HealthMemory = () => {
         // Commit extracted facts to the timeline
         for (const fact of extractedFacts) {
           if (fact.entry_type === 'symptom') {
+            let sev = fact.structured_data?.severity;
+            if (typeof sev === 'string') {
+              sev = sev.toLowerCase().includes('severe') ? 8 : sev.toLowerCase().includes('moderate') ? 5 : 2;
+            }
+            
             await addSymptomEntry({
               ...fact.structured_data,
+              severity: typeof sev === 'number' ? Math.max(1, Math.min(10, sev)) : 3,
               description: fact.raw_content,
               start_time: new Date().toISOString()
             });
-          } else {
-            await healthService.createHealthEntry(
-              user!.id,
-              fact.raw_content,
-              fact.entry_type,
-              activeProfile.id
-            );
           }
+          
+          // Always add to the global health timeline
+          await healthService.createHealthEntry(
+            user!.id,
+            fact.raw_content,
+            fact.entry_type,
+            activeProfile.id
+          );
         }
+        await refreshEntries();
         toast.success(`Sync complete: ${extractedFacts.length} items added to timeline`, { id: "sync" });
         await refreshEntries();
       } else {
@@ -608,7 +616,7 @@ const HealthMemory = () => {
 
       {/* Summary Dialog */}
       <Dialog open={showSummary} onOpenChange={setShowSummary}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogContent aria-describedby={undefined} className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="font-display flex items-center gap-2">
               <ClipboardList className="h-5 w-5" />

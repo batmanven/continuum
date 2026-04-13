@@ -604,7 +604,7 @@ const DoctorSummaries = () => {
 
       {/* Summary Detail Dialog */}
       <Dialog open={showSummaryDialog} onOpenChange={setShowSummaryDialog}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogContent aria-describedby={undefined} className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="font-display flex items-center gap-2">
               <ClipboardList className="h-5 w-5" />
@@ -679,7 +679,7 @@ const DoctorSummaries = () => {
 
       {/* Pre-Visit Brief Dialog */}
       <Dialog open={showPreVisitBrief} onOpenChange={setShowPreVisitBrief}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0 border-none bg-slate-50">
+        <DialogContent aria-describedby={undefined} className="max-w-4xl max-h-[90vh] overflow-y-auto p-0 border-none bg-slate-50">
           <div data-html2canvas-ignore="true" className="absolute top-4 right-12 z-50 flex items-center gap-2 bg-white/10 backdrop-blur px-3 py-1.5 rounded-full border border-white/20">
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Recommended Queries</span>
             <button 

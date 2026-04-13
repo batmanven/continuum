@@ -267,7 +267,7 @@ const Dashboard = () => {
         </div>
       </div>
       <Dialog open={showScoreBreakdown} onOpenChange={setShowScoreBreakdown}>
-        <DialogContent className="max-w-md p-0 overflow-hidden border border-border bg-card text-card-foreground rounded-[2rem] shadow-2xl">
+        <DialogContent aria-describedby={undefined} className="max-w-md p-0 overflow-hidden border border-border bg-card text-card-foreground rounded-[2rem] shadow-2xl">
           <div className="p-8 space-y-8">
             <div className="flex justify-between items-center">
               <div>

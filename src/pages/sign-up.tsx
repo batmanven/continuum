@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Heart, User, Phone } from "lucide-react";
+import { Heart, User, Phone, ArrowLeft } from "lucide-react";
 import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
 import { toast } from "sonner";
 
@@ -82,7 +82,16 @@ const Signup = () => {
   const isFormValid = name && (email || phoneNumber) && password && gender && dateOfBirth && !phoneError;
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-mesh px-4 py-8">
+    <div className="relative min-h-screen flex items-center justify-center bg-mesh px-4 py-8">
+      <div className="absolute top-4 left-4 z-50">
+        <button
+          onClick={() => navigate('/')}
+          className="flex items-center gap-2 text-slate-600 hover:text-slate-900 font-medium"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back
+        </button>
+      </div>
       <div className="absolute top-20 right-20 w-72 h-72 rounded-full bg-primary/5 blur-3xl" />
       <div className="absolute bottom-10 left-10 w-64 h-64 rounded-full bg-accent/5 blur-3xl" />
 
