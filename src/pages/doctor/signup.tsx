@@ -1,17 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { doctorProfileService } from '@/services/doctorProfileService';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from '@/components/ui/card';
 import {
   Select,
   SelectContent,
@@ -19,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Stethoscope, ArrowRight, Loader2, AlertCircle, ArrowLeft } from 'lucide-react';
+import { Stethoscope, ArrowRight, Loader2, AlertCircle, ArrowLeft, Heart, Briefcase, Award, User } from 'lucide-react';
 import { toast } from 'sonner';
 
 const SPECIALTIES = [
@@ -63,7 +57,6 @@ const DoctorSignup = () => {
   };
 
   useEffect(() => {
-    // Auto-create profile if user returns verified from email auth
     const createPendingProfile = async () => {
       if (user) {
         const pendingProfileStr = sessionStorage.getItem('pendingDoctorProfile');
@@ -71,9 +64,8 @@ const DoctorSignup = () => {
           try {
             setLoading(true);
             const pendingProfile = JSON.parse(pendingProfileStr);
-            console.log("Restoring pending doctor profile:", pendingProfile);
             
-            const { data, error } = await doctorProfileService.createDoctorProfile(user.id, {
+            const { error: profileError } = await doctorProfileService.createDoctorProfile(user.id, {
               full_name: pendingProfile.full_name,
               medical_license: pendingProfile.medical_license,
               license_country: pendingProfile.license_country,
@@ -83,23 +75,23 @@ const DoctorSignup = () => {
               experience_years: pendingProfile.experience_years ? parseInt(pendingProfile.experience_years) : undefined,
               verified_by_hospital: false,
               is_active: true,
+              user_id: user.id
             });
 
-            if (error) {
-              setError(error);
-              toast.error('Failed to create doctor profile. Try saving your details again.');
-              setStep(2); // Provide them a chance to re-save if it fails
+            if (profileError) {
+              setError(profileError);
+              toast.error('Failed to create doctor profile. Please try again.');
+              setStep(2);
               return;
             }
 
-            // Success
             sessionStorage.removeItem('pendingDoctorProfile');
-            toast.success('Doctor profile created! Your hospital will verify your credentials.');
+            toast.success('Professional profile created! Verification pending.');
             setTimeout(() => navigate('/doctor'), 1500);
 
-          } catch (err) {
+          } catch (err: any) {
             console.error('Error auto-creating profile:', err);
-            setError('Failed to create doctor profile automatically.');
+            setError('Failed to complete professional onboarding.');
             setStep(2);
           } finally {
             setLoading(false);
@@ -107,7 +99,6 @@ const DoctorSignup = () => {
         }
       }
     };
-    
     createPendingProfile();
   }, [user, navigate]);
 
@@ -115,7 +106,7 @@ const DoctorSignup = () => {
     if (!formData.full_name.trim()) return "Please enter your full name";
     if (!formData.email.trim()) return "Please enter your email";
     if (!formData.phone.trim()) return "Please enter your phone number";
-    if (!formData.password || formData.password.length < 6) return "Password must be at least 6 characters";
+    if (!user && (!formData.password || formData.password.length < 6)) return "Password must be at least 6 characters";
     if (!formData.medical_license.trim()) return "Please enter your medical license number";
     return "";
   };
@@ -151,270 +142,292 @@ const DoctorSignup = () => {
 
     try {
       if (!user) {
-        // Start User Signup Flow
         sessionStorage.setItem('pendingDoctorProfile', JSON.stringify(formData));
-        sessionStorage.setItem('returnTo', '/doctor/signup'); // Make sure we return here after OTP
-        
+        sessionStorage.setItem('returnTo', '/doctor/signup');
+
         const { error: signUpError } = await signUp(
-          formData.email, 
-          formData.password, 
-          formData.full_name, 
-          "Not specified", // Gender
-          "", // DOB
-          formData.phone, 
-          "Not specified" // Blood Group
+          formData.email,
+          formData.password,
+          formData.full_name,
+          "Not specified",
+          "",
+          formData.phone,
+          "Not specified"
         );
 
-        if (signUpError) {
-          throw new Error(signUpError.message);
-        }
-
+        if (signUpError) throw signUpError;
         navigate(`/verify-email?email=${encodeURIComponent(formData.email)}`);
-
       } else {
-        // User already exists (e.g. they logged in, or we just recovered from verify-email without catching the useEffect)
         const { error: profileError } = await doctorProfileService.createDoctorProfile(user.id, {
-            full_name: formData.full_name,
-            medical_license: formData.medical_license,
-            license_country: formData.license_country,
-            specialty: formData.specialty,
-            hospital_id: formData.hospital_id,
-            hospital_name: formData.hospital_name,
-            experience_years: formData.experience_years ? parseInt(formData.experience_years) : undefined,
-            verified_by_hospital: false,
-            is_active: true,
+          full_name: formData.full_name,
+          medical_license: formData.medical_license,
+          license_country: formData.license_country,
+          specialty: formData.specialty,
+          hospital_id: formData.hospital_id,
+          hospital_name: formData.hospital_name,
+          experience_years: formData.experience_years ? parseInt(formData.experience_years) : undefined,
+          verified_by_hospital: false,
+          is_active: true,
+          user_id: user.id
         });
 
         if (profileError) throw profileError;
 
-        toast.success('Doctor profile created! Your hospital will verify your credentials.');
+        toast.success('Professional profile created! Verification pending.');
         setTimeout(() => navigate('/doctor'), 1500);
       }
     } catch (err: any) {
-      console.error('Error:', err);
-      setError(err.message || 'Failed to create doctor profile');
+      setError(err.message || 'An error occurred during profile setup');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center px-4 py-12">
-      {/* Back button */}
-      <div className="absolute top-4 left-4 z-50">
-        <button
-          onClick={() => navigate('/')}
-          className="flex items-center gap-2 text-slate-600 hover:text-slate-900 font-medium"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back
-        </button>
-      </div>
+    <div className="relative min-h-screen flex items-center justify-center bg-mesh px-4 py-8">
+      {/* Decorative Blur Circles */}
+      <div className="absolute top-20 right-20 w-72 h-72 rounded-full bg-primary/5 blur-3xl opacity-60 pointer-events-none" />
+      <div className="absolute bottom-10 left-10 w-64 h-64 rounded-full bg-accent/5 blur-3xl opacity-60 pointer-events-none" />
 
-      {/* Background */}
-      <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden">
-        <div
-          className="absolute inset-0 opacity-[0.04] blur-[80px] scale-125"
-          style={{
-            backgroundImage: "url('/dashboard-bg.png')",
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-          }}
-        />
-        <div className="absolute inset-0 bg-mesh opacity-10" />
-      </div>
+      <div className="w-full max-w-2xl relative z-10 opacity-0 animate-fade-in">
+        <div className="text-center mb-8">
+          <Link to="/" className="inline-flex items-center gap-2 mb-6 transition-transform hover:scale-105">
+            <div className="h-9 w-9 rounded-lg bg-primary flex items-center justify-center">
+              <Heart className="h-4.5 w-4.5 text-primary-foreground" />
+            </div>
+            <span className="text-lg font-semibold text-foreground tracking-tight">
+              Continuum Health
+            </span>
+          </Link>
+          <h1 className="font-display text-2xl font-semibold text-foreground">
+            {step === 1 ? 'Join our Professional Network' : 'Professional Credentials'}
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            {step === 1 ? 'Create your doctor account to start providing care' : 'Nearly there! Just a few more professional details'}
+          </p>
+        </div>
 
-      <Card className="w-full max-w-2xl glass-premium border-white/5 shadow-2xl relative z-10">
-        <CardHeader className="space-y-2">
-          <div className="flex items-center gap-2 text-[10px] font-bold tracking-[0.3em] text-primary uppercase mb-3">
-            <Stethoscope className="h-4 w-4 fill-primary" />
-            Doctor Portal
+        {/* Role Selector */}
+        <div className="max-w-xs mx-auto flex p-1 bg-muted/50 rounded-xl mb-8 border border-border/40">
+          <button
+            onClick={() => navigate("/signup")}
+            className={`flex-1 flex items-center justify-center gap-2 py-2 text-sm font-medium rounded-lg transition-all text-muted-foreground hover:text-foreground`}
+          >
+            <User className="h-4 w-4" />
+            Patient
+          </button>
+          <button
+            className={`flex-1 flex items-center justify-center gap-2 py-2 text-sm font-medium rounded-lg transition-all bg-card text-foreground shadow-sm ring-1 ring-border/20`}
+          >
+            <Stethoscope className="h-4 w-4 text-primary" />
+            Doctor
+          </button>
+        </div>
+
+        {error && (
+          <div className="mb-6 p-4 rounded-xl bg-destructive/5 border border-destructive/10 flex gap-3 animate-in fade-in slide-in-from-top-1">
+            <AlertCircle className="h-5 w-5 text-destructive shrink-0" />
+            <p className="text-sm text-destructive font-medium">{error}</p>
           </div>
-          <CardTitle className="text-2xl font-display">
-            {step === 1 ? 'Create Doctor Profile' : 'Hospital Information'}
-          </CardTitle>
-          <CardDescription>
-            {step === 1
-              ? 'Create a new doctor account'
-              : 'Connect to your hospital network'}
-          </CardDescription>
-        </CardHeader>
+        )}
 
-        <CardContent>
-          {error && (
-            <div className="mb-6 p-3 rounded-lg bg-destructive/10 border border-destructive/30 flex gap-3">
-              <AlertCircle className="h-4 w-4 text-destructive mt-0.5 shrink-0" />
-              <p className="text-sm text-destructive">{error}</p>
+        <form
+          onSubmit={handleSubmit}
+          className="rounded-2xl border border-border/60 bg-card p-6 md:p-8 shadow-card space-y-8"
+        >
+          {step === 1 ? (
+            <div className="grid md:grid-cols-2 gap-x-8 gap-y-6">
+              <div className="md:col-span-2 flex items-center gap-2 pb-2 border-b border-border/40">
+                <Briefcase className="h-4 w-4 text-primary" />
+                <h3 className="text-xs font-bold text-foreground uppercase tracking-widest">Account Details</h3>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="full_name">Full Name</Label>
+                <Input
+                  id="full_name"
+                  placeholder="Dr. John Doe"
+                  value={formData.full_name}
+                  onChange={(e) => handleInputChange('full_name', e.target.value)}
+                  className="bg-background/50 border-border/40 focus:border-primary/40 transition-all"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="email">Email Address</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="doctor@hospital.com"
+                  value={formData.email}
+                  onChange={(e) => handleInputChange('email', e.target.value)}
+                  disabled={!!user}
+                  className="bg-background/50 border-border/40 transition-colors"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="phone">Phone Number</Label>
+                <Input
+                  id="phone"
+                  placeholder="+1 (555) 000-0000"
+                  value={formData.phone}
+                  onChange={(e) => handleInputChange('phone', e.target.value)}
+                  className="bg-background/50 border-border/40 transition-colors"
+                />
+              </div>
+
+              {!user && (
+                <div className="space-y-2">
+                  <Label htmlFor="password">Password</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    placeholder="••••••••"
+                    value={formData.password}
+                    onChange={(e) => handleInputChange('password', e.target.value)}
+                    className="bg-background/50 border-border/40 transition-colors"
+                  />
+                  <p className="text-[10px] text-muted-foreground">Min. 6 characters</p>
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <Label htmlFor="license">Medical License Number</Label>
+                <Input
+                  id="license"
+                  placeholder="e.g. MD123456"
+                  value={formData.medical_license}
+                  onChange={(e) => handleInputChange('medical_license', e.target.value)}
+                  className="bg-background/50 border-border/40 transition-colors"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="country">License Country</Label>
+                <Select value={formData.license_country} onValueChange={(value) => handleInputChange('license_country', value)}>
+                  <SelectTrigger id="country" className="bg-background/50 border-border/40 transition-colors">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {COUNTRIES.map((country) => (
+                      <SelectItem key={country} value={country}>{country}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="md:col-span-2 pt-4">
+                <Button
+                  type="button"
+                  onClick={handleNextStep}
+                  variant="hero"
+                  className="w-full h-12 text-base font-medium"
+                >
+                  Continue Professional Setup <ArrowRight className="h-4 w-4 ml-2" />
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="grid md:grid-cols-2 gap-x-8 gap-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+              <div className="md:col-span-2 flex items-center gap-2 pb-2 border-b border-border/40">
+                <Award className="h-4 w-4 text-primary" />
+                <h3 className="text-xs font-bold text-foreground uppercase tracking-widest">Professional Context</h3>
+              </div>
+
+              <div className="md:col-span-2 space-y-2">
+                <Label htmlFor="specialty">Medical Specialty</Label>
+                <Select value={formData.specialty} onValueChange={(value) => handleInputChange('specialty', value)}>
+                  <SelectTrigger id="specialty" className="bg-background/50 border-border/40 h-11 transition-colors">
+                    <SelectValue placeholder="Select your primary specialty" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SPECIALTIES.map((specialty) => (
+                      <SelectItem key={specialty} value={specialty}>{specialty}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="md:col-span-2 space-y-2">
+                <Label htmlFor="hospital">Current Hospital/Network Name</Label>
+                <Input
+                  id="hospital"
+                  placeholder="e.g. Mount Sinai Medical Center"
+                  value={formData.hospital_name}
+                  onChange={(e) => handleInputChange('hospital_name', e.target.value)}
+                  className="bg-background/50 border-border/40 h-11 transition-colors"
+                />
+              </div>
+
+              <div className="md:col-span-2 space-y-2">
+                <Label htmlFor="experience">Years of Professional Experience</Label>
+                <Input
+                  id="experience"
+                  type="number"
+                  placeholder="e.g. 8"
+                  value={formData.experience_years}
+                  onChange={(e) => handleInputChange('experience_years', e.target.value)}
+                  className="bg-background/50 border-border/40 h-11 transition-colors"
+                />
+              </div>
+
+              <div className="md:col-span-2 flex gap-4 pt-6">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setStep(1)}
+                  className="flex-1 h-12 border-border/60 hover:bg-slate-50 transition-colors"
+                  disabled={loading}
+                >
+                  <ArrowLeft className="h-4 w-4 mr-2" /> Back
+                </Button>
+                <Button
+                  type="submit"
+                  variant="hero"
+                  className="flex-[2] h-12 text-base"
+                  disabled={loading || !formData.specialty || !formData.hospital_name}
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Setup in progress...
+                    </>
+                  ) : (
+                    'Complete Setup'
+                  )}
+                </Button>
+              </div>
+
+              {loading && (
+                <div className="md:col-span-2 text-center">
+                  <p className="text-xs text-muted-foreground animate-pulse">
+                    Configuring your secure professional portal...
+                  </p>
+                </div>
+              )}
+              
+              <div className="md:col-span-2 bg-muted/30 p-4 rounded-xl border border-border/40 mt-4">
+                <p className="text-[11px] text-muted-foreground leading-relaxed text-center">
+                  By clicking "Complete Setup", your credentials will be submitted for verification by your registered hospital system.
+                </p>
+              </div>
             </div>
           )}
+        </form>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {step === 1 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label>Full Name</Label>
-                  <Input
-                    placeholder="Dr. John Doe"
-                    value={formData.full_name}
-                    onChange={(e) => handleInputChange('full_name', e.target.value)}
-                    className="bg-white/50"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Email</Label>
-                  <Input
-                    type="email"
-                    placeholder="doctor@hospital.com"
-                    value={formData.email}
-                    onChange={(e) => handleInputChange('email', e.target.value)}
-                    className="bg-white/50"
-                    disabled={!!user}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Phone Number</Label>
-                  <Input
-                    placeholder="+1 555-0100"
-                    value={formData.phone}
-                    onChange={(e) => handleInputChange('phone', e.target.value)}
-                    className="bg-white/50"
-                  />
-                </div>
-
-                {!user && (
-                    <div className="space-y-2">
-                      <Label>Password</Label>
-                      <Input
-                        type="password"
-                        placeholder="••••••••"
-                        value={formData.password}
-                        onChange={(e) => handleInputChange('password', e.target.value)}
-                        className="bg-white/50"
-                      />
-                    </div>
-                )}
-
-                <div className="space-y-2">
-                  <Label>Medical License Number</Label>
-                  <Input
-                    placeholder="e.g., MD123456"
-                    value={formData.medical_license}
-                    onChange={(e) => handleInputChange('medical_license', e.target.value)}
-                    className="bg-white/50"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>License Country</Label>
-                  <Select value={formData.license_country} onValueChange={(value) => handleInputChange('license_country', value)}>
-                    <SelectTrigger className="bg-white/50">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {COUNTRIES.map((country) => (
-                        <SelectItem key={country} value={country}>
-                          {country}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="md:col-span-2">
-                  <Button
-                    type="button"
-                    onClick={handleNextStep}
-                    className="w-full mt-2"
-                  >
-                    Continue <ArrowRight className="h-4 w-4 ml-2" />
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2 md:col-span-2">
-                  <Label>Specialty</Label>
-                  <Select value={formData.specialty} onValueChange={(value) => handleInputChange('specialty', value)}>
-                    <SelectTrigger className="bg-white/50">
-                      <SelectValue placeholder="Select specialty" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {SPECIALTIES.map((specialty) => (
-                        <SelectItem key={specialty} value={specialty}>
-                          {specialty}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2 md:col-span-2">
-                  <Label>Hospital Name</Label>
-                  <Input
-                    placeholder="e.g., General Medical Center"
-                    value={formData.hospital_name}
-                    onChange={(e) => handleInputChange('hospital_name', e.target.value)}
-                    className="bg-white/50"
-                  />
-                </div>
-
-                <div className="space-y-2 md:col-span-2">
-                  <Label>Years of Experience (Optional)</Label>
-                  <Input
-                    type="number"
-                    placeholder="e.g., 5"
-                    value={formData.experience_years}
-                    onChange={(e) => handleInputChange('experience_years', e.target.value)}
-                    className="bg-white/50"
-                  />
-                </div>
-
-                <div className="flex gap-3 pt-4 md:col-span-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setStep(1)}
-                    className="flex-1"
-                    disabled={loading} // Add disabled state since it could be logging in
-                  >
-                    Back
-                  </Button>
-                  <Button
-                    type="submit"
-                    className="flex-[2]"
-                    disabled={loading || !formData.specialty || !formData.hospital_name}
-                  >
-                    {loading ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Creating Account...
-                      </>
-                    ) : (
-                      'Create Profile'
-                    )}
-                  </Button>
-                </div>
-                {loading && (
-                    <div className="md:col-span-2">
-                        <p className="text-xs text-center text-muted-foreground mt-2">
-                          Please wait, configuring your secure doctor portal...
-                        </p>
-                    </div>
-                )}
-                <div className="md:col-span-2">
-                    <p className="text-xs text-center text-muted-foreground mt-4">
-                      Your hospital admin will verify your credentials
-                    </p>
-                </div>
-              </div>
-            )}
-          </form>
-        </CardContent>
-      </Card>
+        <p className="text-center text-sm text-muted-foreground mt-8">
+          Already have a professional account?{" "}
+          <Link
+            to="/doctor/login"
+            className="text-primary hover:underline font-semibold"
+          >
+            Sign in here
+          </Link>
+        </p>
+      </div>
     </div>
   );
 };
 
 export default DoctorSignup;
+

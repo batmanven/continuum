@@ -28,7 +28,7 @@ import DoctorChatPage from "./pages/app/doctor-chat";
 import DoctorLayout from "./components/doctor/DoctorLayout";
 import DoctorDashboard from "./pages/doctor/dashboard";
 import DoctorSignup from "./pages/doctor/signup";
-import DoctorLogin from "./pages/doctor/login";
+
 import DoctorPatientDetail from "./pages/doctor/patient-detail";
 import DoctorProfilePage from "./pages/doctor/profile";
 import DoctorSettingsPage from "./pages/doctor/settings";
@@ -71,7 +71,7 @@ const App = () => (
               <Route path="profile" element={<DoctorProfilePage />} />
               <Route path="settings" element={<DoctorSettingsPage />} />
             </Route>
-            <Route path="/doctor/login" element={<PublicRoute><DoctorLogin /></PublicRoute>} />
+
             <Route path="/doctor/signup" element={<DoctorSignup />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

@@ -2,12 +2,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, BarChart3, LayoutDashboard } from "lucide-react";
 import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+
 
 const HeroSection = () => {
   const { user } = useSupabaseAuth();
@@ -51,39 +46,18 @@ const HeroSection = () => {
               </Link>
             </Button>
           ) : (
-            <>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="hero" size="lg" className="gap-2">
-                    Sign Up <ArrowRight className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="center" className="w-48">
-                  <DropdownMenuItem asChild>
-                    <Link to="/signup" className="cursor-pointer py-2">Patient Sign Up</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/doctor/signup" className="cursor-pointer py-2">Doctor Sign Up</Link>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="lg" className="gap-2">
-                    Login <ArrowRight className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="center" className="w-48">
-                  <DropdownMenuItem asChild>
-                    <Link to="/login" className="cursor-pointer py-2">Patient Login</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/doctor/login" className="cursor-pointer py-2">Doctor Login</Link>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </>
+            <div className="flex items-center justify-center gap-4">
+              <Button variant="hero" size="lg" asChild>
+                <Link to="/signup" className="gap-2">
+                  Sign Up <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+              <Button variant="outline" size="lg" asChild>
+                <Link to="/login" className="gap-2">
+                  Login <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
           )}
         </div>
 

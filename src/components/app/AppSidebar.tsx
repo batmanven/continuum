@@ -134,9 +134,7 @@ export function AppSidebar() {
           </SidebarGroup>
           
           <SidebarGroup className="p-0 mt-6">
-            <div className={`px-2 py-2 transition-all ${collapsed ? 'text-xs' : ''}`}>
-              <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-muted-foreground/70">Online Clinic</span>
-            </div>
+        
             <SidebarGroupContent>
               {renderNavItems(clinicItems)}
             </SidebarGroupContent>
