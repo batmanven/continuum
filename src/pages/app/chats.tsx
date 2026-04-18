@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   MessageSquare,
   ChevronRight,
@@ -26,16 +26,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface ChatWithDoctor {
   id?: string;
-  patient_id: string;
-  doctor_id: string;
+  patient_id?: string;
+  doctor_id?: string;
   doctor_name: string;
-  status: 'active' | 'closed' | 'archived';
+  status?: 'active' | 'closed' | 'archived';
   reason_for_consultation?: string;
   doctor_accepted_at?: string;
   consultation_complete_at?: string;
   patient_satisfaction_rating?: number;
   created_at?: string;
   unread_count?: number;
+  doctor_specialty?: string;
+  doctor_hospital?: string;
 }
 
 export default function ChatsPage() {
@@ -43,11 +45,14 @@ export default function ChatsPage() {
   const { user, loading: authLoading } = useSupabaseAuth();
   const { toast } = useToast();
 
+  const [searchParams] = useSearchParams();
+  const doctorIdParam = searchParams.get('doctorId');
+
   const [chats, setChats] = useState<ChatWithDoctor[]>([]);
   const [filteredChats, setFilteredChats] = useState<ChatWithDoctor[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState<'active' | 'closed' | 'all'>('active');
+  const [activeTab, setActiveTab] = useState<'active' | 'closed' | 'all'>(doctorIdParam ? 'all' : 'active');
 
   useEffect(() => {
     if (authLoading) return;
@@ -64,7 +69,7 @@ export default function ChatsPage() {
 
     try {
       setLoading(true);
-      const { data, error } = await chatService.getPatientChats(user.id, 50, 0);
+      const { data, error } = await chatService.getPatientChats(user.id);
 
       if (error) {
         toast({
@@ -78,10 +83,14 @@ export default function ChatsPage() {
       if (data) {
         const chatsWithDoctors = await Promise.all(
           data.map(async (chat) => {
+            if (!chat.doctor_id) return { ...chat, doctor_name: 'Doctor' };
+            
             const { data: doctorData } = await doctorProfileService.getDoctorProfile(chat.doctor_id);
             return {
               ...chat,
               doctor_name: doctorData?.full_name || 'Unknown Doctor',
+              doctor_specialty: doctorData?.specialty,
+              doctor_hospital: doctorData?.hospital_name,
             };
           })
         );
@@ -108,6 +117,12 @@ export default function ChatsPage() {
       filtered = filtered.filter((c) => c.status === 'closed');
     }
 
+    // Filter by URL doctorId param
+    if (doctorIdParam) {
+      filtered = filtered.filter((c) => c.doctor_id === doctorIdParam);
+    }
+
+    // Filter by search
     if (searchQuery) {
       filtered = filtered.filter(
         (c) =>
@@ -236,34 +251,53 @@ export default function ChatsPage() {
                           <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center text-primary border border-primary/10 font-display font-bold text-xl uppercase group-hover:scale-105 transition-transform">
                             {chat.doctor_name.charAt(0)}
                           </div>
-                          {chat.status === 'active' && !chat.doctor_accepted_at && (
-                            <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-500 border-2 border-card shadow-sm animate-pulse" />
-                          )}
+                          <div>
+                            <h3 className="font-semibold text-slate-900 leading-tight">{chat.doctor_name}</h3>
+                            <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-0.5">
+                              {chat.doctor_specialty && (
+                                <span className="text-[10px] font-bold text-primary uppercase tracking-wider">
+                                  {chat.doctor_specialty}
+                                </span>
+                              )}
+                              {chat.doctor_hospital && (
+                                <span className="text-[10px] text-slate-500 font-medium">
+                                  • {chat.doctor_hospital}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs text-slate-600 truncate mt-1">
+                              {chat.reason_for_consultation}
+                            </p>
+                          </div>
                         </div>
 
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <h3 className="font-display font-bold text-lg text-foreground group-hover:text-primary transition-colors truncate">
-                              {chat.doctor_name}
-                            </h3>
-                            {chat.status === 'active' ? (
-                              <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 text-[9px] font-bold uppercase tracking-tight">
-                                <span className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
-                                Live
-                              </div>
-                            ) : (
-                              <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-muted text-muted-foreground text-[9px] font-bold uppercase tracking-tight">
-                                Finished
-                              </div>
-                            )}
-                          </div>
+                        {/* Status and Date */}
+                        <div className="flex items-center gap-2 mt-2 ml-13">
+                          <Badge className={chat.status === 'active' ? "bg-green-100 text-green-800" : "bg-slate-100 text-slate-800"}>
+                            {chat.status === 'active' ? 'Active' : 'Completed'}
+                          </Badge>
+                          <span className="text-xs text-slate-500">
+                            {formatDate(chat.created_at)}
+                          </span>
+                        </div>
 
-                          <p className="text-sm text-foreground/80 font-medium truncate mb-2">
-                            {chat.reason_for_consultation}
-                          </p>
+                        {/* Status and Date */}
+                        <div className="flex items-center gap-2 mt-2 ml-13">
+                          {chat.status === 'active' ? (
+                            <Badge className="h-5 bg-green-100 text-green-800 hover:bg-green-100 gap-1">
+                              <div className="w-2 h-2 bg-green-600 rounded-full" />
+                              Active
+                            </Badge>
+                          ) : (
+                            <Badge className="h-5 bg-slate-100 text-slate-800 hover:bg-slate-100 gap-1">
+                              <CheckCircle className="w-3 h-3" />
+                              Completed
+                            </Badge>
+                          )}
 
-                          <div className="flex items-center gap-4">
-                            <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground font-bold uppercase tracking-wider">
+                          {/* Waiting indicator for active chats not accepted yet */}
+                          {chat.status === 'active' && !chat.doctor_accepted_at && (
+                            <span className="flex items-center gap-1 text-xs text-amber-600">
                               <Clock className="w-3 h-3" />
                               {formatDate(chat.created_at)}
                             </div>

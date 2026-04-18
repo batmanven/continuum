@@ -16,11 +16,8 @@ import {
 import {
   Card,
   CardContent,
-  CardHeader,
-  CardTitle,
 } from '@/components/ui/card';
 import {
-  Search,
   Users,
   Loader2,
   Plus,
@@ -28,6 +25,7 @@ import {
   Stethoscope,
   Calendar,
   FileText,
+  Search,
   AlertCircle,
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -36,26 +34,14 @@ const DoctorDashboard = () => {
   const navigate = useNavigate();
   const { user } = useSupabaseAuth();
   const { doctorProfile, patients, loadingProfile, loadingPatients, isDoctor, refreshPatients } = useDoctor();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filteredPatients, setFilteredPatients] = useState(patients);
   const [showAddPatient, setShowAddPatient] = useState(false);
   const [patientSearchQuery, setPatientSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<UserProfile[]>([]);
   const [searching, setSearching] = useState(false);
   const [addingPatient, setAddingPatient] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (searchTerm.trim()) {
-      setFilteredPatients(
-        patients.filter(p =>
-          (p.patient?.full_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-          p.patient_id.toLowerCase().includes(searchTerm.toLowerCase())
-        )
-      );
-    } else {
-      setFilteredPatients(patients);
-    }
-  }, [searchTerm, patients]);
+
+
 
   const handlePatientSearch = async () => {
     if (!patientSearchQuery.trim()) return;
@@ -193,106 +179,125 @@ const DoctorDashboard = () => {
           </div>
         )}
 
-        {/* Patients Section */}
+        {/* Clinical Overview */}
         <div className="space-y-6 animate-slide-up" style={{ animationDelay: '200ms' }}>
-          <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
-            <div>
-              <h2 className="text-[10px] font-bold uppercase tracking-[.3em] text-primary">Your Patients</h2>
-              <p className="text-sm text-muted-foreground mt-1">
-                {filteredPatients.length} patient{filteredPatients.length !== 1 ? 's' : ''}
-              </p>
-            </div>
-            <div className="w-full md:w-auto flex gap-2">
-              <div className="relative flex-1 md:flex-none md:w-64">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search patients..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 h-10 rounded-lg bg-muted/30 border-border/50 focus:bg-background transition-all"
-                />
-              </div>
-            </div>
+          <div>
+            <h2 className="text-[10px] font-bold uppercase tracking-[.3em] text-primary">Clinical Overview</h2>
+            <p className="text-sm text-muted-foreground mt-1">Live snapshot of your practice.</p>
           </div>
 
-          {loadingPatients ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[
+              {
+                label: 'Patients',
+                value: patients.length,
+                color: 'text-primary',
+                bg: 'bg-primary/10',
+                icon: Users,
+                link: null,
+              },
+              {
+                label: 'Consultations',
+                value: '→',
+                color: 'text-purple-400',
+                bg: 'bg-purple-500/10',
+                icon: Stethoscope,
+                link: '/doctor/consultations',
+              },
+              {
+                label: 'Prescriptions',
+                value: '→',
+                color: 'text-amber-400',
+                bg: 'bg-amber-500/10',
+                icon: FileText,
+                link: '/doctor/prescriptions',
+              },
+              {
+                label: 'Reports',
+                value: '→',
+                color: 'text-blue-400',
+                bg: 'bg-blue-500/10',
+                icon: Calendar,
+                link: '/doctor/reports',
+              },
+            ].map((stat, i) => (
+              <Card
+                key={i}
+                onClick={() => stat.link && navigate(stat.link)}
+                className={`glass-premium border-white/5 transition-all animate-slide-up ${stat.link ? 'cursor-pointer hover:border-primary/20 hover:scale-[1.02]' : ''}`}
+                style={{ animationDelay: `${300 + i * 80}ms` }}
+              >
+                <CardContent className="pt-5 pb-5">
+                  <div className={`h-10 w-10 rounded-2xl ${stat.bg} flex items-center justify-center mb-3`}>
+                    <stat.icon className={`h-5 w-5 ${stat.color}`} />
+                  </div>
+                  <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mt-1">{stat.label}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/* Recent Patients Quick-Access */}
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-[10px] font-bold uppercase tracking-[.3em] text-primary">Recent Patients</h3>
+              <Button variant="ghost" size="sm" className="text-xs text-muted-foreground" onClick={() => setShowAddPatient(true)}>
+                <Plus className="h-3 w-3 mr-1" /> Add Patient
+              </Button>
             </div>
-          ) : filteredPatients.length === 0 ? (
-            <Card className="glass-premium border border-dashed border-white/10">
-              <CardContent className="flex flex-col items-center justify-center py-12">
-                <Users className="h-12 w-12 text-muted-foreground/30 mb-4" />
-                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
-                  {searchTerm ? 'No patients found' : 'No patients yet'}
-                </p>
-                <p className="text-xs text-muted-foreground mt-2 text-center">
-                  {searchTerm
-                    ? 'Try adjusting your search'
-                    : 'Request access to patient records to get started'}
-                </p>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid gap-4">
-              {filteredPatients.map((relationship, index) => (
-                <Card
-                  key={relationship.id}
-                  onClick={() => navigate(`/doctor/patient/${relationship.patient_id}`)}
-                  className="glass-premium border-white/5 hover:border-primary/30 transition-all cursor-pointer group animate-slide-up"
-                  style={{ animationDelay: `${300 + index * 100}ms` }}
-                >
-                  <CardContent className="pt-6">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-3">
-                          <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
+
+            {loadingPatients ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : patients.length === 0 ? (
+              <Card className="glass-premium border border-dashed border-white/10">
+                <CardContent className="flex flex-col items-center justify-center py-12">
+                  <Users className="h-12 w-12 text-muted-foreground/30 mb-4" />
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">No patients yet</p>
+                  <p className="text-xs text-muted-foreground mt-2 text-center">Use the sidebar or the button above to add patients.</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid gap-3">
+                {patients.slice(0, 5).map((relationship, index) => (
+                  <Card
+                    key={relationship.id}
+                    onClick={() => navigate(`/doctor/patient/${relationship.patient_id}`)}
+                    className="glass-premium border-white/5 hover:border-primary/30 transition-all cursor-pointer group animate-slide-up"
+                    style={{ animationDelay: `${400 + index * 80}ms` }}
+                  >
+                    <CardContent className="pt-4 pb-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden text-[11px] font-bold text-primary">
                             {relationship.patient?.avatar_url ? (
                               <img src={relationship.patient.avatar_url} alt="" className="h-full w-full object-cover" />
                             ) : (
-                              <Users className="h-5 w-5 text-primary" />
+                              relationship.patient?.full_name?.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase() || '??'
                             )}
                           </div>
                           <div>
-                            <p className="font-semibold">{relationship.patient?.full_name || 'Anonymous Patient'}</p>
-                            <p className="text-[10px] text-muted-foreground uppercase tracking-widest">
-                              {relationship.patient_id.substring(0, 8)}...
+                            <p className="font-semibold text-sm">{relationship.patient?.full_name || 'Anonymous Patient'}</p>
+                            <p className="text-[10px] text-muted-foreground">
+                              Since {new Date(relationship.access_granted_at || '').toLocaleDateString('en-IN', { month: 'short', year: 'numeric' })}
                             </p>
                           </div>
                         </div>
-
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 pt-4 border-t border-white/5">
-                          <div>
-                            <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Access Since</p>
-                            <p className="text-xs font-semibold">
-                              {new Date(relationship.access_granted_at || '').toLocaleDateString()}
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Status</p>
-                            <Badge variant="outline" className="bg-green-500/10 text-green-700 border-green-500/30">
-                              Active
-                            </Badge>
-                          </div>
-                          <div>
-                            <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Note</p>
-                            <p className="text-xs font-semibold">{relationship.notes || '—'}</p>
-                          </div>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="bg-green-500/10 text-green-700 border-green-500/30 text-[9px]">
+                            Active
+                          </Badge>
+                          <Eye className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
                         </div>
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-10 w-10 rounded-xl hover:bg-primary/10 text-muted-foreground hover:text-primary group-hover:scale-110 transition-all"
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
       {/* Add Patient Dialog */}

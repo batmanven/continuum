@@ -537,6 +537,7 @@ const HealthMemory = () => {
                   I'm analyzing our chat in real-time. When we're done, click the analyze button to commit clinical items to your health timeline.
                 </p>
                 <Button
+                  id="tour-hm-summary-btn"
                   onClick={handleSyncAndSummarize}
                   disabled={messages.length < 2 || loadingSummary}
                   variant="hero"

@@ -3,6 +3,9 @@ import { healthService, HealthEntry } from '@/services/healthService';
 import { billService, BillRecord } from '@/services/billService';
 import { doctorSummaryService, DoctorSummary } from '@/services/doctorSummaryService';
 import { medicationService } from '@/services/medicationService';
+import { consultationRecordService, ConsultationRecord } from '@/services/consultationRecordService';
+import { medicalReportService, MedicalReport } from '@/services/medicalReportService';
+import { supabase } from '@/lib/supabase';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { useProfile } from '@/contexts/ProfileContext';
 
@@ -35,12 +38,18 @@ export interface DashboardStats {
   };
   recentActivity: Array<{
     id: string;
-    type: 'health' | 'bill' | 'summary';
+    type: 'health' | 'bill' | 'summary' | 'consultation' | 'prescription' | 'report';
     title: string;
     description: string;
     date: string;
     timestamp: string;
     metadata?: any;
+    doctorName?: string;
+  }>;
+  specialists: Array<{
+    id: string;
+    name: string;
+    specialty: string;
   }>;
 }
 
@@ -69,12 +78,16 @@ export const useDashboardData = () => {
         healthEntriesResult,
         billsResult,
         summariesResult,
-        medicationsResult
+        medicationsResult,
+        consultationsResult,
+        reportsResult
       ] = await Promise.allSettled([
         healthService.getUserHealthEntries(user.id, 50, 0, activeProfile.id),
         billService.getUserBills(user.id, 20, 0, activeProfile.id),
         doctorSummaryService.getUserDoctorSummaries(user.id, 10, 0, activeProfile.id),
-        medicationService.getMedications(user.id, activeProfile.id, activeProfile.linked_user_id)
+        medicationService.getUnifiedMedications(user.id, activeProfile.id, activeProfile.linked_user_id),
+        consultationRecordService.getPatientConsultations(user.id, activeProfile.id),
+        medicalReportService.getPatientReports(user.id, activeProfile.id)
       ]);
 
       
@@ -94,17 +107,50 @@ export const useDashboardData = () => {
         ? medicationsResult.value.data
         : [];
 
-      
+      const consultations = consultationsResult.status === 'fulfilled' && consultationsResult.value.data
+        ? consultationsResult.value.data
+        : [];
+
+      const reports = reportsResult.status === 'fulfilled' && reportsResult.value.data
+        ? reportsResult.value.data
+        : [];
+
+      // 0. Resolve Doctors for all clinical activity
+      const doctorIds = new Set<string>();
+      consultations.forEach(c => doctorIds.add(c.doctor_id));
+      reports.forEach(r => r.doctor_id && doctorIds.add(r.doctor_id));
+      medications.forEach(m => m.prescribing_doctor_id && doctorIds.add(m.prescribing_doctor_id));
+
+      const doctorMap: Record<string, string> = {};
+      if (doctorIds.size > 0) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, full_name, name')
+          .in('id', Array.from(doctorIds));
+        profiles?.forEach(p => doctorMap[p.id] = p.full_name || p.name || 'Doctor');
+      }
+
       const healthStats = processHealthStats(healthEntries);
-      
-      
       const financialStats = processFinancialStats(bills);
-      
-      
       const insightsStats = processInsightsStats(summaries);
       
-      
-      const recentActivity = processRecentActivity(healthEntries, bills, summaries);
+      const recentActivity = processRecentActivity(
+        healthEntries, 
+        bills, 
+        summaries, 
+        consultations, 
+        reports,
+        medications,
+        doctorMap
+      );
+
+      const specialists = Object.entries(doctorMap).map(([id, name]) => ({
+        id,
+        name,
+        specialty: consultations.find(c => c.doctor_id === id)?.consultation_type || 
+                   medications.find(m => m.prescribing_doctor_id === id)?.name || 
+                   'Specialist'
+      }));
 
       const continuumScore = calculateContinuumScore(healthStats, medications, summaries, healthEntries);
 
@@ -113,7 +159,8 @@ export const useDashboardData = () => {
         financialStats,
         insightsStats,
         continuumScore,
-        recentActivity
+        recentActivity,
+        specialists
       });
     } catch (error) {
       console.error('Error loading dashboard data:', error);
@@ -269,11 +316,15 @@ export const useDashboardData = () => {
   const processRecentActivity = (
     healthEntries: HealthEntry[], 
     bills: BillRecord[], 
-    summaries: DoctorSummary[]
+    summaries: DoctorSummary[],
+    consultations: ConsultationRecord[],
+    reports: MedicalReport[],
+    medications: MedicationRecord[],
+    doctorMap: Record<string, string>
   ) => {
     const activities: any[] = [];
 
-    
+    // Health Entries
     healthEntries.slice(0, 10).forEach(entry => {
       activities.push({
         id: entry.id!,
@@ -288,7 +339,7 @@ export const useDashboardData = () => {
       });
     });
 
-    
+    // Bills
     bills.slice(0, 10).forEach(bill => {
       const amount = bill.structured_data?.totalAmount || 0;
       activities.push({
@@ -302,7 +353,7 @@ export const useDashboardData = () => {
       });
     });
 
-    
+    // Summaries
     summaries.slice(0, 10).forEach(summary => {
       activities.push({
         id: summary.id!,
@@ -317,10 +368,51 @@ export const useDashboardData = () => {
       });
     });
 
-    
+    // Consultations
+    consultations.slice(0, 10).forEach(c => {
+      activities.push({
+        id: c.id!,
+        type: 'consultation' as const,
+        title: `Consultation (${c.consultation_type})`,
+        description: `${doctorMap[c.doctor_id] || 'Doctor'} - ${c.chief_complaint || 'General Visit'}`,
+        date: new Date(c.consultation_date).toLocaleDateString(),
+        timestamp: c.consultation_date,
+        doctorName: doctorMap[c.doctor_id],
+        metadata: c
+      });
+    });
+
+    // Medical Reports
+    reports.slice(0, 10).forEach(r => {
+      activities.push({
+        id: r.id!,
+        type: 'report' as const,
+        title: r.report_title,
+        description: `${r.doctor_id ? doctorMap[r.doctor_id] || 'Doctor' : 'Diagnostic Lab'} - ${r.report_type.replace('_', ' ')}`,
+        date: new Date(r.report_date || r.created_at!).toLocaleDateString(),
+        timestamp: r.report_date || r.created_at!,
+        doctorName: r.doctor_id ? doctorMap[r.doctor_id] : undefined,
+        metadata: r
+      });
+    });
+
+    // Doctor Prescriptions (from Medications)
+    medications.filter(m => m.source === 'doctor').slice(0, 5).forEach(m => {
+      activities.push({
+        id: m.id!,
+        type: 'prescription' as const,
+        title: 'New Prescription',
+        description: `${m.prescribing_doctor_name} - ${m.name} (${m.dosage})`,
+        date: new Date(m.created_at!).toLocaleDateString(),
+        timestamp: m.created_at!,
+        doctorName: m.prescribing_doctor_name,
+        metadata: m
+      });
+    });
+
     return activities
       .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-      .slice(0, 10);
+      .slice(0, 12);
   };
 
   const calculateMoodTrend = (moodEntries: HealthEntry[]): 'improving' | 'declining' | 'stable' => {

@@ -367,7 +367,7 @@ const DoctorSummaries = () => {
             Doctor Summaries
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Your AI-generated health summaries for medical appointments
+            Your clinical insights and AI-generated health summaries
           </p>
         </div>
         <div className="flex gap-2">

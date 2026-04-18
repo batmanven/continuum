@@ -20,31 +20,35 @@ import { chatService } from '@/services/chatService';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 
-interface ChatRequest {
-  id: string;
-  patient_id: string;
+interface ChatWithDoctor {
+  id?: string;
+  patient_id?: string;
+  doctor_id?: string;
   patient_name: string;
   patient_age?: number;
-  reason_for_consultation: string;
+  patient_gender?: string;
+  patient_blood_type?: string;
+  reason_for_consultation?: string;
   patient_request_message?: string;
-  status: 'active' | 'closed' | 'archived';
+  status?: 'active' | 'closed' | 'archived';
   doctor_accepted_at?: string;
-  created_at: string;
+  created_at?: string;
+  updated_at?: string;
   unread_count?: number;
 }
 
 export default function DoctorChatsPage() {
   const navigate = useNavigate();
-  const { doctorProfile: doctor, loading: profileLoading } = useDoctor();
+  const { doctorProfile: doctor, loadingProfile } = useDoctor();
   const { user, loading: authLoading } = useSupabaseAuth();
   const { toast } = useToast();
 
-  const [chats, setChats] = useState<ChatRequest[]>([]);
+  const [chats, setChats] = useState<ChatWithDoctor[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'pending' | 'active' | 'completed'>('pending');
 
   useEffect(() => {
-    if (authLoading || profileLoading) return;
+    if (authLoading || loadingProfile) return;
     if (!user || !doctor) return;
 
     loadChats();
@@ -69,14 +73,15 @@ export default function DoctorChatsPage() {
     return () => {
       subscription.unsubscribe();
     };
-  }, [user, doctor, navigate, authLoading, profileLoading]);
+  }, [user, doctor, navigate, authLoading, loadingProfile]);
 
   const loadChats = async () => {
     if (!user) return;
 
     try {
       setLoading(true);
-      const { data, error } = await chatService.getDoctorChats(user.id, 50, 0);
+      // Fixed: Passing undefined for status to get all chats according to the service signature
+      const { data, error } = await chatService.getDoctorChats(user.id);
 
       if (error) {
         toast({
@@ -91,16 +96,31 @@ export default function DoctorChatsPage() {
         // Enrich with patient names from profiles
         const chatsWithPatients = await Promise.all(
           data.map(async (chat) => {
+            if (!chat.patient_id) return { ...chat, patient_name: 'Patient' };
+            
             const { data: patientProfile } = await supabase
               .from('profiles')
-              .select('full_name, age')
+              .select('full_name, gender, date_of_birth, blood_type')
               .eq('id', chat.patient_id)
               .single();
+
+            let age: number | undefined;
+            if (patientProfile?.date_of_birth) {
+              const birthDate = new Date(patientProfile.date_of_birth);
+              const today = new Date();
+              age = today.getFullYear() - birthDate.getFullYear();
+              const m = today.getMonth() - birthDate.getMonth();
+              if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+                age--;
+              }
+            }
 
             return {
               ...chat,
               patient_name: patientProfile?.full_name || 'Patient',
-              patient_age: patientProfile?.age,
+              patient_age: age,
+              patient_gender: patientProfile?.gender,
+              patient_blood_type: patientProfile?.blood_type,
             };
           })
         );
@@ -250,53 +270,80 @@ export default function DoctorChatsPage() {
             ) : (
               <div className="space-y-4">
                 {pendingChats.map((chat) => (
-                  <Card key={chat.id} className="p-6 border-l-4 border-l-amber-500">
-                    <div className="flex items-start justify-between mb-4">
-                      <div>
-                        <div className="flex items-center gap-2 mb-1">
-                          <h3 className="text-lg font-semibold text-slate-900">
-                            {chat.patient_name}
-                          </h3>
-                          {chat.patient_age && (
-                            <span className="text-sm text-slate-600">
-                              {chat.patient_age} years
-                            </span>
+                  <Card key={chat.id} className="p-0 overflow-hidden border-slate-200 hover:border-amber-500/50 transition-all shadow-sm">
+                    <div className="flex h-full">
+                      <div className="w-1 bg-amber-500" />
+                      <div className="flex-1 p-6">
+                        <div className="flex items-start justify-between mb-6">
+                          <div className="flex gap-4">
+                            <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center text-slate-900 font-bold text-xl border border-slate-200 shrink-0 shadow-sm">
+                              {chat.patient_name.charAt(0)}
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-3 mb-1">
+                                <h3 className="text-xl font-bold text-slate-900 leading-none">
+                                  {chat.patient_name}
+                                </h3>
+                                {chat.patient_age && (
+                                  <Badge variant="outline" className="bg-blue-50/50 text-blue-700 border-blue-100 px-2 py-0 h-6 text-xs font-bold">
+                                    {chat.patient_age}y
+                                  </Badge>
+                                )}
+                                {chat.patient_gender && (
+                                  <Badge variant="outline" className="bg-slate-50 text-slate-700 border-slate-200 px-2 py-0 h-6 text-xs font-bold capitalize">
+                                    {chat.patient_gender}
+                                  </Badge>
+                                )}
+                                {chat.patient_blood_type && (
+                                  <Badge variant="outline" className="bg-red-50/50 text-red-600 border-red-100 px-2 py-0 h-6 text-xs font-bold uppercase">
+                                    {chat.patient_blood_type}
+                                  </Badge>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
+                                <Clock className="w-3.5 h-3.5" />
+                                Requested {formatDate(chat.created_at)}
+                              </div>
+                            </div>
+                          </div>
+                          <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100 px-3 py-1 text-[10px] uppercase font-bold tracking-wider">
+                            Pending Request
+                          </Badge>
+                        </div>
+
+                        <div className="grid md:grid-cols-2 gap-4 mb-6">
+                          <div className="bg-slate-50 border border-slate-100 p-4 rounded-2xl">
+                            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Chief Complaint</p>
+                            <p className="text-slate-900 font-semibold leading-relaxed">
+                              {chat.reason_for_consultation}
+                            </p>
+                          </div>
+                          {chat.patient_request_message && (
+                            <div className="bg-blue-50/30 border border-blue-50 p-4 rounded-2xl italic">
+                              <p className="text-[10px] font-bold uppercase tracking-widest text-blue-600 mb-2">Initial Message</p>
+                              <p className="text-sm text-slate-700">
+                                "{chat.patient_request_message}"
+                              </p>
+                            </div>
                           )}
                         </div>
-                        <p className="text-sm text-slate-600 mb-2">
-                          {chat.reason_for_consultation}
-                        </p>
-                        {chat.patient_request_message && (
-                          <p className="text-sm text-slate-700 bg-slate-50 p-2 rounded mt-2">
-                            <span className="font-medium">Message:</span>{' '}
-                            {chat.patient_request_message}
-                          </p>
-                        )}
+
+                        <div className="flex gap-3 pt-4 border-t border-slate-100">
+                          <Button 
+                            onClick={() => handleAcceptChat(chat.id)}
+                            className="flex-1 bg-green-600 hover:bg-green-700 shadow-md shadow-green-600/10 h-11"
+                          >
+                            Accept Consultation
+                          </Button>
+                          <Button 
+                            onClick={() => handleRejectChat(chat.id)}
+                            variant="outline" 
+                            className="flex-1 h-11 border-slate-200 hover:bg-slate-50"
+                          >
+                            Decline
+                          </Button>
+                        </div>
                       </div>
-                      <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100 whitespace-nowrap flex-shrink-0">
-                        <Clock className="w-3 h-3 mr-1" />
-                        Pending
-                      </Badge>
-                    </div>
-
-                    <div className="text-xs text-slate-500 mb-4">
-                      Requested {formatDate(chat.created_at)}
-                    </div>
-
-                    <div className="flex gap-3">
-                      <Button
-                        onClick={() => handleAcceptChat(chat.id)}
-                        className="flex-1 bg-green-600 hover:bg-green-700"
-                      >
-                        Accept Consultation
-                      </Button>
-                      <Button
-                        onClick={() => handleRejectChat(chat.id)}
-                        variant="outline"
-                        className="flex-1"
-                      >
-                        Decline
-                      </Button>
                     </div>
                   </Card>
                 ))}
@@ -326,7 +373,21 @@ export default function DoctorChatsPage() {
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-slate-900">{chat.patient_name}</h3>
+                        <div className="flex items-center gap-3 mb-1">
+                          <h3 className="font-semibold text-slate-900 leading-none">{chat.patient_name}</h3>
+                          <div className="flex items-center gap-1.5">
+                            {chat.patient_gender && (
+                              <span className="text-[10px] font-bold text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200 capitalize">
+                                {chat.patient_gender}
+                              </span>
+                            )}
+                            {chat.patient_age && (
+                              <span className="text-[10px] font-bold text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100">
+                                {chat.patient_age}y
+                              </span>
+                            )}
+                          </div>
+                        </div>
                         <p className="text-sm text-slate-600 truncate">
                           {chat.reason_for_consultation}
                         </p>
@@ -336,7 +397,7 @@ export default function DoctorChatsPage() {
                             Active
                           </Badge>
                           <span className="text-xs text-slate-500">
-                            {formatDate(chat.doctor_accepted_at || chat.created_at)}
+                            Accepted {formatDate(chat.doctor_accepted_at || chat.created_at)}
                           </span>
                         </div>
                       </div>
@@ -369,7 +430,21 @@ export default function DoctorChatsPage() {
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-slate-900">{chat.patient_name}</h3>
+                        <div className="flex items-center gap-3 mb-1">
+                          <h3 className="font-semibold text-slate-900 leading-none">{chat.patient_name}</h3>
+                          <div className="flex items-center gap-1.5">
+                            {chat.patient_gender && (
+                              <span className="text-[10px] font-bold text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200 capitalize">
+                                {chat.patient_gender}
+                              </span>
+                            )}
+                            {chat.patient_age && (
+                              <span className="text-[10px] font-bold text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100">
+                                {chat.patient_age}y
+                              </span>
+                            )}
+                          </div>
+                        </div>
                         <p className="text-sm text-slate-600 truncate">
                           {chat.reason_for_consultation}
                         </p>
@@ -378,6 +453,9 @@ export default function DoctorChatsPage() {
                             <CheckCircle className="w-3 h-3 mr-1" />
                             Completed
                           </Badge>
+                          <span className="text-xs text-slate-500">
+                            Finished {formatDate(chat.created_at)}
+                          </span>
                         </div>
                       </div>
                       <ChevronRight className="w-5 h-5 text-slate-400 flex-shrink-0" />

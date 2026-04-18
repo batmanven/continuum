@@ -1,10 +1,11 @@
 import { supabase } from '@/lib/supabase';
+import { consultationRecordService } from './consultationRecordService';
 
 export interface PatientDoctorChat {
   id?: string;
   patient_id: string;
   doctor_id: string;
-  status: 'active' | 'closed' | 'archived';
+  status: 'active' | 'closed' | 'archived' | 'cancelled';
   reason_for_consultation?: string;
   patient_request_message?: string;
   started_at?: string;
@@ -17,6 +18,11 @@ export interface PatientDoctorChat {
   follow_up_required: boolean;
   follow_up_date?: string;
   is_pinned: boolean;
+  metadata?: {
+    closed_by?: string;
+    patient_closure_reason?: string;
+    [key: string]: any;
+  };
   created_at?: string;
   updated_at?: string;
 }
@@ -177,10 +183,108 @@ export class ChatService {
         return { error: error.message };
       }
 
+      // Automatically create a formal consultation record
+      try {
+        const { data: chatData } = await this.getChatById(chatId);
+        if (chatData) {
+          await consultationRecordService.createConsultation(chatData.doctor_id, {
+            patient_id: chatData.patient_id,
+            consultation_date: new Date().toISOString(),
+            consultation_type: 'general',
+            chief_complaint: chatData.reason_for_consultation || 'Clinic Chat Consultation',
+            clinical_findings: doctorNotes,
+            treatment_plan: doctorSummary,
+            consultation_mode: 'chat',
+            is_completed: true,
+            follow_up_date: followUpDate,
+            follow_up_instructions: followUpRequired ? `Follow up required by ${followUpDate}` : undefined,
+            linked_consultation_id: chatData.id, // Repurposing as source link
+          });
+        }
+      } catch (syncError) {
+        console.error('Failed to auto-sync consultation record:', syncError);
+        // We don't return error here because the chat closure itself was successful
+      }
+
       return {};
     } catch (error) {
       console.error('Unexpected error closing chat:', error);
       return { error: 'Failed to close chat' };
+    }
+  }
+
+  async closeChatByPatient(
+    chatId: string,
+    reason: string
+  ): Promise<{ error?: string }> {
+    try {
+      const { error } = await supabase
+        .from('patient_doctor_chats')
+        .update({
+          status: 'closed',
+          consultation_complete_at: new Date().toISOString(),
+          metadata: {
+            closed_by: 'patient',
+            patient_closure_reason: reason
+          }
+        })
+        .eq('id', chatId);
+
+      if (error) {
+        console.error('Error closing chat by patient:', error);
+        return { error: error.message };
+      }
+
+      // Automatically create a formal consultation record for parity
+      try {
+        const { data: chatData } = await this.getChatById(chatId);
+        if (chatData) {
+          await consultationRecordService.createConsultation(chatData.doctor_id, {
+            patient_id: chatData.patient_id,
+            consultation_date: new Date().toISOString(),
+            consultation_type: 'general',
+            chief_complaint: chatData.reason_for_consultation || 'Consultation closed by patient',
+            clinical_findings: `Patient closed consultation session with reason: ${reason}`,
+            treatment_plan: 'Pending specialist review of archived session',
+            consultation_mode: 'chat',
+            is_completed: true,
+            linked_consultation_id: chatData.id,
+          });
+        }
+      } catch (syncError) {
+        console.error('Failed to auto-sync patient-closed consultation:', syncError);
+      }
+
+      return {};
+    } catch (error) {
+      console.error('Unexpected error closing chat:', error);
+      return { error: 'Failed to close chat' };
+    }
+  }
+
+  async cancelChat(chatId: string): Promise<{ error?: string }> {
+    try {
+      const { error } = await supabase
+        .from('patient_doctor_chats')
+        .update({
+          status: 'cancelled',
+          ended_at: new Date().toISOString(),
+          metadata: {
+            cancelled_at: new Date().toISOString(),
+            cancelled_by: 'patient'
+          }
+        })
+        .eq('id', chatId);
+
+      if (error) {
+        console.error('Error cancelling chat:', error);
+        return { error: error.message };
+      }
+
+      return {};
+    } catch (error) {
+      console.error('Unexpected error cancelling chat:', error);
+      return { error: 'Failed to cancel chat' };
     }
   }
 

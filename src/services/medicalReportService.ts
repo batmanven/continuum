@@ -100,6 +100,14 @@ export class MedicalReportService {
     }
   }
 
+  async getUserReports(
+    patientId: string,
+    limit: number = 50,
+    offset: number = 0
+  ): Promise<{ data?: MedicalReport[]; error?: string }> {
+    return this.getPatientReports(patientId, null, limit, offset);
+  }
+
   async getDoctorPatientReports(
     doctorId: string,
     patientId: string,
@@ -111,6 +119,7 @@ export class MedicalReportService {
         .from('medical_reports')
         .select('*')
         .eq('patient_id', patientId)
+        .eq('doctor_id', doctorId)
         .order('report_date', { ascending: false })
         .range(offset, offset + limit - 1);
 

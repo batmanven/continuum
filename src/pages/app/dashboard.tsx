@@ -1,4 +1,4 @@
-import { Activity, Plus, FileUp, Brain, DollarSign, TrendingUp, TrendingDown, Minus, FileText, Heart, Shield, Zap, Info, ArrowRight, X, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { Activity, Plus, FileUp, Brain, DollarSign, TrendingUp, TrendingDown, Minus, FileText, Heart, Shield, Zap, Info, ArrowRight, X, AlertTriangle, CheckCircle2, Stethoscope, Pill, ClipboardList } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -152,15 +152,38 @@ const Dashboard = () => {
           </div>
 
           {/* SATELLITE 1: Health Records (Left-Top Orbit) */}
-          <div className="absolute top-[10%] left-[5%] md:left-[15%] group animate-slide-up" style={{ animationDelay: '200ms' }}>
-            <Link to="/app/health-memory" className="block">
-              <div className="floating-blob w-32 h-32 md:w-40 md:h-40 flex flex-col items-center justify-center gap-2 text-center p-6 border-white/10 hover:border-primary/30 shadow-2xl transition-all hover:scale-110 active:scale-95">
-                <Heart className="h-6 w-6 text-primary mb-2" />
-                <div className="text-2xl font-display font-bold">{data.healthStats.totalEntries}</div>
-                <div className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest leading-none">Records</div>
-                <Badge className="text-[8px] bg-primary/20 text-primary border-none mt-1">Active</Badge>
-              </div>
-            </Link>
+          <div className="absolute top-[5%] left-[5%] md:left-[10%] group animate-slide-up" style={{ animationDelay: '200ms' }}>
+             <Link to="/app/health-memory" className="block">
+               <div className="floating-blob w-32 h-32 md:w-36 md:h-36 flex flex-col items-center justify-center gap-2 text-center p-6 border-white/10 hover:border-primary/30 shadow-2xl transition-all hover:scale-110 active:scale-95">
+                  <Heart className="h-6 w-6 text-primary mb-2" />
+                  <div className="text-2xl font-display font-bold">{data.healthStats.totalEntries}</div>
+                  <div className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest leading-none">Records</div>
+               </div>
+             </Link>
+          </div>
+
+          {/* SATELLITE 4: My Specialists (Left-Bottom Orbit) */}
+          <div className="absolute bottom-[20%] left-[5%] md:left-[10%] group animate-slide-up" style={{ animationDelay: '500ms' }}>
+             <Link to="/app/my-doctors" className="block">
+               <div className="glass-premium rounded-3xl p-5 flex flex-col items-center justify-center gap-3 border-white/5 hover:border-emerald-500/30 shadow-2xl transition-all hover:scale-110 active:scale-95 text-center min-w-[140px]">
+                  <div className="h-10 w-10 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-500">
+                    <Stethoscope className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <div className="text-xl font-display font-bold">{data.specialists.length}</div>
+                    <div className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest text-center">Specialists</div>
+                  </div>
+                  {data.specialists.length > 0 && (
+                    <div className="flex -space-x-2 mt-1">
+                      {data.specialists.slice(0, 3).map((s, i) => (
+                        <div key={i} className="h-6 w-6 rounded-lg bg-emerald-500 border border-background flex items-center justify-center text-[10px] font-bold text-white shadow-lg">
+                          {s.name.charAt(0)}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+               </div>
+             </Link>
           </div>
 
           {/* SATELLITE 2: Medical Spending (Right-Top Orbit) */}
@@ -222,13 +245,20 @@ const Dashboard = () => {
                     </div>
 
                     {/* Timeline Node */}
-                    <div className={`h-12 w-12 rounded-2xl flex items-center justify-center z-10 glass-premium transition-all group-hover:scale-125 group-hover:shadow-2xl ${activity.type === 'health' ? 'border-primary/40 shadow-primary/5 hover:border-primary' :
-                        activity.type === 'bill' ? 'border-accent/40 shadow-accent/5 hover:border-accent' :
-                          'border-purple-400/40 shadow-purple-400/5 hover:border-purple-400'
-                      }`}>
+                    <div className={`h-12 w-12 rounded-2xl flex items-center justify-center z-10 glass-premium transition-all group-hover:scale-125 group-hover:shadow-2xl ${
+                      activity.type === 'health' ? 'border-primary/40 shadow-primary/5 hover:border-primary' :
+                      activity.type === 'bill' ? 'border-accent/40 shadow-accent/5 hover:border-accent' :
+                      activity.type === 'consultation' ? 'border-emerald-500/40 shadow-emerald-500/5 hover:border-emerald-500' :
+                      activity.type === 'prescription' ? 'border-blue-500/40 shadow-blue-500/5 hover:border-blue-500' :
+                      activity.type === 'report' ? 'border-amber-500/40 shadow-amber-500/5 hover:border-amber-500' :
+                      'border-purple-400/40 shadow-purple-400/5 hover:border-purple-400'
+                    }`}>
                       {activity.type === 'health' ? <Heart className="h-5 w-5 text-primary" /> :
-                        activity.type === 'bill' ? <FileText className="h-5 w-5 text-accent" /> :
-                          <Brain className="h-5 w-5 text-purple-400" />}
+                       activity.type === 'bill' ? <FileText className="h-5 w-5 text-accent" /> :
+                       activity.type === 'consultation' ? <Stethoscope className="h-5 w-5 text-emerald-500" /> :
+                       activity.type === 'prescription' ? <Pill className="h-5 w-5 text-blue-500" /> :
+                       activity.type === 'report' ? <ClipboardList className="h-5 w-5 text-amber-500" /> :
+                       <Brain className="h-5 w-5 text-purple-400" />}
                     </div>
 
                     <div className="mt-6 text-center">
@@ -237,10 +267,14 @@ const Dashboard = () => {
                     </div>
 
                     {/* Connecting Bud */}
-                    <div className={`absolute top-1/2 -translate-y-1/2 h-2 w-2 rounded-full z-0 group-hover:scale-150 transition-all ${activity.type === 'health' ? 'bg-primary' :
-                        activity.type === 'bill' ? 'bg-accent' :
-                          'bg-purple-400'
-                      }`} />
+                    <div className={`absolute top-1/2 -translate-y-1/2 h-2 w-2 rounded-full z-0 group-hover:scale-150 transition-all ${
+                      activity.type === 'health' ? 'bg-primary' :
+                      activity.type === 'bill' ? 'bg-accent' :
+                      activity.type === 'consultation' ? 'bg-emerald-500' :
+                      activity.type === 'prescription' ? 'bg-blue-500' :
+                      activity.type === 'report' ? 'bg-amber-500' :
+                      'bg-purple-400'
+                    }`} />
                   </div>
                 ))
               )}

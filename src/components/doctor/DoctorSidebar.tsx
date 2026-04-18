@@ -6,8 +6,9 @@ import {
   Heart,
   User,
   Users,
-  Clock,
-  CheckCircle,
+  Stethoscope,
+  Pill,
+  FileText,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import {
@@ -15,17 +16,23 @@ import {
   SidebarContent,
   SidebarGroup,
   SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarHeader,
-  SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
 
-const items = [
+const topItems = [
   { title: "Dashboard", url: "/doctor", icon: LayoutDashboard },
-  { title: "Consultations", url: "/doctor/chats", icon: MessageSquare },
+  { title: "Patients", url: "/doctor/patients", icon: Users },
+];
+
+const clinicalLogItems = [
+  { title: "Consultations", url: "/doctor/consultations", icon: Stethoscope },
+  { title: "Prescriptions", url: "/doctor/prescriptions", icon: Pill },
+  { title: "Medical Reports", url: "/doctor/reports", icon: FileText },
 ];
 
 const bottomItems = [
@@ -38,56 +45,49 @@ export function DoctorSidebar() {
   const collapsed = state === "collapsed";
   const location = useLocation();
 
-  const renderNavItems = (navItems: typeof items) => (
-    <SidebarMenu className="gap-1.5">
-      {navItems.map((item) => {
-        const isActive = location.pathname === item.url || (item.url === "/doctor" && location.pathname === "/doctor/");
-        return (
-          <SidebarMenuItem key={item.title}>
-            <SidebarMenuButton 
-              asChild 
-              className={`h-11 rounded-xl transition-all duration-300 ${collapsed ? "justify-center p-0" : "px-2"}`}
-              tooltip={collapsed ? item.title : undefined}
-            >
-              <NavLink
-                to={item.url}
-                className={`flex items-center w-full transition-all group py-1 ${
-                  collapsed ? "justify-center px-0" : "gap-3 px-2"
-                } ${
-                  isActive 
-                    ? "bg-muted border-border/10 shadow-inner" 
-                    : "hover:bg-muted/50"
-                }`}
-              >
-                <div className={`shrink-0 h-8 w-8 rounded-xl flex items-center justify-center transition-all duration-300 ${
-                  isActive 
-                    ? "bg-primary text-primary-foreground shadow-lg shadow-primary/40 scale-105" 
-                    : "bg-muted border border-border/10 text-muted-foreground group-hover:text-foreground group-hover:bg-muted"
-                }`}>
-                  <item.icon className="h-4 w-4 shrink-0 transition-transform group-hover:scale-110" />
-                </div>
-                {!collapsed && (
-                  <span className={`text-[11px] font-bold uppercase tracking-widest transition-colors ${
-                    isActive ? "text-foreground" : "text-muted-foreground group-hover:text-foreground"
-                  }`}>
-                    {item.title}
-                  </span>
-                )}
-                {isActive && !collapsed && (
-                  <div className="ml-auto h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_10px_rgba(var(--primary),0.8)]" />
-                )}
-              </NavLink>
-            </SidebarMenuButton>
+  const isActive = (url: string) =>
+    url === "/doctor"
+      ? location.pathname === "/doctor" || location.pathname === "/doctor/"
+      : location.pathname.startsWith(url);
 
-          </SidebarMenuItem>
-        );
-      })}
-    </SidebarMenu>
-  );
+  const renderNavItem = (item: { title: string; url: string; icon: any }, isSmall = false) => {
+    const active = isActive(item.url);
+    return (
+      <SidebarMenuItem key={item.title}>
+        <SidebarMenuButton
+          asChild
+          id={`tour-nav-${item.title.toLowerCase().replace(/\s+/g, '-')}`}
+          className={`h-11 rounded-xl transition-all duration-300 ${collapsed ? "justify-center p-0" : "px-2"}`}
+          tooltip={collapsed ? item.title : undefined}
+        >
+          <NavLink
+            to={item.url}
+            className={`flex items-center w-full transition-all group py-1 ${collapsed ? "justify-center px-0" : "gap-3 px-2"
+              } ${active ? "bg-muted border-border/10 shadow-inner" : "hover:bg-muted/50"}`}
+          >
+            <div className={`shrink-0 ${isSmall ? 'h-7 w-7' : 'h-8 w-8'} rounded-xl flex items-center justify-center transition-all duration-300 ${active
+              ? "bg-primary text-primary-foreground shadow-lg shadow-primary/40 scale-105"
+              : "bg-muted border border-border/10 text-muted-foreground group-hover:text-foreground"
+              }`}>
+              <item.icon className={`${isSmall ? 'h-3.5 w-3.5' : 'h-4 w-4'} shrink-0 transition-transform group-hover:scale-110`} />
+            </div>
+            {!collapsed && (
+              <span className={`text-[11px] font-bold uppercase tracking-widest transition-colors ${active ? "text-foreground" : "text-muted-foreground group-hover:text-foreground"}`}>
+                {item.title}
+              </span>
+            )}
+            {active && !collapsed && (
+              <div className="ml-auto h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_10px_rgba(var(--primary),0.8)]" />
+            )}
+          </NavLink>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    );
+  };
 
   return (
-    <Sidebar 
-      collapsible="icon" 
+    <Sidebar
+      collapsible="icon"
       className="border-r border-border/10 shadow-2xl transition-all duration-500 ease-in-out bg-sidebar"
       onMouseEnter={() => setOpen(true)}
       onMouseLeave={() => setOpen(false)}
@@ -107,17 +107,40 @@ export function DoctorSidebar() {
           </div>
         </div>
       </SidebarHeader>
-      
-      <SidebarContent className="flex flex-col justify-between h-full py-4 transition-all duration-500 px-2">
-        <SidebarGroup className="p-0">
-          <SidebarGroupContent>
-            {renderNavItems(items)}
-          </SidebarGroupContent>
-        </SidebarGroup>
 
+      <SidebarContent className="flex flex-col justify-between h-full py-4 transition-all duration-500 px-2 overflow-hidden">
+        <div className="flex flex-col gap-4">
+          {/* Main Navigation */}
+          <SidebarGroup className="p-0">
+            <SidebarGroupContent>
+              <SidebarMenu className="gap-1.5">
+                {topItems.map((item) => renderNavItem(item))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+
+          {/* Clinical Logs Section */}
+          <SidebarGroup className="p-0">
+            {!collapsed && (
+              <SidebarGroupLabel className="px-3 py-2 text-[9px] font-bold uppercase tracking-[0.3em] text-muted-foreground/60 flex items-center gap-2">
+                <FileText className="h-3 w-3" />
+                Clinical Logs
+              </SidebarGroupLabel>
+            )}
+            <SidebarGroupContent>
+              <SidebarMenu className="gap-1.5">
+                {clinicalLogItems.map((item) => renderNavItem(item, true))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        </div>
+
+        {/* Bottom Navigation */}
         <SidebarGroup className="mt-auto pb-4 p-0">
           <SidebarGroupContent>
-            {renderNavItems(bottomItems)}
+            <SidebarMenu className="gap-1.5">
+              {bottomItems.map((item) => renderNavItem(item))}
+            </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>

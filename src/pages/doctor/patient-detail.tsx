@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { supabase } from '@/lib/supabase';
 import { useDoctor } from '@/contexts/DoctorContext';
@@ -10,6 +10,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
+import { doctorPatientRelationshipService } from '@/services/doctorPatientRelationshipService';
+import { chatService } from '@/services/chatService';
 import {
   Card,
   CardContent,
@@ -23,7 +25,22 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import {
-  Activity,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
   FileText,
   Plus,
   Loader2,
@@ -35,6 +52,11 @@ import {
   Stethoscope,
   ArrowLeft,
   Zap,
+  ArrowDownRight,
+  Activity,
+  MoreVertical,
+  UserX,
+  MessageSquare,
 } from 'lucide-react';
 import {
   Tabs,
@@ -48,14 +70,19 @@ import { toast } from 'sonner';
 
 const DoctorPatientDetail = () => {
   const { patientId } = useParams<{ patientId: string }>();
+  const navigate = useNavigate();
   const { user } = useSupabaseAuth();
   const { doctorProfile } = useDoctor();
   const [loading, setLoading] = useState(true);
+  const [requestedConsultation, setRequestedConsultation] = useState<any>(null);
   const [healthEntries, setHealthEntries] = useState<any[]>([]);
   const [consultations, setConsultations] = useState<ConsultationRecord[]>([]);
   const [reports, setReports] = useState<MedicalReport[]>([]);
   const [prescriptions, setPrescriptions] = useState<any[]>([]);
   const [clinicalSummary, setClinicalSummary] = useState<any>(null);
+  const [relationshipId, setRelationshipId] = useState<string | null>(null);
+  const [revoking, setRevoking] = useState(false);
+  const [showRevokeConfirm, setShowRevokeConfirm] = useState(false);
   const [generatingSummary, setGeneratingSummary] = useState(false);
   const [showNewConsultation, setShowNewConsultation] = useState(false);
   const [showNewPrescription, setShowNewPrescription] = useState(false);
@@ -66,6 +93,7 @@ const DoctorPatientDetail = () => {
   const [reportAnalysis, setReportAnalysis] = useState<Record<string, any>>({});
   const [isScanning, setIsScanning] = useState(false);
   const [scannedResult, setScannedResult] = useState<any>(null);
+  const [editingPrescriptionId, setEditingPrescriptionId] = useState<string | null>(null);
 
   const [consultationForm, setConsultationForm] = useState({
     consultation_type: 'general' as const,
@@ -75,7 +103,10 @@ const DoctorPatientDetail = () => {
     treatment_plan: '',
     follow_up_date: '',
     notes: '',
+    linked_consultation_id: '' as string | null,
   });
+  const [isScheduling, setIsScheduling] = useState(false);
+  const [scheduledDate, setScheduledDate] = useState('');
 
   const [stagedMedications, setStagedMedications] = useState<any[]>([]);
   const [currentMedication, setCurrentMedication] = useState({
@@ -132,6 +163,15 @@ const DoctorPatientDetail = () => {
           patientId || ''
         );
         if (prescriptionData) setPrescriptions(prescriptionData);
+        
+        // Load any pending consultation requests (chats not yet accepted)
+        const { data: pendingChats } = await chatService.getDoctorChats(user.id);
+        const patientRequest = pendingChats?.find(c => 
+          c.patient_id === patientId && 
+          !c.doctor_accepted_at && 
+          c.status === 'active'
+        );
+        if (patientRequest) setRequestedConsultation(patientRequest);
 
         // Load specific patient profile
         const { data: profile } = await supabase
@@ -140,12 +180,37 @@ const DoctorPatientDetail = () => {
           .eq('id', patientId)
           .single();
         if (profile) setPatientProfile(profile);
+
+        // Fetch relationship ID for revoking access
+        const { data: relationships } = await doctorPatientRelationshipService.getDoctorPatients(user.id);
+        const rel = relationships?.find(r => r.patient_id === patientId);
+        if (rel?.id) setRelationshipId(rel.id);
       }
     } catch (err) {
       console.error('Error loading patient data:', err);
       toast.error('Failed to load patient data');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleRevokeAccess = async () => {
+    if (!relationshipId) return;
+
+    setRevoking(true);
+    try {
+      const { error } = await doctorPatientRelationshipService.revokeAccess(relationshipId);
+      if (error) {
+        toast.error(error);
+      } else {
+        toast.success('Patient access revoked');
+        navigate('/doctor/patients');
+      }
+    } catch (err) {
+      toast.error('Failed to revoke access');
+    } finally {
+      setShowRevokeConfirm(false);
+      setRevoking(false);
     }
   };
 
@@ -219,6 +284,33 @@ const DoctorPatientDetail = () => {
     setStagedMedications(prev => prev.filter((_, i) => i !== index));
   };
 
+  const handleEditPrescription = (presc: any) => {
+    setEditingPrescriptionId(presc.id);
+    setStagedMedications([{
+      medication_name: presc.medication_name,
+      dosage: presc.dosage,
+      frequency: presc.frequency,
+      duration: presc.duration,
+      instructions: presc.instructions || '',
+    }]);
+    setShowMedicationForm(false);
+    setShowNewPrescription(true);
+  };
+
+  const handleRevokePrescription = async (prescId: string) => {
+    try {
+      const { error } = await prescriptionService.revokePrescription(prescId);
+      if (error) {
+        toast.error('Failed to revoke prescription');
+      } else {
+        toast.success('Prescription revoked');
+        await loadPatientData();
+      }
+    } catch (err) {
+      toast.error('Error revoking prescription');
+    }
+  };
+
   const handleSavePrescription = async () => {
     if (!user || !patientId) return;
     
@@ -240,29 +332,43 @@ const DoctorPatientDetail = () => {
 
     setSavingPrescription(true);
     try {
-      const prescriptionsData = finalMedications.map(p => ({
-        patient_id: patientId,
-        medication_name: p.medication_name,
-        dosage: p.dosage,
-        frequency: p.frequency,
-        duration: p.duration,
-        instructions: p.instructions,
-        is_active: true,
-        patient_acknowledged: false,
-        refills_allowed: 0,
-        refills_remaining: 0,
-        prescribed_date: new Date().toISOString(),
-      }));
-
-      const { error } = await prescriptionService.createPrescriptions(user.id, prescriptionsData);
+      let error;
+      if (editingPrescriptionId) {
+        const p = finalMedications[0];
+        const result = await prescriptionService.updatePrescription(editingPrescriptionId, {
+          medication_name: p.medication_name,
+          dosage: p.dosage,
+          frequency: p.frequency,
+          duration: p.duration,
+          instructions: p.instructions,
+        });
+        error = result.error;
+      } else {
+        const prescriptionsData = finalMedications.map(p => ({
+          patient_id: patientId,
+          medication_name: p.medication_name,
+          dosage: p.dosage,
+          frequency: p.frequency,
+          duration: p.duration,
+          instructions: p.instructions,
+          is_active: true,
+          patient_acknowledged: false,
+          refills_allowed: 0,
+          refills_remaining: 0,
+          prescribed_date: new Date().toISOString(),
+        }));
+        const result = await prescriptionService.createPrescriptions(user.id, prescriptionsData);
+        error = result.error;
+      }
 
       if (error) {
-        toast.error('Failed to save prescriptions');
+        toast.error(editingPrescriptionId ? 'Failed to update prescription' : 'Failed to save prescriptions');
         return;
       }
 
-      toast.success(`${prescriptionsData.length} medications issued`);
+      toast.success(editingPrescriptionId ? 'Prescription updated' : `${finalMedications.length} medications issued`);
       setShowNewPrescription(false);
+      setEditingPrescriptionId(null);
       setStagedMedications([]);
       setCurrentMedication({
         medication_name: '',
@@ -341,24 +447,34 @@ const DoctorPatientDetail = () => {
   const handleSaveConsultation = async () => {
     if (!user || !patientId) return;
 
-    if (!consultationForm.chief_complaint || !consultationForm.diagnosis) {
+    // Scheduled-only: don't require diagnosis
+    if (!isScheduling && (!consultationForm.chief_complaint || !consultationForm.diagnosis)) {
       toast.error('Please fill in chief complaint and diagnosis');
+      return;
+    }
+    if (isScheduling && !scheduledDate) {
+      toast.error('Please select a date for the scheduled consultation');
       return;
     }
 
     setSavingConsultation(true);
     try {
+      const consultationDate = isScheduling
+        ? new Date(scheduledDate).toISOString()
+        : new Date().toISOString();
+
       const { error } = await consultationRecordService.createConsultation(user.id, {
         patient_id: patientId,
-        consultation_type: 'general',
-        consultation_date: new Date().toISOString(),
-        chief_complaint: consultationForm.chief_complaint,
+        consultation_type: consultationForm.consultation_type,
+        consultation_date: consultationDate,
+        chief_complaint: consultationForm.chief_complaint || 'Scheduled consultation',
         clinical_findings: consultationForm.clinical_findings,
         diagnosis: consultationForm.diagnosis,
         treatment_plan: consultationForm.treatment_plan,
         follow_up_instructions: consultationForm.notes,
         consultation_mode: 'in_person',
-        is_completed: true,
+        is_completed: !isScheduling,
+        linked_consultation_id: consultationForm.linked_consultation_id || null,
       });
 
       if (error) {
@@ -366,8 +482,10 @@ const DoctorPatientDetail = () => {
         return;
       }
 
-      toast.success('Consultation saved successfully');
+      toast.success(isScheduling ? 'Consultation scheduled successfully' : 'Consultation saved successfully');
       setShowNewConsultation(false);
+      setIsScheduling(false);
+      setScheduledDate('');
       setConsultationForm({
         consultation_type: 'general',
         chief_complaint: '',
@@ -376,6 +494,7 @@ const DoctorPatientDetail = () => {
         treatment_plan: '',
         follow_up_date: '',
         notes: '',
+        linked_consultation_id: null,
       });
       await loadPatientData();
     } catch (err) {
@@ -385,6 +504,7 @@ const DoctorPatientDetail = () => {
       setSavingConsultation(false);
     }
   };
+
 
   const handleAnalyzeReport = async (report: MedicalReport) => {
     setAnalyzingReportId(report.id);
@@ -463,8 +583,11 @@ const DoctorPatientDetail = () => {
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 py-8">
           <div className="space-y-1">
-            <button className="flex items-center gap-2 text-primary hover:text-primary/80 mb-4 transition-colors">
-              <ArrowLeft className="h-4 w-4" />
+            <button 
+              onClick={() => navigate('/doctor/patients')}
+              className="flex items-center gap-2 text-primary hover:text-primary/80 mb-4 transition-colors group"
+            >
+              <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
               <span className="text-sm font-semibold">Back to Patients</span>
             </button>
             <div className="flex items-center gap-2 text-[10px] font-bold tracking-[0.3em] text-primary uppercase mb-2">
@@ -475,17 +598,49 @@ const DoctorPatientDetail = () => {
               Patient <span className="text-primary">Detail</span>
             </h1>
           </div>
-          <Button 
-            className="rounded-full px-6 bg-primary hover:bg-primary/90"
-            onClick={() => setShowNewConsultation(true)}
-          >
-            <Plus className="h-4 w-4 mr-2" /> Write Consultation
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button 
+              variant="outline"
+              className="rounded-full px-5 border-amber-500/30 text-amber-500 hover:bg-amber-500/10 gap-2"
+              onClick={() => {
+                setIsScheduling(true);
+                setShowNewConsultation(true);
+              }}
+            >
+              <Calendar className="h-4 w-4" /> Schedule Follow-up
+            </Button>
+            <Button 
+              id="tour-write-consultation-btn"
+              className="rounded-full px-6 bg-primary hover:bg-primary/90 gap-2 shadow-lg shadow-primary/20"
+              onClick={() => {
+                setIsScheduling(false);
+                setShowNewConsultation(true);
+              }}
+            >
+              <Plus className="h-4 w-4" /> Write Consultation
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full hover:bg-muted ml-2">
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56 glass-premium border-white/10">
+                <DropdownMenuItem 
+                  className="text-red-500 focus:text-red-500 focus:bg-red-500/10"
+                  onClick={() => setShowRevokeConfirm(true)}
+                  disabled={revoking || !relationshipId}
+                >
+                  <UserX className="h-4 w-4 mr-2" /> Revoke Access (Delete)
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
 
         {/* Patient Overview */}
         <div className="grid lg:grid-cols-4 gap-6 mb-8">
-          <Card className="glass-premium border-white/5 lg:col-span-2 relative overflow-hidden group">
+          <Card id="tour-patient-identity" className="glass-premium border-white/5 lg:col-span-2 relative overflow-hidden group">
             <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
               <Activity className="h-12 w-12" />
             </div>
@@ -562,6 +717,7 @@ const DoctorPatientDetail = () => {
                   <CardHeader className="flex flex-row items-center justify-between">
                     <CardTitle className="text-lg">Clinical Synthesis</CardTitle>
                     <Button 
+                      id="tour-generate-summary-btn"
                       variant="outline" 
                       size="sm" 
                       onClick={handleGenerateSummary}
@@ -659,7 +815,7 @@ const DoctorPatientDetail = () => {
             </div>
           </TabsContent>
 
-          <TabsContent value="timeline">
+          <TabsContent value="timeline" id="tour-patient-timeline">
             <div className="space-y-3">
               {healthEntries.length === 0 ? (
                 <div className="text-center py-20 bg-muted/10 rounded-3xl border border-dashed border-white/5">
@@ -704,7 +860,39 @@ const DoctorPatientDetail = () => {
 
           <TabsContent value="consultations">
             <div className="space-y-4">
-              {consultations.length === 0 ? (
+              {/* Requested / Pending Consultation Alert */}
+              {requestedConsultation && (
+                <Card className="border-amber-500/30 bg-amber-500/5 overflow-hidden">
+                  <div className="flex">
+                    <div className="w-1 bg-amber-500" />
+                    <CardContent className="py-4 flex flex-col md:flex-row md:items-center justify-between gap-4 w-full">
+                      <div className="flex items-start gap-3">
+                        <div className="h-10 w-10 rounded-xl bg-amber-500/10 flex items-center justify-center shrink-0">
+                          <MessageSquare className="h-5 w-5 text-amber-500" />
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-amber-600 mb-0.5">Requested Consultation</p>
+                          <h4 className="font-bold text-sm text-foreground">
+                            "{requestedConsultation.reason_for_consultation}"
+                          </h4>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            Received {new Date(requestedConsultation.created_at).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                          </p>
+                        </div>
+                      </div>
+                      <Button 
+                        size="sm" 
+                        className="bg-amber-500 hover:bg-amber-600 shadow-lg shadow-amber-500/20 text-xs font-bold px-4 rounded-full"
+                        onClick={() => navigate('/doctor/chats')}
+                      >
+                        Manage Request
+                      </Button>
+                    </CardContent>
+                  </div>
+                </Card>
+              )}
+
+              {consultations.length === 0 && !requestedConsultation ? (
                 <div className="text-center py-20 bg-muted/10 rounded-3xl border border-dashed border-white/5">
                   <Stethoscope className="h-12 w-12 mx-auto mb-4 text-muted-foreground/20" />
                   <p className="text-sm text-muted-foreground">No past consultations recorded.</p>
@@ -713,9 +901,27 @@ const DoctorPatientDetail = () => {
                 consultations.map((c) => (
                   <Card key={c.id} className="glass-premium border-white/5">
                     <CardContent className="pt-6 space-y-4">
-                      <div className="flex justify-between">
-                        <h4 className="font-bold text-lg">{c.chief_complaint}</h4>
-                        <span className="text-[10px] text-muted-foreground uppercase">{new Date(c.consultation_date).toLocaleDateString()}</span>
+                      <div className="flex justify-between items-start">
+                        <div className="space-y-1">
+                          <h4 className="font-bold text-lg">{c.chief_complaint}</h4>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] text-muted-foreground uppercase">{new Date(c.consultation_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                            {!c.is_completed && (
+                              <Badge variant="outline" className="bg-amber-500/10 text-amber-500 border-amber-500/20 text-[9px] uppercase tracking-tighter">
+                                Scheduled
+                              </Badge>
+                            )}
+                            {c.linked_consultation_id && (
+                              <div className="flex items-center gap-1 text-[10px] text-purple-400 font-semibold px-2 py-0.5 bg-purple-500/5 rounded-full border border-purple-500/10">
+                                <ArrowDownRight className="h-3 w-3" />
+                                Continuation
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        <Badge variant="outline" className="text-[10px] uppercase font-bold text-primary border-primary/20">
+                          {c.consultation_type}
+                        </Badge>
                       </div>
                       <div className="grid md:grid-cols-2 gap-6">
                         <div>
@@ -793,7 +999,12 @@ const DoctorPatientDetail = () => {
           <TabsContent value="prescriptions">
             <div className="space-y-4">
               <div className="flex justify-end">
-                <Button onClick={() => setShowNewPrescription(true)} size="sm">
+                <Button onClick={() => {
+                  setEditingPrescriptionId(null);
+                  setStagedMedications([]);
+                  setShowMedicationForm(true);
+                  setShowNewPrescription(true);
+                }} size="sm">
                   <Pill className="h-4 w-4 mr-2" /> Issue Prescription
                 </Button>
               </div>
@@ -817,7 +1028,31 @@ const DoctorPatientDetail = () => {
                             <p className="text-xs text-muted-foreground mt-1">Duration: {p.duration}</p>
                           </div>
                         </div>
-                        <Badge className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20">Active</Badge>
+                        <div className="flex flex-col items-end gap-2">
+                          <Badge className={`${p.is_active ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : 'bg-red-500/10 text-red-500 border-red-500/20'}`}>
+                            {p.is_active ? 'Active' : 'Revoked'}
+                          </Badge>
+                          {p.is_active && (
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-full hover:bg-white/10">
+                                  <MoreVertical className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="glass-premium border-white/5">
+                                <DropdownMenuItem onClick={() => handleEditPrescription(p)}>
+                                  <Zap className="h-4 w-4 mr-2 text-primary" /> Edit Details
+                                </DropdownMenuItem>
+                                <DropdownMenuItem 
+                                  className="text-red-500 focus:text-red-500 focus:bg-red-500/10"
+                                  onClick={() => handleRevokePrescription(p.id)}
+                                >
+                                  <UserX className="h-4 w-4 mr-2" /> Revoke Order
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          )}
+                        </div>
                       </div>
                       {p.instructions && (
                         <div className="mt-4 pt-4 border-t border-white/5">
@@ -835,16 +1070,71 @@ const DoctorPatientDetail = () => {
       </div>
 
       {/* New Consultation Dialog */}
-      <Dialog open={showNewConsultation} onOpenChange={setShowNewConsultation}>
-        <DialogContent aria-describedby={undefined} className="max-w-2xl glass-premium border-white/5">
+      <Dialog open={showNewConsultation} onOpenChange={(open) => {
+        setShowNewConsultation(open);
+        if (!open) { setIsScheduling(false); setScheduledDate(''); }
+      }}>
+        <DialogContent aria-describedby={undefined} className="max-w-2xl glass-premium border-white/5 max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Write Consultation</DialogTitle>
+            <DialogTitle className="flex items-center justify-between">
+              <span>{isScheduling ? 'Schedule Consultation' : 'Write Consultation'}</span>
+              {/* Schedule / Instant toggle */}
+              <button
+                onClick={() => setIsScheduling((v) => !v)}
+                className={`text-[9px] font-bold uppercase tracking-[0.2em] px-3 py-1.5 rounded-full border transition-all ${isScheduling
+                  ? 'bg-amber-500/10 text-amber-400 border-amber-500/30'
+                  : 'bg-muted text-muted-foreground border-border/30 hover:bg-primary/5 hover:text-primary'
+                  }`}
+              >
+                {isScheduling ? '🗓 Scheduled' : '+ Schedule Future'}
+              </button>
+            </DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4">
+            {/* Scheduling date picker */}
+            {isScheduling && (
+              <div className="p-3 rounded-xl bg-amber-500/5 border border-amber-500/20 space-y-2">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-amber-400">
+                  Scheduled Date & Time
+                </label>
+                <Input
+                  type="datetime-local"
+                  value={scheduledDate}
+                  onChange={(e) => setScheduledDate(e.target.value)}
+                  min={new Date().toISOString().slice(0, 16)}
+                  className="h-10 rounded-lg bg-muted/30 border-amber-500/30"
+                />
+              </div>
+            )}
+
+            {/* Link to Previous Consultation */}
+            {consultations.length > 0 && (
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                  Link to Previous Consultation (optional)
+                </label>
+                <select
+                  value={consultationForm.linked_consultation_id || ''}
+                  onChange={(e) => setConsultationForm(prev => ({ ...prev, linked_consultation_id: e.target.value || null }))}
+                  className="w-full h-10 rounded-lg bg-muted/30 border border-border/50 px-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary text-foreground"
+                >
+                  <option value="">No link (new thread)</option>
+                  {consultations.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {new Date(c.consultation_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })} — {c.diagnosis || c.chief_complaint || 'Consultation'}
+                    </option>
+                  ))}
+                </select>
+                {consultationForm.linked_consultation_id && (
+                  <p className="text-[10px] text-purple-400 font-semibold">↳ This consultation will be linked as a continuation.</p>
+                )}
+              </div>
+            )}
+
             <div className="space-y-2">
               <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                Chief Complaint
+                Chief Complaint {isScheduling && <span className="text-muted-foreground/50">(optional for scheduled)</span>}
               </label>
               <Input
                 placeholder="Patient's main concern..."
@@ -854,48 +1144,52 @@ const DoctorPatientDetail = () => {
               />
             </div>
 
-            <div className="space-y-2">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                Clinical Findings
-              </label>
-              <Textarea
-                placeholder="Examination findings..."
-                value={consultationForm.clinical_findings}
-                onChange={(e) => setConsultationForm(prev => ({ ...prev, clinical_findings: e.target.value }))}
-                className="rounded-lg bg-muted/30 border-border/50"
-                rows={3}
-              />
-            </div>
+            {!isScheduling && (
+              <>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                    Clinical Findings
+                  </label>
+                  <Textarea
+                    placeholder="Examination findings..."
+                    value={consultationForm.clinical_findings}
+                    onChange={(e) => setConsultationForm(prev => ({ ...prev, clinical_findings: e.target.value }))}
+                    className="rounded-lg bg-muted/30 border-border/50"
+                    rows={3}
+                  />
+                </div>
 
-            <div className="space-y-2">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                Diagnosis
-              </label>
-              <Input
-                placeholder="Medical diagnosis..."
-                value={consultationForm.diagnosis}
-                onChange={(e) => setConsultationForm(prev => ({ ...prev, diagnosis: e.target.value }))}
-                className="h-10 rounded-lg bg-muted/30 border-border/50"
-              />
-            </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                    Diagnosis
+                  </label>
+                  <Input
+                    placeholder="Medical diagnosis..."
+                    value={consultationForm.diagnosis}
+                    onChange={(e) => setConsultationForm(prev => ({ ...prev, diagnosis: e.target.value }))}
+                    className="h-10 rounded-lg bg-muted/30 border-border/50"
+                  />
+                </div>
 
-            <div className="space-y-2">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                Treatment Plan
-              </label>
-              <Textarea
-                placeholder="Recommended treatment and follow-up..."
-                value={consultationForm.treatment_plan}
-                onChange={(e) => setConsultationForm(prev => ({ ...prev, treatment_plan: e.target.value }))}
-                className="rounded-lg bg-muted/30 border-border/50"
-                rows={3}
-              />
-            </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                    Treatment Plan
+                  </label>
+                  <Textarea
+                    placeholder="Recommended treatment and follow-up..."
+                    value={consultationForm.treatment_plan}
+                    onChange={(e) => setConsultationForm(prev => ({ ...prev, treatment_plan: e.target.value }))}
+                    className="rounded-lg bg-muted/30 border-border/50"
+                    rows={3}
+                  />
+                </div>
+              </>
+            )}
 
             <div className="flex gap-3 pt-4">
               <Button
                 variant="outline"
-                onClick={() => setShowNewConsultation(false)}
+                onClick={() => { setShowNewConsultation(false); setIsScheduling(false); setScheduledDate(''); }}
                 className="flex-1 h-10 rounded-lg"
               >
                 Cancel
@@ -903,18 +1197,14 @@ const DoctorPatientDetail = () => {
               <Button
                 onClick={handleSaveConsultation}
                 disabled={savingConsultation}
-                className="flex-1 h-10 rounded-lg bg-primary hover:bg-primary/90"
+                className={`flex-1 h-10 rounded-lg ${isScheduling ? 'bg-amber-500 hover:bg-amber-600' : 'bg-primary hover:bg-primary/90'}`}
               >
                 {savingConsultation ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Saving...
-                  </>
+                  <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Saving...</>
+                ) : isScheduling ? (
+                  <><Calendar className="h-4 w-4 mr-2" />Schedule Consultation</>
                 ) : (
-                  <>
-                    <CheckCircle2 className="h-4 w-4 mr-2" />
-                    Save Consultation
-                  </>
+                  <><CheckCircle2 className="h-4 w-4 mr-2" />Save Consultation</>
                 )}
               </Button>
             </div>
@@ -922,11 +1212,12 @@ const DoctorPatientDetail = () => {
         </DialogContent>
       </Dialog>
 
+
       {/* New Prescription Dialog */}
       <Dialog open={showNewPrescription} onOpenChange={setShowNewPrescription}>
         <DialogContent className="max-w-md glass-premium border-white/5">
           <DialogHeader>
-            <DialogTitle>Issue Prescription</DialogTitle>
+            <DialogTitle>{editingPrescriptionId ? 'Edit Prescription' : 'Issue Prescription'}</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4">
@@ -1225,6 +1516,27 @@ const DoctorPatientDetail = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Revoke Access Confirmation */}
+      <AlertDialog open={showRevokeConfirm} onOpenChange={setShowRevokeConfirm}>
+        <AlertDialogContent className="glass-premium border-white/5">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Revoke Patient Access?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will remove the patient from your list and terminate your access to their clinical records. You will need to re-connect if you wish to view their health timeline again.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="rounded-xl border-white/10">Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleRevokeAccess}
+              className="rounded-xl bg-red-500 hover:bg-red-600 shadow-lg shadow-red-500/20"
+            >
+              Revoke Access
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

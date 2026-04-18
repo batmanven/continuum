@@ -7,7 +7,7 @@ import { medicationProcessor } from "@/services/medicationProcessor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Pill, Activity, Trash2, ShieldAlert, CheckCircle2, Loader2, Plus, Zap, Heart, Info, Clock, FileUp } from "lucide-react";
+import { Pill, Activity, Trash2, ShieldAlert, CheckCircle2, Loader2, Plus, Zap, Heart, Info, Clock, FileUp, Stethoscope, Shield } from "lucide-react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -42,7 +42,7 @@ const MedicationsDashboard = () => {
   const loadMedications = async () => {
     if (!user) return;
     setLoading(true);
-    const { data, error } = await medicationService.getMedications(
+    const { data, error } = await medicationService.getUnifiedMedications(
       user.id, 
       activeProfile.id,
       activeProfile.linked_user_id
@@ -173,13 +173,21 @@ const MedicationsDashboard = () => {
                         <h3 className="text-lg font-display font-bold group-hover:text-indigo-500 transition-colors">
                           {med.name}
                         </h3>
+                        {med.source === 'doctor' && (
+                          <div className="flex items-center gap-1.5 mt-1">
+                            <Stethoscope className="h-3 w-3 text-emerald-500" />
+                            <span className="text-[10px] font-bold text-emerald-600/80 uppercase tracking-tight">
+                              Prescribed by {med.prescribing_doctor_name}
+                            </span>
+                          </div>
+                        )}
                         <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1">
                           <Clock className="h-3 w-3" />
                           {med.dosage} • {med.frequency}
                         </div>
                       </div>
-                      <Badge variant="outline" className={`text-[9px] font-bold uppercase tracking-tighter ${med.active ? 'bg-indigo-500/10 text-indigo-500 border-indigo-500/20' : 'bg-muted/10 text-muted-foreground border-white/5'}`}>
-                        {med.active ? 'Active' : 'Stopped'}
+                      <Badge variant="outline" className={`text-[9px] font-bold uppercase tracking-tighter ${med.source === 'doctor' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : med.active ? 'bg-indigo-500/10 text-indigo-500 border-indigo-500/20' : 'bg-muted/10 text-muted-foreground border-white/5'}`}>
+                        {med.source === 'doctor' ? 'Clinical' : med.active ? 'Active' : 'Stopped'}
                       </Badge>
                     </div>
 
@@ -203,22 +211,30 @@ const MedicationsDashboard = () => {
                     </div>
 
                     <div className="flex items-center justify-between pt-4 border-t border-white/5 mt-auto">
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        className="text-[10px] font-bold uppercase tracking-widest h-8 px-4 border border-white/5 hover:bg-white/5"
-                        onClick={() => toggleStatus(med.id!, med.active)}
-                      >
-                        {med.active ? 'Stop' : 'Resume'}
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        className="h-8 w-8 p-0 text-muted-foreground hover:text-red-500 hover:bg-red-500/10 transition-colors"
-                        onClick={() => deleteMedication(med.id!)}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
+                      {med.source === 'user' ? (
+                        <>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="text-[10px] font-bold uppercase tracking-widest h-8 px-4 border border-white/5 hover:bg-white/5"
+                            onClick={() => toggleStatus(med.id!, med.active)}
+                          >
+                            {med.active ? 'Stop' : 'Resume'}
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-8 w-8 p-0 text-muted-foreground hover:text-red-500 hover:bg-red-500/10 transition-colors"
+                            onClick={() => deleteMedication(med.id!)}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </>
+                      ) : (
+                        <div className="flex items-center gap-2 text-[9px] font-bold text-muted-foreground/60 uppercase tracking-widest px-1">
+                          <Shield className="h-3 w-3" /> Managed by prescribing physician
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
