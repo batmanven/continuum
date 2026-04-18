@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
@@ -9,6 +11,8 @@ import {
   Inbox,
   Plus,
   Star,
+  Users,
+  Activity,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -77,7 +81,6 @@ export default function ChatsPage() {
       }
 
       if (data) {
-        // Enrich with doctor names
         const chatsWithDoctors = await Promise.all(
           data.map(async (chat) => {
             if (!chat.doctor_id) return { ...chat, doctor_name: 'Doctor' };
@@ -108,8 +111,6 @@ export default function ChatsPage() {
 
   const filterChats = () => {
     let filtered = chats;
-
-    // Filter by tab
     if (activeTab === 'active') {
       filtered = filtered.filter((c) => c.status === 'active');
     } else if (activeTab === 'closed') {
@@ -129,11 +130,11 @@ export default function ChatsPage() {
           c.reason_for_consultation.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
-
     setFilteredChats(filtered);
   };
 
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return 'Pending';
     const date = new Date(dateString);
     const today = new Date();
     const yesterday = new Date(today);
@@ -147,103 +148,107 @@ export default function ChatsPage() {
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
-  if (!user) {
-    return null;
-  }
+  if (!user) return null;
 
   const activeChatsCount = chats.filter((c) => c.status === 'active').length;
   const closedChatsCount = chats.filter((c) => c.status === 'closed').length;
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* Header */}
-      <div className="bg-white border-b border-slate-200 sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto px-4 py-6 flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-slate-900">Consultations</h1>
-            <p className="text-slate-600 mt-1">Chat with your doctors</p>
+    <div className="max-w-5xl mx-auto space-y-6 p-6">
+      {/* Header Section */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div>
+          <div className="flex items-center gap-2 text-primary mb-2">
+            <MessageSquare className="h-4 w-4" />
+            <span className="text-[10px] font-bold uppercase tracking-[0.2em]">Consultation History</span>
           </div>
-          <Button
-            onClick={() => navigate('/app/doctor-search')}
-            className="gap-2 bg-blue-600 hover:bg-blue-700"
-          >
-            <Plus className="w-4 h-4" />
-            New Consultation
-          </Button>
+          <h1 className="text-3xl font-display font-bold text-foreground tracking-tight">
+            My <span className="text-gradient">Consultations</span>
+          </h1>
+          <p className="text-muted-foreground mt-1 text-sm max-w-lg">
+            Manage your active medical conversations and review past clinical advice in one place.
+          </p>
         </div>
+        
+        <Button
+          onClick={() => navigate('/app/doctor-search')}
+          variant="hero"
+          className="h-11 px-6 rounded-xl group"
+        >
+          <Plus className="w-4 h-4 mr-2 group-hover:rotate-90 transition-transform duration-300" />
+          New Consultation
+        </Button>
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        {/* Search */}
-        <div className="mb-6">
-          <div className="relative">
-            <Search className="absolute left-3 top-3 w-5 h-5 text-slate-400" />
-            <Input
-              placeholder="Search by doctor name or reason..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 h-11"
-            />
-          </div>
+      <div className="relative z-10">
+        {/* Search Bar */}
+        <div className="mb-8 group relative">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+          <Input
+            placeholder="Search by doctor name or reason..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10 h-12 rounded-xl bg-card/50 backdrop-blur-sm border-border/40 focus:border-primary/40 focus:ring-primary/10 transition-all text-sm shadow-sm"
+          />
         </div>
 
-        {/* Tabs */}
-        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as any)}>
-          <TabsList className="mb-6">
-            <TabsTrigger value="active">
-              Active ({activeChatsCount})
+        {/* Tabs and Content */}
+        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as any)} className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-300">
+          <TabsList className="bg-muted/50 p-1.5 h-14 rounded-2xl border border-border/40 mb-8 w-full max-w-md">
+            <TabsTrigger value="active" className="rounded-xl h-full font-bold text-xs uppercase tracking-widest px-6 data-[state=active]:bg-card data-[state=active]:shadow-sm">
+              Active <Badge className="ml-2 bg-primary/10 text-primary border-none h-5 px-1.5">{activeChatsCount}</Badge>
             </TabsTrigger>
-            <TabsTrigger value="closed">
-              Completed ({closedChatsCount})
+            <TabsTrigger value="closed" className="rounded-xl h-full font-bold text-xs uppercase tracking-widest px-6 data-[state=active]:bg-card data-[state=active]:shadow-sm">
+              Completed <Badge className="ml-2 bg-muted-foreground/10 text-muted-foreground border-none h-5 px-1.5">{closedChatsCount}</Badge>
             </TabsTrigger>
-            <TabsTrigger value="all">
-              All ({chats.length})
+            <TabsTrigger value="all" className="rounded-xl h-full font-bold text-xs uppercase tracking-widest px-6 data-[state=active]:bg-card data-[state=active]:shadow-sm">
+              All
             </TabsTrigger>
           </TabsList>
 
-          {/* Content */}
-          <TabsContent value={activeTab} className="mt-0">
+          <TabsContent value={activeTab} className="mt-0 focus-visible:ring-0">
             {loading ? (
-              <div className="text-center py-12">
-                <p className="text-slate-600">Loading consultations...</p>
+              <div className="flex flex-col items-center justify-center py-20 animate-pulse">
+                <div className="h-12 w-12 rounded-full border-4 border-primary/20 border-t-primary animate-spin mb-4" />
+                <p className="text-muted-foreground font-medium">Retrieving sessions...</p>
               </div>
             ) : filteredChats.length === 0 ? (
-              <Card className="p-8 text-center">
-                {chats.length === 0 ? (
-                  <>
-                    <Inbox className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-                    <p className="text-slate-900 font-medium mb-2">No consultations yet</p>
-                    <p className="text-slate-600 mb-6">
-                      Start a new consultation by finding a doctor
-                    </p>
-                    <Button
-                      onClick={() => navigate('/app/doctor-search')}
-                      className="bg-blue-600 hover:bg-blue-700"
-                    >
-                      Find a Doctor
-                    </Button>
-                  </>
-                ) : (
-                  <>
-                    <MessageSquare className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-                    <p className="text-slate-900 font-medium">No consultations found</p>
-                    <p className="text-slate-600">Try adjusting your search</p>
-                  </>
+              <div className="bg-card/40 border border-border/40 rounded-[32px] p-16 text-center">
+                <div className="w-20 h-20 bg-muted/30 rounded-3xl flex items-center justify-center mx-auto mb-6">
+                  {chats.length === 0 ? <Inbox className="w-10 h-10 text-muted-foreground" /> : <Search className="w-10 h-10 text-muted-foreground" />}
+                </div>
+                <h3 className="text-2xl font-display font-bold text-foreground mb-2">
+                  {chats.length === 0 ? "No consultations yet" : "No matches found"}
+                </h3>
+                <p className="text-muted-foreground max-w-sm mx-auto mb-8">
+                  {chats.length === 0
+                    ? "You haven't started any medical consultations yet. Find a specialist to get started."
+                    : "Try adjusting your search or filters to find the specific consultation you're looking for."}
+                </p>
+                {chats.length === 0 && (
+                  <Button
+                    onClick={() => navigate('/app/doctor-search')}
+                    variant="hero"
+                    className="h-12 px-8 rounded-2xl"
+                  >
+                    Find a Doctor
+                  </Button>
                 )}
-              </Card>
+              </div>
             ) : (
-              <div className="space-y-3">
-                {filteredChats.map((chat) => (
+              <div className="grid gap-4">
+                {filteredChats.map((chat, index) => (
                   <Card
                     key={chat.id}
-                    className="hover:shadow-md transition-shadow cursor-pointer"
+                    className="group relative overflow-hidden bg-card/60 backdrop-blur-sm border-border/40 hover:border-primary/30 hover:shadow-card transition-all duration-300 rounded-3xl cursor-pointer animate-in fade-in slide-in-from-bottom-4"
+                    style={{ animationDelay: `${index * 50}ms` }}
                     onClick={() => navigate(`/app/doctor-chat/${chat.id}`)}
                   >
-                    <div className="p-4 flex items-center justify-between">
-                      <div className="flex-1 min-w-0">
-                        {/* Doctor Name and Status */}
-                        <div className="flex items-center gap-3 mb-1">
-                          <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0">
+                    <div className="p-5 sm:p-6 flex items-center justify-between gap-6">
+                      <div className="flex items-center gap-5 flex-1 min-w-0">
+                        {/* Doctor Avatar */}
+                        <div className="relative shrink-0">
+                          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center text-primary border border-primary/10 font-display font-bold text-xl uppercase group-hover:scale-105 transition-transform">
                             {chat.doctor_name.charAt(0)}
                           </div>
                           <div>
@@ -294,35 +299,31 @@ export default function ChatsPage() {
                           {chat.status === 'active' && !chat.doctor_accepted_at && (
                             <span className="flex items-center gap-1 text-xs text-amber-600">
                               <Clock className="w-3 h-3" />
-                              Awaiting response
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Rating for closed chats */}
-                        {chat.status === 'closed' && chat.patient_satisfaction_rating && (
-                          <div className="flex items-center gap-2 mt-2 ml-13">
-                            <div className="flex">
-                              {[...Array(5)].map((_, i) => (
-                                <Star
-                                  key={i}
-                                  className={`w-3 h-3 ${
-                                    i < chat.patient_satisfaction_rating
-                                      ? 'fill-amber-400 text-amber-400'
-                                      : 'text-slate-300'
-                                  }`}
-                                />
-                              ))}
+                              {formatDate(chat.created_at)}
                             </div>
-                            <span className="text-xs text-slate-600">
-                              Rated {chat.patient_satisfaction_rating}/5
-                            </span>
+
+                            {chat.status === 'active' && !chat.doctor_accepted_at && (
+                              <span className="flex items-center gap-1 text-[10px] text-amber-600 font-bold uppercase tracking-wider">
+                                <Activity className="w-3 h-3" />
+                                Pending Response
+                              </span>
+                            )}
+
+                            {chat.status === 'closed' && chat.patient_satisfaction_rating && (
+                              <div className="flex items-center gap-1.5 bg-amber-400/10 px-2 py-0.5 rounded-lg border border-amber-400/20">
+                                <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
+                                <span className="text-[10px] font-bold text-amber-700">
+                                  {chat.patient_satisfaction_rating}/5
+                                </span>
+                              </div>
+                            )}
                           </div>
-                        )}
+                        </div>
                       </div>
 
-                      {/* Arrow */}
-                      <ChevronRight className="w-5 h-5 text-slate-400 flex-shrink-0 ml-4" />
+                      <div className="shrink-0 flex items-center justify-center w-10 h-10 rounded-xl group-hover:bg-primary/10 transition-colors">
+                        <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                      </div>
                     </div>
                   </Card>
                 ))}
@@ -334,3 +335,4 @@ export default function ChatsPage() {
     </div>
   );
 }
+

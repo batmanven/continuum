@@ -78,34 +78,13 @@ const LandingNav = () => {
             </>
           ) : (
             <>
-              <div className="hidden md:flex items-center gap-2">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm">Login</Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem asChild>
-                      <Link to="/login" className="cursor-pointer">Patient Login</Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link to="/doctor/login" className="cursor-pointer">Doctor Login</Link>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="hero" size="sm">Sign Up</Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem asChild>
-                      <Link to="/signup" className="cursor-pointer">Patient Sign Up</Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link to="/doctor/signup" className="cursor-pointer">Doctor Sign Up</Link>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+              <div className="hidden md:flex items-center gap-4">
+                <Button variant="ghost" size="sm" asChild>
+                  <Link to="/login">Login</Link>
+                </Button>
+                <Button variant="hero" size="sm" asChild>
+                  <Link to="/signup">Sign Up</Link>
+                </Button>
               </div>
               <Button variant="ghost" size="icon" asChild className="md:hidden">
                 <Link to="/login" className="text-sm">Login</Link>
