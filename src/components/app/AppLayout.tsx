@@ -81,7 +81,7 @@ const AppLayout = () => {
             </div>
           </header>
 
-          <main ref={mainRef} className="flex-1 px-8 py-4 overflow-auto custom-scrollbar">
+          <main ref={mainRef} className="flex-1 px-8 py-4 overflow-auto custom-scrollbar scrollbar-gutter-stable">
             <div className="max-w-7xl mx-auto min-h-full">
               <Outlet />
             </div>

@@ -19,6 +19,8 @@ export interface ConsultationRecord {
   notes?: string;
   consultation_mode: 'in_person' | 'video' | 'phone' | 'chat';
   is_completed: boolean;
+  linked_consultation_id?: string | null; // Thread / continuation link
+  patient_name?: string; // Enriched on frontend joins
   created_at?: string;
   updated_at?: string;
 }
@@ -177,6 +179,44 @@ export class ConsultationRecordService {
     } catch (error) {
       console.error('Unexpected error fetching consultations:', error);
       return { error: 'Failed to fetch consultation records' };
+    }
+  }
+
+  /**
+   * Fetch all consultations for a doctor enriched with patient name from profiles.
+   * Used in the global Consultations list page.
+   */
+  async getDoctorConsultationsWithPatients(
+    doctorId: string,
+    limit: number = 50,
+    offset: number = 0
+  ): Promise<{ data?: ConsultationRecord[]; error?: string }> {
+    try {
+      const { data, error } = await supabase
+        .from('consultation_records')
+        .select('*')
+        .eq('doctor_id', doctorId)
+        .order('consultation_date', { ascending: false })
+        .range(offset, offset + limit - 1);
+
+      if (error) return { error: error.message };
+      if (!data || data.length === 0) return { data: [] };
+
+      // Enrich with patient names
+      const patientIds = [...new Set(data.map((c) => c.patient_id))];
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, full_name, name')
+        .in('id', patientIds);
+
+      const enriched = data.map((c) => {
+        const profile = profiles?.find((p) => p.id === c.patient_id);
+        return { ...c, patient_name: profile?.full_name || profile?.name || 'Patient' };
+      });
+
+      return { data: enriched as ConsultationRecord[] };
+    } catch (error) {
+      return { error: 'Failed to fetch consultations' };
     }
   }
 }

@@ -111,7 +111,10 @@ export default function DoctorSearchPage() {
     const matchesHospital = selectedHospital === 'all' || 
       doctor.hospital_name === selectedHospital;
     
-    return matchesSearch && matchesSpecialization && matchesHospital && doctor.accepting_patients;
+    // Condition: active and accepting patients
+    const isVisible = doctor.is_active !== false && (doctor.accepting_patients !== false);
+
+    return matchesSearch && matchesSpecialization && matchesHospital && isVisible;
   });
 
   const handleStartConsultation = (doctor: DoctorProfile) => {
@@ -145,20 +148,34 @@ export default function DoctorSearchPage() {
       }
 
       // Create new chat
-      const { data: newChat, error } = await chatService.createChat(
+      const { data: newChat, error: chatError } = await chatService.createChat(
         user.id,
         selectedDoctor.user_id,
         consultationReason,
         initialMessage || undefined
       );
 
-      if (error) {
+      if (chatError) {
         toast({
           title: 'Error',
-          description: error,
+          description: chatError,
           variant: 'destructive',
         });
         return;
+      }
+
+      // Automatically create a clinical consultation record so it shows up in the doctor's patient detail page
+      if (newChat) {
+        await consultationRecordService.createConsultation(selectedDoctor.user_id, {
+          patient_id: user.id,
+          consultation_type: 'general',
+          consultation_date: new Date().toISOString(),
+          chief_complaint: consultationReason,
+          clinical_findings: 'Consultation initiated via online chat.',
+          treatment_plan: 'Assessment pending chat conversation.',
+          is_completed: false,
+          consultation_mode: 'chat'
+        });
       }
 
       if (newChat) {
@@ -199,7 +216,7 @@ export default function DoctorSearchPage() {
 
       <div className="max-w-6xl mx-auto px-4 py-8">
         {/* Search and Filters */}
-        <div className="bg-white rounded-lg border border-slate-200 p-6 mb-8">
+        <div id="tour-doctor-search-box" className="bg-white rounded-lg border border-slate-200 p-6 mb-8">
           <div className="space-y-4">
             {/* Search Box */}
             <div className="relative">
@@ -318,13 +335,17 @@ export default function DoctorSearchPage() {
                     )}
 
                     {/* Verification Badge */}
-                    {doctor.verification_status === 'verified' && (
-                      <div className="mt-3">
+                    <div className="mt-3 flex gap-2">
+                      {doctor.verification_status === 'verified' ? (
                         <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
                           ✓ Verified Doctor
                         </Badge>
-                      </div>
-                    )}
+                      ) : (
+                        <Badge variant="secondary" className="bg-amber-100 text-amber-800 hover:bg-amber-100 border-amber-200">
+                          ⚠ Verification Pending
+                        </Badge>
+                      )}
+                    </div>
                   </div>
 
                   {/* Consultation Fee and CTA */}

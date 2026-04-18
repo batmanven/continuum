@@ -62,9 +62,9 @@ export class DoctorProfileService {
         .from('doctor_profiles')
         .select('*')
         .eq('user_id', userId)
-        .single();
+        .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') {
+      if (error) {
         console.error('Error fetching doctor profile:', error);
         return { error: error.message };
       }
@@ -109,7 +109,8 @@ export class DoctorProfileService {
       let query = supabase
         .from('doctor_profiles')
         .select('*')
-        .eq('is_active', true);
+        .eq('is_active', true)
+        .or('accepting_patients.eq.true,accepting_patients.is.null');
 
       if (specialty) {
         query = query.eq('specialty', specialty);
@@ -139,7 +140,6 @@ export class DoctorProfileService {
       const { data, error } = await supabase
         .from('doctor_profiles')
         .select('*')
-        .eq('is_active', true)
         .or(`full_name.ilike.%${searchTerm}%,specialty.ilike.%${searchTerm}%,hospital_name.ilike.%${searchTerm}%`)
         .limit(limit);
 
@@ -152,6 +152,43 @@ export class DoctorProfileService {
     } catch (error) {
       console.error('Unexpected error searching doctors:', error);
       return { error: 'Failed to search doctors' };
+    }
+  }
+
+  async getDoctorProfiles(userIds: string[]): Promise<{ data?: DoctorProfile[]; error?: string }> {
+    try {
+      if (userIds.length === 0) return { data: [] };
+      
+      const { data, error } = await supabase
+        .from('doctor_profiles')
+        .select('*')
+        .in('user_id', userIds);
+
+      if (error) {
+        console.error('Error fetching batch doctor profiles:', error);
+        return { error: error.message };
+      }
+
+      return { data };
+    } catch (error) {
+      console.error('Unexpected error fetching batch doctor profiles:', error);
+      return { error: 'Failed to fetch doctor profiles' };
+    }
+  }
+
+  async verifyDoctor(userId: string): Promise<{ data?: DoctorProfile; error?: string }> {
+    try {
+      const { data, error } = await supabase
+        .from('doctor_profiles')
+        .update({ verification_status: 'verified', verification_date: new Date().toISOString() })
+        .eq('user_id', userId)
+        .select()
+        .single();
+
+      if (error) return { error: error.message };
+      return { data };
+    } catch (error) {
+      return { error: 'Failed to verify doctor' };
     }
   }
 }

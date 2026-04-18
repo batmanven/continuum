@@ -8,6 +8,7 @@ import { useTheme } from "@/hooks/use-theme";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
 import { useDoctor } from "@/contexts/DoctorContext";
+import { WalkthroughOverlay } from "@/components/app/WalkthroughOverlay";
 
 const DoctorLayout = () => {
   const { theme, toggle } = useTheme();
@@ -48,7 +49,13 @@ const DoctorLayout = () => {
             <div className="flex items-center gap-4">
               <div className="flex flex-col">
                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/40">Doctor Portal</span>
-                 <span className="text-xs font-bold text-foreground/60">{location.pathname === '/doctor' ? 'Dashboard' : location.pathname.split('/').pop()?.replace('-', ' ')}</span>
+                 <span className="text-xs font-bold text-foreground/60">
+                   {location.pathname === '/doctor' 
+                     ? 'Dashboard' 
+                     : location.pathname.includes('/patient/') 
+                       ? 'Patient Detail' 
+                       : location.pathname.split('/').pop()?.replace('-', ' ')}
+                 </span>
               </div>
             </div>
             
@@ -78,10 +85,12 @@ const DoctorLayout = () => {
 
           <main
             ref={mainRef}
-            className="flex-1 min-h-0 overflow-y-auto scroll-smooth"
+            className="flex-1 min-h-0 overflow-y-auto scroll-smooth scrollbar-gutter-stable"
           >
             <Outlet />
           </main>
+          
+          <WalkthroughOverlay />
         </div>
       </div>
     </SidebarProvider>

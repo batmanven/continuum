@@ -19,6 +19,10 @@ export interface Prescription {
   is_active: boolean;
   patient_acknowledged: boolean;
   acknowledged_at?: string;
+  metadata?: {
+    hospital_name?: string;
+    [key: string]: any;
+  };
   created_at?: string;
   updated_at?: string;
 }
@@ -121,12 +125,46 @@ export class PrescriptionService {
       }
 
       const { data, error } = await query
-        .eq('is_active', true)
         .order('prescribed_date', { ascending: false })
         .range(offset, offset + limit - 1);
 
       if (error) {
         console.error('Error fetching patient prescriptions:', error);
+        return { error: error.message };
+      }
+
+      return { data };
+    } catch (error) {
+      console.error('Unexpected error fetching prescriptions:', error);
+      return { error: 'Failed to fetch prescriptions' };
+    }
+  }
+
+  async getUserPrescriptions(
+    patientId: string,
+    limit: number = 50,
+    offset: number = 0
+  ): Promise<{ data?: Prescription[]; error?: string }> {
+    return this.getPatientPrescriptions(patientId, null, limit, offset);
+  }
+
+  async getDoctorPatientPrescriptions(
+    doctorId: string,
+    patientId: string,
+    limit: number = 50,
+    offset: number = 0
+  ): Promise<{ data?: any[]; error?: string }> {
+    try {
+      const { data, error } = await supabase
+        .from('prescriptions')
+        .select('*')
+        .eq('patient_id', patientId)
+        .eq('doctor_id', doctorId)
+        .order('created_at', { ascending: false })
+        .range(offset, offset + limit - 1);
+
+      if (error) {
+        console.error('Error fetching doctor patient prescriptions:', error);
         return { error: error.message };
       }
 
