@@ -32,7 +32,7 @@ export interface DoctorProfile {
 export class DoctorProfileService {
   async createDoctorProfile(
     userId: string,
-    profileData: Omit<DoctorProfile, 'id' | 'created_at' | 'updated_at'>
+    profileData: Omit<DoctorProfile, 'id' | 'created_at' | 'updated_at' | 'user_id'>
   ): Promise<{ data?: DoctorProfile; error?: string }> {
     try {
       const { data, error } = await supabase

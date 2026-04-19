@@ -6,11 +6,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertCircle, ArrowLeft, Heart } from 'lucide-react';
+import { AlertCircle, ArrowLeft, Heart, Moon, Sun } from 'lucide-react';
 import { toast } from 'sonner';
+import { useTheme } from '@/hooks/use-theme';
 
 export default function DoctorLogin() {
   const navigate = useNavigate();
+  const { theme, toggle } = useTheme();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -56,7 +58,25 @@ export default function DoctorLogin() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-mesh px-4">
+    <div className="min-h-screen flex items-center justify-center bg-mesh px-4 overflow-hidden relative">
+      <div className="absolute top-6 left-6 z-50">
+        <button
+          onClick={() => navigate('/role-selection?mode=login')}
+          className="flex items-center gap-2 px-4 py-2 rounded-full bg-background/80 backdrop-blur-md border border-border/50 text-muted-foreground hover:text-foreground hover:border-border hover:shadow-sm transition-all group"
+        >
+          <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+          <span className="text-sm font-medium">Back</span>
+        </button>
+      </div>
+
+      <div className="absolute top-6 right-6 z-50">
+        <button
+          onClick={toggle}
+          className="p-3 rounded-full bg-background/80 backdrop-blur-md border border-border/50 text-muted-foreground hover:text-foreground hover:border-border hover:shadow-sm transition-all"
+        >
+          {theme === "light" ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+        </button>
+      </div>
 
 
       {/* Decorative Blur Circles */}

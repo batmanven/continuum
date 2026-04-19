@@ -1,19 +1,16 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Heart, Stethoscope, User, ShieldCheck } from "lucide-react";
+import { Heart, ArrowLeft, Moon, Sun } from "lucide-react";
 import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
-import { doctorProfileService } from "@/services/doctorProfileService";
+import { useTheme } from "@/hooks/use-theme";
 import { toast } from "sonner";
-
-type UserRole = "patient" | "doctor";
 
 const Login = () => {
   const navigate = useNavigate();
-  const [role, setRole] = useState<UserRole>("patient");
+  const { theme, toggle } = useTheme();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -23,58 +20,55 @@ const Login = () => {
     e.preventDefault();
     setLoading(true);
 
-    try {
-      const { data, error } = await signIn(email, password);
+    const { data, error } = await signIn(email, password);
 
-      if (error) {
-        toast.error(error.message);
-        setLoading(false);
-        return;
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success("Welcome back!");
+      const returnTo = sessionStorage.getItem('returnTo');
+      if (returnTo) {
+        sessionStorage.removeItem('returnTo');
+        navigate(returnTo);
+      } else {
+        navigate("/app");
       }
-
-      if (data?.user) {
-        if (role === "doctor") {
-          const { data: profile, error: profileError } = await doctorProfileService.getDoctorProfile(data.user.id);
-
-          if (profileError || !profile) {
-            toast.error("This account is not registered as a doctor. Please sign up as a doctor first.");
-            setLoading(false);
-            return;
-          }
-
-          toast.success("Welcome back, Doctor!");
-          navigate("/doctor");
-        } else {
-          toast.success("Welcome back!");
-          const returnTo = sessionStorage.getItem('returnTo');
-          if (returnTo) {
-            sessionStorage.removeItem('returnTo');
-            navigate(returnTo);
-          } else {
-            navigate("/app");
-          }
-        }
-      }
-    } catch (err: any) {
-      toast.error("An unexpected error occurred");
-    } finally {
-      setLoading(false);
     }
+
+    setLoading(false);
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-mesh px-4 py-12">
-      {/* Decorative Blur Circles */}
+    <div className="min-h-screen flex items-center justify-center bg-mesh px-4 overflow-hidden relative">
+      <div className="absolute top-6 left-6 z-50">
+        <button
+          onClick={() => navigate('/role-selection?mode=login')}
+          className="flex items-center gap-2 px-4 py-2 rounded-full bg-background/80 backdrop-blur-md border border-border/50 text-muted-foreground hover:text-foreground hover:border-border hover:shadow-sm transition-all group"
+        >
+          <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+          <span className="text-sm font-medium">Back</span>
+        </button>
+      </div>
+
+      <div className="absolute top-6 right-6 z-50">
+        <button
+          onClick={toggle}
+          className="p-3 rounded-full bg-background/80 backdrop-blur-md border border-border/50 text-muted-foreground hover:text-foreground hover:border-border hover:shadow-sm transition-all"
+        >
+          {theme === "light" ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+        </button>
+      </div>
+
       <div className="absolute top-20 left-10 w-72 h-72 rounded-full bg-primary/5 blur-3xl pointer-events-none" />
       <div className="absolute bottom-20 right-10 w-64 h-64 rounded-full bg-accent/5 blur-3xl pointer-events-none" />
 
       <div className="w-full max-w-sm relative z-10 opacity-0 animate-fade-in">
         <div className="text-center mb-8">
-          <Link to="/" className="inline-flex items-center gap-2 mb-6 transition-transform hover:scale-105">
+          <Link to="/" className="inline-flex items-center gap-2 mb-6">
             <div className="h-9 w-9 rounded-lg bg-primary flex items-center justify-center">
               <Heart className="h-4.5 w-4.5 text-primary-foreground" />
             </div>
-            <span className="text-lg font-semibold text-foreground tracking-tight">
+            <span className="text-lg font-semibold text-foreground">
               Continuum Health
             </span>
           </Link>
@@ -82,32 +76,8 @@ const Login = () => {
             Welcome back
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Sign in to your {role} account
+            Sign in to your account
           </p>
-        </div>
-
-        {/* Role Selector */}
-        <div className="flex p-1 bg-muted/50 rounded-xl mb-6 border border-border/40">
-          <button
-            onClick={() => setRole("patient")}
-            className={`flex-1 flex items-center justify-center gap-2 py-2 text-sm font-medium rounded-lg transition-all ${role === "patient"
-                ? "bg-card text-foreground shadow-sm ring-1 ring-border/20"
-                : "text-muted-foreground hover:text-foreground"
-              }`}
-          >
-            <User className={`h-4 w-4 ${role === "patient" ? "text-primary" : ""}`} />
-            Patient
-          </button>
-          <button
-            onClick={() => setRole("doctor")}
-            className={`flex-1 flex items-center justify-center gap-2 py-2 text-sm font-medium rounded-lg transition-all ${role === "doctor"
-                ? "bg-card text-foreground shadow-sm ring-1 ring-border/20"
-                : "text-muted-foreground hover:text-foreground"
-              }`}
-          >
-            <Stethoscope className={`h-4 w-4 ${role === "doctor" ? "text-primary" : ""}`} />
-            Doctor
-          </button>
         </div>
 
         <form
@@ -119,7 +89,7 @@ const Login = () => {
             <Input
               id="email"
               type="email"
-              placeholder={role === 'doctor' ? 'doctor@hospital.com' : 'alex@example.com'}
+              placeholder="you@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -127,9 +97,7 @@ const Login = () => {
             />
           </div>
           <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="password">Password</Label>
-            </div>
+            <Label htmlFor="password">Password</Label>
             <Input
               id="password"
               type="password"
@@ -145,30 +113,18 @@ const Login = () => {
           </Button>
         </form>
 
-        <div className="mt-8 space-y-4">
-          <p className="text-center text-sm text-muted-foreground">
-            Don't have a {role} account?{" "}
-            <Link
-              to={role === "doctor" ? "/doctor/signup" : "/signup"}
-              className="text-primary hover:underline font-semibold"
-            >
-              Sign up here
-            </Link>
-          </p>
-
-          {role === "doctor" && (
-            <div className="bg-primary/5 rounded-xl p-4 border border-primary/10 flex gap-3">
-              <ShieldCheck className="h-5 w-5 text-primary shrink-0" />
-              <p className="text-[11px] text-muted-foreground leading-relaxed">
-                Authorized access only. Doctor credentials will be verified by the hospital administration.
-              </p>
-            </div>
-          )}
-        </div>
+        <p className="text-center text-sm text-muted-foreground mt-5">
+          Don't have an account?{" "}
+          <Link
+            to="/signup"
+            className="text-primary hover:underline font-semibold"
+          >
+            Sign up
+          </Link>
+        </p>
       </div>
     </div>
   );
 };
 
 export default Login;
-

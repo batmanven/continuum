@@ -28,6 +28,8 @@ import DoctorChatPage from "./pages/app/doctor-chat";
 import DoctorLayout from "./components/doctor/DoctorLayout";
 import DoctorDashboard from "./pages/doctor/dashboard";
 import DoctorSignup from "./pages/doctor/signup";
+import DoctorLogin from "./pages/doctor/login";
+import RoleSelection from "./pages/role-selection";
 
 import DoctorPatientDetail from "./pages/doctor/patient-detail";
 import DoctorProfilePage from "./pages/doctor/profile";
@@ -89,6 +91,8 @@ const App = () => (
               </Route>
             </Route>
 
+            <Route path="/role-selection" element={<RoleSelection />} />
+            <Route path="/doctor/login" element={<DoctorLogin />} />
             <Route path="/doctor/signup" element={<DoctorSignup />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

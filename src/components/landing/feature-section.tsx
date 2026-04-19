@@ -3,45 +3,39 @@ import { Brain, FileText, ClipboardList, Users, Activity, Shield, Stethoscope } 
 const features = [
   {
     icon: Brain,
-    title: "Health Memory",
+    title: "Clinical Memory",
     description:
-      "Automatically builds a structured health timeline from simple daily conversations.",
+      "Automatically builds a structured medical timeline from collaborative clinical events.",
     color: "text-primary bg-primary/10",
   },
   {
     icon: Stethoscope,
-    title: "Online Clinic",
-    description: "Connect with verified doctors for 1-to-1 consultations without visiting hospitals.",
+    title: "Consultation Hub",
+    description: "Highly secure connection for real-time medical insights and specialized professional support.",
     color: "text-emerald-600 bg-emerald-600/10",
   },
   {
-    icon: Users,
-    title: "Family Profiles",
-    description: "Manage health records for your entire family — children, parents, and dependents.",
-    color: "text-blue-500 bg-blue-500/10",
-  },
-  {
     icon: Activity,
-    title: "Symptom Insights",
-    description: "Track patterns with an interactive heatmap and discover hidden health trends.",
+    title: "Trend Intelligence",
+    description: "Deep visual analysis of clinical data to uncover hidden medical trends and patterns.",
     color: "text-red-500 bg-red-500/10",
   },
   {
     icon: Shield,
-    title: "Emergency Passports",
-    description: "QR-based medical records for first responders, accessible even without a login.",
+    title: "Emergency QR access",
+    description: "QR-based vital records ensuring high-speed intervention for critical medical situations.",
     color: "text-emerald-500 bg-emerald-500/10",
   },
   {
     icon: FileText,
-    title: "Bill Explainer",
-    description: "Upload complex medical bills and get plain-language breakdowns of costs.",
+    title: "Billing Decryption",
+    description: "Intelligent breakdowns of complex clinical billing to ensure data clarity and cost accuracy.",
     color: "text-amber-500 bg-amber-500/10",
   },
   {
     icon: ClipboardList,
-    title: "Doctor Summaries",
-    description: "Generate AI-powered patient reports to share before your next appointment.",
+    title: "Advanced Reports",
+    description: "Generate AI-powered clinical summaries to ensure deep context for any medical appointment.",
     color: "text-purple-500 bg-purple-500/10",
   },
 ];

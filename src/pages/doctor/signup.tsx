@@ -13,9 +13,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Stethoscope, ArrowRight, Loader2, AlertCircle, ArrowLeft, Heart, Briefcase, Award, User } from 'lucide-react';
+import { Stethoscope, ArrowRight, Loader2, AlertCircle, ArrowLeft, Heart, Briefcase, Award, User, Moon, Sun } from 'lucide-react';
 import { toast } from 'sonner';
 import { profilesService } from '@/services/profilesService';
+import { useTheme } from '@/hooks/use-theme';
 
 const SPECIALTIES = [
   'General Practice',
@@ -34,6 +35,7 @@ const COUNTRIES = ['United States', 'United Kingdom', 'Canada', 'India', 'Austra
 
 const DoctorSignup = () => {
   const navigate = useNavigate();
+  const { theme, toggle } = useTheme();
   const { user, signUp } = useSupabaseAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -76,7 +78,6 @@ const DoctorSignup = () => {
               experience_years: pendingProfile.experience_years ? parseInt(pendingProfile.experience_years) : undefined,
               verified_by_hospital: false,
               is_active: true,
-              user_id: user.id
             });
 
             if (profileError) {
@@ -185,7 +186,6 @@ const DoctorSignup = () => {
           experience_years: formData.experience_years ? parseInt(formData.experience_years) : undefined,
           verified_by_hospital: false,
           is_active: true,
-          user_id: user.id
         });
 
         if (profileError) throw profileError;
@@ -201,13 +201,31 @@ const DoctorSignup = () => {
   };
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center bg-mesh px-4 py-8">
-      {/* Decorative Blur Circles */}
+    <div className="relative min-h-screen flex items-center justify-center bg-mesh px-4 py-8 overflow-hidden">
+      <div className="absolute top-6 left-6 z-50">
+        <button
+          onClick={() => navigate('/role-selection?mode=signup')}
+          className="flex items-center gap-2 px-4 py-2 rounded-full bg-background/80 backdrop-blur-md border border-border/50 text-muted-foreground hover:text-foreground hover:border-border hover:shadow-sm transition-all group"
+        >
+          <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+          <span className="text-sm font-medium">Back</span>
+        </button>
+      </div>
+
+      <div className="absolute top-6 right-6 z-50">
+        <button
+          onClick={toggle}
+          className="p-3 rounded-full bg-background/80 backdrop-blur-md border border-border/50 text-muted-foreground hover:text-foreground hover:border-border hover:shadow-sm transition-all"
+        >
+          {theme === "light" ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+        </button>
+      </div>
+
       <div className="absolute top-20 right-20 w-72 h-72 rounded-full bg-primary/5 blur-3xl opacity-60 pointer-events-none" />
       <div className="absolute bottom-10 left-10 w-64 h-64 rounded-full bg-accent/5 blur-3xl opacity-60 pointer-events-none" />
 
       <div className="w-full max-w-2xl relative z-10 opacity-0 animate-fade-in">
-        <div className="text-center mb-8">
+        <div className="text-center mb-12">
           <Link to="/" className="inline-flex items-center gap-2 mb-6 transition-transform hover:scale-105">
             <div className="h-9 w-9 rounded-lg bg-primary flex items-center justify-center">
               <Heart className="h-4.5 w-4.5 text-primary-foreground" />
@@ -222,23 +240,6 @@ const DoctorSignup = () => {
           <p className="text-sm text-muted-foreground mt-1">
             {step === 1 ? 'Create your doctor account to start providing care' : 'Nearly there! Just a few more professional details'}
           </p>
-        </div>
-
-        {/* Role Selector */}
-        <div className="max-w-xs mx-auto flex p-1 bg-muted/50 rounded-xl mb-8 border border-border/40">
-          <button
-            onClick={() => navigate("/signup")}
-            className={`flex-1 flex items-center justify-center gap-2 py-2 text-sm font-medium rounded-lg transition-all text-muted-foreground hover:text-foreground`}
-          >
-            <User className="h-4 w-4" />
-            Patient
-          </button>
-          <button
-            className={`flex-1 flex items-center justify-center gap-2 py-2 text-sm font-medium rounded-lg transition-all bg-card text-foreground shadow-sm ring-1 ring-border/20`}
-          >
-            <Stethoscope className="h-4 w-4 text-primary" />
-            Doctor
-          </button>
         </div>
 
         {error && (
