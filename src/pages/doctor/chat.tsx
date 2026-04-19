@@ -353,116 +353,165 @@ export default function DoctorChatDetailPage() {
   const isAccepted = !!chat.doctor_accepted_at;
 
   return (
-    <div className="h-full flex flex-col bg-slate-50 overflow-hidden relative">
+    <div className="h-full flex flex-col bg-background selection:bg-primary/10 relative overflow-hidden">
+      {/* Background Layers */}
+      <div className="fixed inset-0 pointer-events-none bg-mesh opacity-60 z-0" />
+      <div className="fixed inset-0 pointer-events-none bg-clinical opacity-[0.02] z-0" />
+
       {/* Header */}
-      <div className="shrink-0 sticky top-0 bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between z-30">
+      <div className="shrink-0 sticky top-0 bg-background/60 backdrop-blur-xl border-b border-border/40 px-6 py-4 flex items-center justify-between z-30 shadow-soft">
         <div className="flex items-center gap-4">
-          <button onClick={() => navigate(-1)} className="p-2 hover:bg-slate-100 rounded-lg">
-            <ArrowLeft className="w-5 h-5 text-slate-600" />
+          <button onClick={() => navigate(-1)} className="p-2.5 hover:bg-primary/5 rounded-xl transition-colors border border-transparent hover:border-primary/10">
+            <ArrowLeft className="w-5 h-5 text-muted-foreground" />
           </button>
-          <div>
-            <h1 className="text-lg font-semibold text-slate-900">{patientName}</h1>
-            <p className="text-sm text-slate-500">
+          <div className="space-y-0.5">
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl font-display font-black text-foreground tracking-tight">{patientName}</h1>
+              <Badge variant="outline" className="text-[9px] font-black uppercase tracking-widest bg-primary/10 text-primary border-primary/20">Active Session</Badge>
+            </div>
+            <p className="text-[10px] uppercase font-bold tracking-[0.15em] text-muted-foreground">
               {chat.status === 'active'
                 ? isAccepted
-                  ? 'Active consultation'
-                  : 'Pending acceptance'
-                : 'Completed consultation'}
+                  ? 'Authenticated Specialist Channel'
+                  : 'Awaiting Clinical Intake'
+                : 'Archived Encounter Record'}
             </p>
           </div>
         </div>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon">
-              <MoreVertical className="w-5 h-5" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {!isAccepted && chat.status === 'active' && (
-              <DropdownMenuItem onClick={() => setShowAcceptDialog(true)}>
-                Accept Consultation
+        <div className="flex items-center gap-2">
+           {isAccepted && chat.status === 'active' && (
+             <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setShowCloseDialog(true)}
+                className="hidden md:flex rounded-xl h-10 px-4 font-black uppercase tracking-widest text-[10px] border-amber-500/20 text-amber-600 hover:bg-amber-600 hover:text-white transition-all gap-2"
+             >
+                <XCircle className="w-3.5 h-3.5" /> End Session
+             </Button>
+           )}
+           <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="rounded-xl border border-transparent hover:border-border/40 h-10 w-10">
+                <MoreVertical className="w-5 h-5 text-muted-foreground" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="glass-premium border-border/40 w-52 p-2">
+              {!isAccepted && chat.status === 'active' && (
+                <DropdownMenuItem onClick={() => setShowAcceptDialog(true)} className="rounded-lg font-bold text-xs uppercase tracking-widest gap-3 py-2.5">
+                  <CheckCircleIcon className="w-4 h-4 text-primary" /> Accept Case
+                </DropdownMenuItem>
+              )}
+              {isAccepted && chat.status === 'active' && (
+                <DropdownMenuItem onClick={() => setShowCloseDialog(true)} className="rounded-lg font-bold text-xs uppercase tracking-widest gap-3 py-2.5 text-amber-600">
+                  <XCircle className="w-4 h-4" /> End Session
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuItem className="rounded-lg font-bold text-xs uppercase tracking-widest gap-3 py-2.5">
+                <FileText className="w-4 h-4" /> Patient Records
               </DropdownMenuItem>
-            )}
-            {isAccepted && chat.status === 'active' && (
-              <DropdownMenuItem onClick={() => setShowCloseDialog(true)} className="text-amber-600">
-                Close Consultation
+              <DropdownMenuItem className="rounded-lg font-bold text-xs uppercase tracking-widest gap-3 py-2.5 text-destructive">
+                <AlertCircle className="w-4 h-4" /> Report Issue
               </DropdownMenuItem>
-            )}
-            <DropdownMenuItem>Archive Chat</DropdownMenuItem>
-            <DropdownMenuItem className="text-red-600">Report Patient</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
 
-      {/* Consultation Info */}
-      <div className="shrink-0 sticky top-[68px] bg-blue-50 border-b border-blue-200 px-6 py-3 z-20">
-        <p className="text-sm text-blue-900">
-          <span className="font-medium">Reason:</span> {chat.reason_for_consultation}
-        </p>
-        {chat.patient_request_message && (
-          <p className="text-sm text-blue-900 mt-2">
-            <span className="font-medium">Patient Message:</span> {chat.patient_request_message}
-          </p>
-        )}
-      </div>
-
-      {/* Pending Badge */}
-      {!isAccepted && chat.status === 'active' && (
-        <div className="shrink-0 sticky top-[108px] bg-amber-50 border-b border-amber-200 px-6 py-3 flex items-center gap-2 z-10">
-          <Clock className="w-4 h-4 text-amber-600" />
-          <p className="text-sm text-amber-900">
-            Awaiting your acceptance to start the consultation
-          </p>
-        </div>
-      )}
-
-      {/* Closed Badge */}
-      {chat.status === 'closed' && (
-        <div className="shrink-0 sticky top-[108px] bg-slate-100 border-b border-slate-200 px-6 py-3 z-10">
-          <p className="text-sm text-slate-900 font-medium mb-1">Consultation Summary</p>
-          <p className="text-sm text-slate-700">{chat.doctor_summary}</p>
-          {chat.follow_up_required && (
-            <p className="text-sm text-amber-700 mt-2">
-              Follow-up required on: {chat.follow_up_date}
-            </p>
-          )}
-        </div>
-      )}
-
-      {/* Messages Container */}
-      <div className="flex-1 overflow-y-auto p-6">
-        <div className="max-w-3xl mx-auto space-y-4">
-          {messages.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-slate-600">
-                {isAccepted ? 'Message history is empty' : 'Accept the consultation to start messaging'}
-              </p>
+      <div className="flex-1 overflow-y-auto relative z-10 flex flex-col">
+        {/* Banner Section - Unified Style */}
+        <div className="shrink-0 glass border-b border-border/40 px-6 py-4 space-y-3 shadow-sm">
+            <div className="flex items-start gap-4">
+               <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 border border-primary/10">
+                  <Stethoscope className="h-5 w-5 text-primary" />
+               </div>
+               <div className="space-y-1">
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Chief Complaint</p>
+                  <p className="text-sm text-foreground font-bold tracking-tight leading-relaxed italic">
+                    "{chat.reason_for_consultation}"
+                  </p>
+               </div>
             </div>
-          ) : (
+            {chat.patient_request_message && (
+               <div className="flex items-start gap-4 pt-1 opacity-80">
+                  <div className="w-10 h-1 bg-primary/20 rounded-full mt-2.5 ml-0" />
+                  <div className="space-y-1">
+                     <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-muted-foreground">Patient Narrative</p>
+                     <p className="text-xs text-muted-foreground font-medium leading-relaxed italic">
+                        "{chat.patient_request_message}"
+                     </p>
+                  </div>
+               </div>
+            )}
+        </div>
+
+        {/* Status Indicators Layered onto the Background */}
+        {!isAccepted && chat.status === 'active' ? (
+          <div className="mx-6 mt-6 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
+            <div className="h-2 w-2 bg-amber-500 rounded-full animate-pulse shadow-sm" />
+            <p className="text-[11px] font-black uppercase tracking-widest text-amber-700">
+              Awaiting specialist validation to initiate secure channel
+            </p>
+          </div>
+        ) : null}
+
+        {chat.status === 'closed' ? (
+          <div className="mx-6 mt-6 p-5 glass-premium rounded-2xl border-border/40 space-y-3">
+             <div className="flex items-center gap-2 mb-1">
+                <ShieldCheck className="w-4 h-4 text-primary" />
+                <p className="text-[10px] font-black uppercase tracking-widest text-foreground">Encounter Summary</p>
+             </div>
+             <p className="text-sm text-muted-foreground font-medium italic border-l-2 border-primary/20 pl-4 py-1 leading-relaxed">{chat.doctor_summary}</p>
+             {chat.follow_up_required && (
+               <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-500/5 rounded-lg border border-amber-500/10 text-amber-700">
+                  <Calendar className="w-3 h-3" />
+                  <span className="text-[10px] font-bold">Repeat consultation scheduled: {chat.follow_up_date}</span>
+               </div>
+             )}
+          </div>
+        ) : null}
+
+        {/* Messages Container */}
+        <div className="flex-1 p-6 md:p-8">
+          <div className="max-w-4xl mx-auto space-y-6">
+            {messages.length === 0 ? (
+              <div className="py-24 text-center">
+                <div className="w-20 h-20 bg-muted/40 rounded-[2rem] flex items-center justify-center mx-auto mb-6">
+                   <MessageSquare className="w-10 h-10 text-muted-foreground/30" />
+                </div>
+                <p className="text-muted-foreground font-bold uppercase tracking-[0.2em] text-[11px]">
+                  {isAccepted ? 'Secure clinical channel established' : 'Accept the request to open transmission'}
+                </p>
+              </div>
+            ) : (
             messages.map((message) => (
               <div
                 key={message.id}
                 className={`flex ${message.sender_id === user.id ? 'justify-end' : 'justify-start'}`}
               >
                 <div
-                  className={`max-w-[75%] px-4 py-2 rounded-2xl shadow-sm ${
+                  className={`max-w-[85%] md:max-w-[70%] px-5 py-3 rounded-2xl shadow-soft ${
                     message.sender_id === user.id
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-white text-slate-900 border border-slate-200'
+                      ? 'bg-primary text-primary-foreground shadow-primary/20'
+                      : 'bg-card text-foreground border border-border/40 h-auto'
                   }`}
                 >
                   {message.message_type !== 'text' ? (
-                     <div className="flex items-center gap-3 py-1">
-                        <div className={`h-10 w-10 rounded-xl flex items-center justify-center shrink-0 ${message.sender_id === user.id ? 'bg-white/20' : 'bg-primary/10 text-primary'}`}>
-                           {message.message_type === 'prescription' ? <Pill className="h-5 w-5" /> : <FileText className="h-5 w-5" />}
+                     <div className="flex items-center gap-4 py-2">
+                        <div className={`h-12 w-12 rounded-xl flex items-center justify-center shrink-0 shadow-inner ${message.sender_id === user.id ? 'bg-white/20' : 'bg-primary/5 text-primary border border-primary/10'}`}>
+                           {message.message_type === 'prescription' ? <Pill className="h-6 w-6" /> : <FileText className="h-6 w-6" />}
                         </div>
-                        <div className="min-w-0">
-                           <p className="text-xs font-bold truncate leading-tight">{message.content}</p>
-                           <p className={`text-[10px] uppercase font-black tracking-tighter mt-0.5 ${message.sender_id === user.id ? 'text-primary-foreground/60' : 'text-muted-foreground'}`}>Clinical Record Issued</p>
+                        <div className="min-w-0 flex-1">
+                           <p className="text-[11px] font-black uppercase tracking-widest leading-none mb-1 text-primary-foreground/60">{message.message_type === 'prescription' ? 'Digital Script' : 'Clinical Record'}</p>
+                           <p className="text-sm font-bold truncate tracking-tight">{message.content}</p>
                         </div>
-                        <Button variant="ghost" size="icon" className={`h-8 w-8 rounded-lg ${message.sender_id === user.id ? 'hover:bg-white/20' : 'hover:bg-black/5'}`}>
-                           <Download className="h-3.5 w-3.5" />
+                        <Button 
+                           variant="ghost" 
+                           size="icon" 
+                           onClick={() => window.open(message.attachment_url, '_blank')}
+                           className={`h-10 w-10 rounded-xl transition-all ${message.sender_id === user.id ? 'hover:bg-white/20 text-white' : 'hover:bg-primary/5 text-primary'}`}
+                        >
+                           <Download className="h-4 w-4" />
                         </Button>
                      </div>
                   ) : (
@@ -488,21 +537,25 @@ export default function DoctorChatDetailPage() {
           <div ref={messagesEndRef} />
         </div>
       </div>
+      </div>
 
       {/* Input Area */}
       {!isAccepted ? (
-        <div className="bg-white border-t border-slate-200 px-6 py-4">
-          <Button
-            onClick={() => setShowAcceptDialog(true)}
-            className="w-full bg-green-600 hover:bg-green-700 gap-2 h-11"
-          >
-            <CheckCircleIcon className="w-4 h-4" />
-            Accept Consultation
-          </Button>
+        <div className="shrink-0 sticky bottom-0 bg-background/80 backdrop-blur-xl border-t border-border/40 px-6 py-6 z-30">
+          <div className="max-w-4xl mx-auto">
+            <Button
+              onClick={() => setShowAcceptDialog(true)}
+              variant="hero"
+              className="w-full h-14 rounded-2xl gap-3 font-black uppercase tracking-widest text-xs shadow-elevated"
+            >
+              <CheckCircleIcon className="w-5 h-5" />
+              Assume Clinical Responsibility
+            </Button>
+          </div>
         </div>
       ) : chat.status === 'active' ? (
-        <div className="shrink-0 sticky bottom-0 bg-white border-t border-slate-200 px-6 py-4 z-30">
-          <div className="max-w-3xl mx-auto flex items-center gap-3">
+        <div className="shrink-0 sticky bottom-0 bg-background/80 backdrop-blur-xl border-t border-border/40 px-6 py-6 z-30">
+          <div className="max-w-4xl mx-auto flex items-center gap-4">
             <input 
               type="file" 
               ref={fileInputRef} 
@@ -516,69 +569,68 @@ export default function DoctorChatDetailPage() {
                    variant="ghost" 
                    size="icon" 
                    disabled={isSharing}
-                   className="h-11 w-11 shrink-0 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-600"
+                   className="h-12 w-12 shrink-0 rounded-2xl bg-muted/40 hover:bg-muted/60 text-primary border border-border/40 nexus-glow"
                 >
                   {isSharing ? <Loader2 className="h-5 w-5 animate-spin" /> : <Plus className="h-5 w-5" />}
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" side="top" className="glass-premium border-white/10 w-48 p-2">
+              <DropdownMenuContent align="start" side="top" className="glass-premium border-border/40 w-52 p-2 mb-2">
                 <DropdownMenuItem 
                   onClick={() => {
                     setPendingShareType('report');
                     setTimeout(() => fileInputRef.current?.click(), 0);
                   }}
-                  className="rounded-xl gap-3 py-2.5 cursor-pointer"
+                  className="rounded-xl gap-4 py-3 cursor-pointer group"
                 >
-                  <div className="h-8 w-8 rounded-lg bg-indigo-500/10 text-indigo-500 flex items-center justify-center">
-                    <FileText className="h-4 w-4" />
+                  <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center border border-primary/5 group-hover:bg-primary transition-colors group-hover:text-white">
+                    <FileText className="h-5 w-5" />
                   </div>
-                  <span className="text-[11px] font-bold uppercase tracking-widest text-foreground">Share Report</span>
+                  <div className="flex flex-col">
+                    <span className="text-xs font-black uppercase tracking-widest text-foreground">Lab Result</span>
+                    <span className="text-[9px] text-muted-foreground uppercase font-bold tracking-widest">Share Report</span>
+                  </div>
                 </DropdownMenuItem>
                 <DropdownMenuItem 
                   onClick={() => {
                     setPendingShareType('prescription');
                     setTimeout(() => fileInputRef.current?.click(), 0);
                   }}
-                  className="rounded-xl gap-3 py-2.5 cursor-pointer"
+                  className="rounded-xl gap-4 py-3 cursor-pointer group mt-1"
                 >
-                  <div className="h-8 w-8 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
-                    <Pill className="h-4 w-4" />
+                  <div className="h-10 w-10 rounded-xl bg-accent/10 text-accent-foreground flex items-center justify-center border border-accent/5 group-hover:bg-accent transition-colors group-hover:text-white">
+                    <Pill className="h-5 w-5" />
                   </div>
-                  <span className="text-[11px] font-bold uppercase tracking-widest text-foreground">Share Script</span>
+                  <div className="flex flex-col">
+                    <span className="text-xs font-black uppercase tracking-widest text-foreground">E-Script</span>
+                    <span className="text-[9px] text-muted-foreground uppercase font-bold tracking-widest">Digital Prescription</span>
+                  </div>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
 
             <form onSubmit={handleSendMessage} className="flex-1 flex gap-3">
               <Input
-                placeholder="Respond to clinical inquiry..."
+                placeholder="Secure Specialist Response..."
                 value={messageInput}
                 onChange={(e) => setMessageInput(e.target.value)}
                 disabled={!user || sending}
-                className="flex-1 h-11 rounded-2xl border-slate-200 focus:ring-primary/20"
+                className="flex-1 h-12 px-5 rounded-2xl bg-card border-border/40 focus:border-primary/40 focus:ring-primary/10 transition-all font-medium"
               />
               <Button
                 type="submit"
                 disabled={!user || sending || !messageInput.trim()}
-                className="bg-primary hover:bg-primary/90 gap-2 h-11 px-6 rounded-2xl shadow-lg shadow-primary/20 transition-all font-bold uppercase tracking-widest text-[11px]"
+                variant="hero"
+                className="h-12 px-8 rounded-2xl shadow-elevated transition-all font-black uppercase tracking-widest text-[11px]"
               >
-                {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                Send
-              </Button>
-              <Button
-                onClick={() => setShowCloseDialog(true)}
-                variant="outline"
-                className="h-11 rounded-2xl bg-amber-500/10 border-amber-500/20 text-amber-600 hover:bg-amber-600 hover:text-white gap-2 px-6 font-bold uppercase tracking-widest text-[10px]"
-              >
-                <XCircle className="w-4 h-4" />
-                Close
+                {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="w-4 h-4 mr-2" />}
+                Transmit
               </Button>
             </form>
           </div>
         </div>
       ) : (
-        <div className="shrink-0 sticky bottom-0 bg-slate-100 border-t border-slate-200 px-6 py-4 text-center z-30">
-          <p className="text-slate-600 text-sm">This consultation has been closed</p>
+        <div className="shrink-0 sticky bottom-0 bg-muted/30 border-t border-border/40 px-6 py-6 text-center z-30">
+          <p className="text-muted-foreground font-black uppercase tracking-[0.3em] text-[10px]">Transmission Channel Terminated</p>
         </div>
       )}
 

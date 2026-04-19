@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -236,188 +237,244 @@ export default function DoctorConsultationsPage() {
   const active = chats.filter(c => c.doctor_accepted_at && c.status === 'active');
 
   return (
-    <div className="min-h-screen bg-slate-50 relative">
-      {/* Premium Background for Archive */}
-      {activeTab === 'archive' && (
-        <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden">
-          <div className="absolute inset-0 opacity-[0.04] blur-[80px] scale-125 animate-drift"
-            style={{ backgroundImage: "url('/dashboard-bg.png')", backgroundSize: 'cover' }} />
-        </div>
-      )}
+    <div className="min-h-screen bg-background relative selection:bg-primary/10 transition-colors duration-500">
+      {/* Dynamic Backgrounds */}
+      <div className="fixed inset-0 pointer-events-none -z-10 bg-mesh opacity-60" />
+      <div className="fixed inset-0 pointer-events-none -z-10 bg-clinical opacity-[0.03]" />
+      
+      {/* Decorative Blob */}
+      <div className="fixed top-[-10%] right-[-5%] w-[40%] h-[40%] rounded-full bg-primary/5 blur-[120px] pointer-events-none -z-10 animate-orbit" />
+      <div className="fixed bottom-[-10%] left-[-5%] w-[30%] h-[30%] rounded-full bg-accent/5 blur-[100px] pointer-events-none -z-10" />
 
-      {/* Header */}
-      <div className="bg-white border-b border-slate-200 sticky top-0 z-20">
-        <div className="max-w-6xl mx-auto px-6 py-6 flex justify-between items-end">
-          <div>
-            <div className="flex items-center gap-2 text-[10px] font-bold tracking-[0.3em] text-primary uppercase mb-2">
-              <Stethoscope className="h-3 w-3 fill-primary" />
-              SPECIALIST COMMAND CENTER
+      {/* Header Section */}
+      <div className="sticky top-0 z-30 border-b border-border/40 glass-premium shadow-soft">
+        <div className="max-w-7xl mx-auto px-6 py-6 md:py-8">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+            <div className="space-y-1">
+              <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary mb-2 shadow-sm">
+                <Stethoscope className="h-3 w-3 fill-primary/20" />
+                <span className="text-[10px] font-black uppercase tracking-[0.2em]">Clinical Command Center</span>
+              </div>
+              <h1 className="text-4xl font-display font-bold text-foreground tracking-tight">
+                {activeTab === 'archive' ? 'Encounter ' : 'Patient '}
+                <span className="text-gradient font-black">{activeTab === 'archive' ? 'Archive' : 'Consultations'}</span>
+              </h1>
+              <p className="text-muted-foreground font-medium text-sm max-w-lg">
+                {activeTab === 'archive' 
+                  ? 'Access your unified master archive of past encounters and clinical records.' 
+                  : 'Manage real-time patient engagements, triage incoming requests, and monitor live sessions.'}
+              </p>
             </div>
-            <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
-              {activeTab === 'archive' ? 'Consultation ' : ''}
-              <span className="text-primary">{activeTab === 'archive' ? 'Archive' : 'Consultations'}</span>
-            </h1>
-            <p className="text-slate-500 mt-1 font-medium">
-              {activeTab === 'archive' 
-                ? 'Your all-in-one searchable master archive of past encounters' 
-                : 'Manage live patient engagements and incoming requests'}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div className="max-w-6xl mx-auto px-6 py-8">
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
-          <div className="flex items-center justify-between mb-8" id="tour-portal-tabs">
-            <TabsList className="bg-slate-200/50 p-1.5 rounded-2xl border border-slate-200 shadow-sm overflow-hidden h-14">
-              <TabsTrigger value="pending" className="relative px-8 py-3 rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-lg transition-all font-bold text-sm tracking-tight">
-                Pending ({pending.length})
-                {pending.length > 0 && <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white animate-pulse" />}
-              </TabsTrigger>
-              <TabsTrigger value="active" className="px-8 py-3 rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-lg transition-all font-bold text-sm tracking-tight">
-                Active ({active.length})
-              </TabsTrigger>
-              <TabsTrigger value="archive" className="px-8 py-3 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-lg transition-all font-bold text-sm tracking-tight flex items-center gap-2">
-                <Archive className="w-4 h-4" /> Consultation Archive
-              </TabsTrigger>
-            </TabsList>
 
             {activeTab === 'archive' && (
-              <div className="relative group w-80" id="tour-portal-search">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-primary transition-colors" />
+              <div className="relative group w-full md:w-80" id="tour-portal-search">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors duration-300" />
                 <Input
-                  placeholder="Universal patient or record search..."
+                  placeholder="Universal search..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-11 h-12 bg-white/50 border-slate-200 focus:bg-white rounded-xl shadow-sm font-medium"
+                  className="pl-11 h-12 bg-background/50 border-border/40 focus:border-primary/40 focus:ring-primary/10 rounded-2xl shadow-soft font-medium transition-all"
                 />
               </div>
             )}
           </div>
+        </div>
+      </div>
 
-          {/* Pending Requests */}
-          <TabsContent value="pending" className="mt-0 space-y-4">
-            {loadingChats ? (
-              <div className="py-20 flex flex-col items-center opacity-40"><Loader2 className="h-10 w-10 animate-spin mb-4" /><p className="font-bold uppercase tracking-widest text-[10px]">Syncing clinical queue...</p></div>
-            ) : pending.length === 0 ? (
-              <Card className="p-16 text-center border-dashed border-slate-200 glass-slate">
-                <Inbox className="w-16 h-16 text-slate-200 mx-auto mb-4" />
-                <h3 className="text-xl font-bold text-slate-900 mb-2 tracking-tight">No pending requests</h3>
-                <p className="text-slate-500 max-w-xs mx-auto text-sm font-medium">New requests will appear here in real-time. You're all caught up!</p>
-              </Card>
-            ) : (
-              pending.map(c => (
-                <Card key={c.id} className="p-0 overflow-hidden border-slate-200 hover:border-amber-500/50 transition-all shadow-sm hover:shadow-xl group">
-                  <div className="flex">
-                    <div className="w-1.5 bg-amber-500" />
-                    <div className="flex-1 p-6">
-                      <div className="flex items-start justify-between mb-6">
-                        <div className="flex gap-5">
-                          <div className="h-16 w-16 rounded-3xl bg-slate-100 flex items-center justify-center text-slate-900 font-black text-2xl border border-slate-200 group-hover:scale-110 transition-transform">
-                            {c.patient_name.charAt(0)}
-                          </div>
-                          <div>
-                            <h3 className="text-2xl font-black text-slate-900 tracking-tighter leading-none mb-2">{c.patient_name}</h3>
-                            <div className="flex items-center gap-2">
-                              {c.patient_age && <Badge variant="outline" className="bg-blue-50/50 text-blue-700 border-blue-100 text-[10px] font-black">{c.patient_age}y</Badge>}
-                              <span className="text-[10px] font-bold text-slate-400 flex items-center gap-1.5 uppercase tracking-widest"><Clock className="w-3 h-3" /> Requested {formatDate(c.created_at!)}</span>
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="space-y-8">
+          <div className="flex items-center justify-between" id="tour-portal-tabs">
+            <TabsList className="bg-muted/40 p-1.5 rounded-2xl border border-border/40 shadow-card h-14 w-full md:w-auto">
+              <TabsTrigger 
+                value="pending" 
+                className="relative flex-1 md:flex-none px-8 py-2.5 rounded-xl data-[state=active]:bg-card data-[state=active]:text-primary data-[state=active]:shadow-elevated transition-all font-bold text-xs uppercase tracking-widest"
+              >
+                Requests
+                {pending.length > 0 && (
+                  <Badge className="ml-2 bg-destructive text-destructive-foreground border-none rounded-full px-1.5 h-4 min-w-[16px] text-[9px] animate-pulse">
+                    {pending.length}
+                  </Badge>
+                )}
+              </TabsTrigger>
+              <TabsTrigger 
+                value="active" 
+                className="flex-1 md:flex-none px-8 py-2.5 rounded-xl data-[state=active]:bg-card data-[state=active]:text-primary data-[state=active]:shadow-elevated transition-all font-bold text-xs uppercase tracking-widest"
+              >
+                In Progress
+              </TabsTrigger>
+              <TabsTrigger 
+                value="archive" 
+                className="flex-1 md:flex-none px-8 py-2.5 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-elevated transition-all font-bold text-xs uppercase tracking-widest flex items-center gap-2"
+              >
+                <Archive className="w-3.5 h-3.5" /> Archive
+              </TabsTrigger>
+            </TabsList>
+          </div>
+
+          {/* Tab Contents with improved spacing and design */}
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+            {/* Pending Requests */}
+            <TabsContent value="pending" className="mt-0 grid grid-cols-1 gap-6">
+              {loadingChats ? (
+                <div className="py-24 flex flex-col items-center justify-center opacity-40">
+                  <Loader2 className="h-10 w-10 animate-spin text-primary mb-4" />
+                  <p className="font-bold uppercase tracking-[0.2em] text-[10px]">Syncing clinical queue...</p>
+                </div>
+              ) : pending.length === 0 ? (
+                <div className="py-24 text-center glass-premium rounded-[32px] border-dashed border-border/60">
+                  <div className="w-20 h-20 bg-muted/30 rounded-[2rem] flex items-center justify-center mx-auto mb-6">
+                    <Inbox className="w-10 h-10 text-muted-foreground/40" />
+                  </div>
+                  <h3 className="text-2xl font-display font-bold text-foreground mb-2">No Requests Pending</h3>
+                  <p className="text-muted-foreground max-w-sm mx-auto font-medium">Your queue is currently empty. New patient intake requests will appear here in real-time.</p>
+                </div>
+              ) : (
+                pending.map((c, i) => (
+                  <Card key={c.id} className="overflow-hidden border-border/40 glass-premium hover:border-primary/40 transition-all duration-500 shadow-card hover:shadow-elevated group" style={{ animationDelay: `${i * 100}ms` }}>
+                    <div className="flex flex-col md:flex-row">
+                      <div className="w-full md:w-1.5 bg-gradient-to-b from-primary to-accent" />
+                      <CardContent className="flex-1 p-8">
+                        <div className="flex flex-col md:flex-row md:items-start justify-between gap-8 mb-8">
+                          <div className="flex gap-6">
+                            <div className="h-16 w-16 rounded-[2rem] bg-gradient-to-br from-primary/10 to-transparent flex items-center justify-center text-primary font-display font-black text-2xl border border-primary/10 group-hover:scale-105 transition-transform duration-500">
+                              {c.patient_name.charAt(0)}
+                            </div>
+                            <div className="space-y-1.5">
+                              <h3 className="text-2xl font-display font-black text-foreground tracking-tight leading-none group-hover:text-primary transition-colors">{c.patient_name}</h3>
+                              <div className="flex items-center flex-wrap gap-2">
+                                {c.patient_age && <Badge className="bg-secondary text-secondary-foreground border-none font-bold text-[10px]">{c.patient_age} Years</Badge>}
+                                {c.patient_gender && <Badge variant="outline" className="border-border/60 font-medium text-[10px] capitalize">{c.patient_gender}</Badge>}
+                                <span className="text-[10px] font-bold text-muted-foreground flex items-center gap-1.5 uppercase tracking-widest"><Clock className="w-3.5 h-3.5" /> {formatDate(c.created_at!)}</span>
+                              </div>
                             </div>
                           </div>
+                          <Badge className="bg-accent/10 text-accent-foreground border-accent/20 text-[10px] font-black uppercase tracking-[0.2em] px-4 py-1.5 rounded-full shadow-soft ml-auto md:ml-0">Critical Triage</Badge>
                         </div>
-                        <Badge className="bg-amber-100 text-amber-900 hover:bg-amber-100 border border-amber-200 text-[10px] font-black uppercase tracking-[0.2em] px-3 py-1">Pending Intake</Badge>
-                      </div>
-                      <div className="bg-slate-50 border border-slate-100 p-6 rounded-[2rem] mb-6">
-                        <p className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-400 mb-2">Chief Complaint</p>
-                        <p className="text-slate-900 font-bold leading-relaxed text-lg tracking-tight">{c.reason_for_consultation}</p>
-                      </div>
-                      <div className="flex gap-4 pt-4 border-t border-slate-100">
-                        <Button onClick={() => handleAcceptChat(c.id!)} className="flex-1 bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 h-14 rounded-2xl font-black text-sm tracking-widest uppercase">Accept Consultation</Button>
-                        <Button onClick={() => handleRejectChat(c.id!)} variant="outline" className="flex-1 h-14 rounded-2xl border-slate-200 hover:bg-red-50 hover:text-red-500 hover:border-red-100 font-black text-sm tracking-widest uppercase transition-all">Decline</Button>
-                      </div>
-                    </div>
-                  </div>
-                </Card>
-              ))
-            )}
-          </TabsContent>
+                        
+                        <div className="bg-background/40 border border-border/40 p-6 rounded-[2rem] mb-8 nexus-glow">
+                          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground mb-3 flex items-center gap-2">
+                            <FileText className="w-3.5 h-3.5" /> Chief Complaint
+                          </p>
+                          <p className="text-foreground font-bold leading-relaxed text-lg tracking-tight italic">
+                            "{c.reason_for_consultation}"
+                          </p>
+                        </div>
 
-          {/* Active Consultations */}
-          <TabsContent value="active" className="mt-0 space-y-3">
-             {active.length === 0 ? (
-               <Card className="p-16 text-center border-dashed border-slate-200 glass-slate">
-                  <MessageSquare className="w-16 h-16 text-slate-200 mx-auto mb-4" />
-                  <p className="text-slate-900 font-bold text-xl tracking-tight">No active sessions</p>
-                  <p className="text-slate-500 mt-2 text-sm font-medium">Accept a pending request to start consulting.</p>
-               </Card>
-             ) : (
-               active.map(c => (
-                 <Card key={c.id} className="p-6 cursor-pointer hover:shadow-2xl hover:border-primary/20 transition-all group bg-white border-slate-200" onClick={() => navigate(`/doctor/chat/${c.id}`)}>
-                    <div className="flex items-center justify-between">
-                       <div className="flex items-center gap-6">
-                          <div className="h-16 w-16 rounded-[2rem] bg-primary/5 text-primary flex items-center justify-center font-black text-2xl group-hover:bg-primary group-hover:text-white transition-all">
-                             {c.patient_name.charAt(0)}
-                          </div>
-                          <div>
-                             <h3 className="font-bold text-slate-900 text-xl tracking-tight group-hover:text-primary transition-colors">{c.patient_name}</h3>
-                             <p className="text-sm font-semibold text-slate-500 mt-1">{c.reason_for_consultation}</p>
-                             <div className="flex items-center gap-4 mt-3">
-                                <span className="flex items-center gap-1.5 text-green-600 font-black uppercase text-[10px] tracking-widest">
-                                   <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" /> Live Session
-                                </span>
-                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{formatDate(c.doctor_accepted_at || c.created_at!)}</span>
-                             </div>
-                          </div>
-                       </div>
-                       <ChevronRight className="h-8 w-8 text-slate-200 group-hover:text-primary group-hover:translate-x-1 transition-all" />
-                    </div>
-                 </Card>
-               ))
-             )}
-          </TabsContent>
-
-          {/* Master Archive */}
-          <TabsContent value="archive" className="mt-0 space-y-4 animate-slide-up">
-             {loadingHistory ? (
-                <div className="py-20 flex flex-col items-center"><Loader2 className="h-10 w-10 animate-spin text-primary" /></div>
-             ) : filteredHistory.length === 0 ? (
-                <Card className="p-24 text-center border-dashed border-white/20 glass-premium">
-                   <Archive className="w-16 h-16 text-slate-200 mx-auto mb-4" />
-                   <h3 className="text-xl font-bold text-slate-900 tracking-tight opacity-50 uppercase">Zero Archive Entries</h3>
-                   <p className="text-slate-500 mt-2 font-medium italic">Clear your search parameters or try a new patient name.</p>
-                </Card>
-             ) : (
-               filteredHistory.map((item, idx) => (
-                 <Card key={item.id} className="glass-premium border-white/5 hover:border-primary/30 transition-all group overflow-hidden relative">
-                    <CardContent className="p-6">
-                       <div className="flex items-center justify-between gap-6">
-                          <div className="flex items-start gap-6 flex-1 min-w-0">
-                             <div className={`h-14 w-14 rounded-2xl flex items-center justify-center shadow-inner ${item.type === 'record' ? 'bg-primary/10' : 'bg-slate-100'}`}>
-                                {item.type === 'record' ? <CheckCircle2 className="h-6 w-6 text-primary" /> : <History className="h-6 w-6 text-slate-400" />}
-                             </div>
-                             <div className="min-w-0 flex-1">
-                                <div className="flex items-center gap-3 mb-2">
-                                   <h3 className="font-black text-xl text-slate-900 tracking-tighter leading-none">{item.patient_name}</h3>
-                                   <Badge variant="outline" className={`text-[10px] font-black uppercase tracking-widest border-2 py-0.5 ${typeColor[item.consultation_type] || ''}`}>{item.consultation_type.replace('_', ' ')}</Badge>
-                                   {item.type === 'session' && <Badge variant="outline" className="text-[10px] font-black uppercase tracking-widest bg-slate-100 text-slate-500 border-slate-200">Session Archive</Badge>}
-                                </div>
-                                <p className="font-bold text-slate-700 text-base mb-1 truncate">{item.title}</p>
-                                {item.subtitle && <p className="text-xs font-semibold text-slate-500 leading-tight italic opacity-80">"{item.subtitle}"</p>}
-                                <div className="flex items-center gap-6 mt-4">
-                                   <span className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400"><Calendar className="h-3.5 w-3.5" /> {new Date(item.date).toLocaleDateString([], { day: 'numeric', month: 'short', year: 'numeric' })}</span>
-                                   <span className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400"><User className="h-3.5 w-3.5" /> UID: {item.patient_id.slice(0, 8)}</span>
-                                </div>
-                             </div>
-                          </div>
-                          <Button size="sm" variant="outline" className="rounded-xl h-12 px-6 font-black uppercase tracking-widest text-[10px] border-primary/20 text-primary hover:bg-primary hover:text-white transition-all gap-2" 
-                             onClick={() => item.type === 'record' ? navigate(`/doctor/patient/${item.patient_id}`) : navigate(`/doctor/chat/${item.id}`)}>
-                             {item.type === 'record' ? 'View Profile' : 'View Archive'} <ArrowRight className="h-4 w-4" />
+                        <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t border-border/40">
+                          <Button 
+                            onClick={() => handleAcceptChat(c.id!)} 
+                            variant="hero" 
+                            className="flex-1 h-14 rounded-2xl font-bold text-xs tracking-widest uppercase shadow-elevated"
+                          >
+                            Accept Consultation
                           </Button>
-                       </div>
-                    </CardContent>
-                 </Card>
-               ))
-             )}
-          </TabsContent>
+                          <Button 
+                            onClick={() => handleRejectChat(c.id!)} 
+                            variant="outline" 
+                            className="flex-1 h-14 rounded-2xl border-border/60 hover:bg-destructive/5 hover:text-destructive hover:border-destructive/20 font-bold text-xs tracking-widest uppercase transition-all"
+                          >
+                            Decline Request
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </div>
+                  </Card>
+                ))
+              )}
+            </TabsContent>
+
+            {/* In Progress Sessions */}
+            <TabsContent value="active" className="mt-0 grid grid-cols-1 gap-4">
+               {active.length === 0 ? (
+                 <div className="py-24 text-center glass-premium rounded-[32px] border-dashed border-border/60">
+                    <MessageSquare className="w-16 h-16 text-muted-foreground/30 mx-auto mb-6" />
+                    <h3 className="text-xl font-display font-bold text-foreground mb-2">No Active Sessions</h3>
+                    <p className="text-muted-foreground max-w-sm mx-auto font-medium">Your active consultations will appear here once accepted.</p>
+                 </div>
+               ) : (
+                 active.map((c, i) => (
+                   <Card key={c.id} className="cursor-pointer glass-premium border-border/40 hover:border-primary/40 hover:shadow-elevated transition-all duration-300 group p-2 rounded-[2.5rem]" 
+                     onClick={() => navigate(`/doctor/chat/${c.id}`)}
+                     style={{ animationDelay: `${i * 100}ms` }}
+                   >
+                     <CardContent className="p-4 md:p-6 flex items-center justify-between gap-6">
+                        <div className="flex items-center gap-6 flex-1 min-w-0">
+                           <div className="h-16 w-16 rounded-[2rem] bg-gradient-to-br from-primary to-primary/60 text-primary-foreground flex items-center justify-center font-display font-black text-2xl shadow-primary/20 shadow-lg group-hover:scale-105 transition-all duration-500">
+                              {c.patient_name.charAt(0)}
+                           </div>
+                           <div className="min-w-0">
+                              <h3 className="font-display font-bold text-foreground text-xl tracking-tight group-hover:text-primary transition-colors">{c.patient_name}</h3>
+                              <p className="text-sm font-semibold text-muted-foreground mt-1 truncate max-w-md">{c.reason_for_consultation}</p>
+                              <div className="flex items-center gap-4 mt-3">
+                                 <span className="flex items-center gap-2 text-success font-black uppercase text-[10px] tracking-widest bg-success/10 px-2.5 py-1 rounded-full border border-success/20">
+                                    <div className="w-1.5 h-1.5 bg-success rounded-full animate-pulse" /> Live Stream
+                                 </span>
+                                 <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
+                                    <Clock className="w-3.5 h-3.5" /> {formatDate(c.doctor_accepted_at || c.created_at!)}
+                                 </span>
+                              </div>
+                           </div>
+                        </div>
+                        <div className="h-12 w-12 rounded-2xl bg-muted/30 flex items-center justify-center group-hover:bg-primary/10 transition-colors duration-300">
+                          <ChevronRight className="h-6 w-6 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                        </div>
+                     </CardContent>
+                   </Card>
+                 ))
+               )}
+            </TabsContent>
+
+            {/* Archive Content */}
+            <TabsContent value="archive" className="mt-0 grid grid-cols-1 gap-4">
+               {loadingHistory ? (
+                  <div className="py-24 flex flex-col items-center justify-center opacity-40">
+                    <Loader2 className="h-10 w-10 animate-spin text-primary mb-4" />
+                    <p className="font-bold uppercase tracking-[0.2em] text-[10px]">Filtering archive...</p>
+                  </div>
+               ) : filteredHistory.length === 0 ? (
+                  <div className="py-24 text-center glass-premium rounded-[32px] border-dashed border-border/60">
+                     <Archive className="w-16 h-16 text-muted-foreground/30 mx-auto mb-6" />
+                     <h3 className="text-xl font-display font-bold text-foreground opacity-50 uppercase tracking-widest">Master Archive Null</h3>
+                     <p className="text-muted-foreground mt-2 font-medium">Try adjusting your search parameters to find the specific patient record.</p>
+                  </div>
+               ) : (
+                 filteredHistory.map((item, i) => (
+                   <Card key={item.id} className="glass-premium border-border/40 hover:border-primary/20 hover:shadow-card transition-all duration-300 group overflow-hidden relative" style={{ animationDelay: `${i * 50}ms` }}>
+                      <CardContent className="p-6">
+                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                            <div className="flex items-start gap-6 flex-1 min-w-0">
+                               <div className={`h-14 w-14 rounded-2xl flex items-center justify-center shadow-inner shrink-0 ${item.type === 'record' ? 'bg-primary/10 text-primary border border-primary/10' : 'bg-muted/40 text-muted-foreground'}`}>
+                                  {item.type === 'record' ? <CheckCircle2 className="h-6 w-6" /> : <History className="h-6 w-6" />}
+                               </div>
+                               <div className="min-w-0 flex-1 space-y-1">
+                                  <div className="flex flex-wrap items-center gap-3 mb-1">
+                                     <h3 className="font-display font-black text-xl text-foreground tracking-tight leading-none">{item.patient_name}</h3>
+                                     <Badge variant="outline" className={`text-[9px] font-black uppercase tracking-[0.2em] border-primary/20 py-0.5 px-2 rounded-md ${typeColor[item.consultation_type] || 'bg-slate-100'}`}>{item.consultation_type.replace('_', ' ')}</Badge>
+                                     {item.type === 'session' && <Badge variant="outline" className="text-[9px] font-black uppercase tracking-[0.2em] bg-muted/40 text-muted-foreground border-border/40 py-0.5 px-2 rounded-md">Archive Session</Badge>}
+                                  </div>
+                                  <p className="font-bold text-foreground text-base truncate">{item.title}</p>
+                                  {item.subtitle && <p className="text-xs font-semibold text-muted-foreground leading-tight italic opacity-80">"{item.subtitle}"</p>}
+                                  <div className="flex items-center gap-6 mt-4">
+                                     <span className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground"><Calendar className="h-3.5 w-3.5" /> {new Date(item.date).toLocaleDateString([], { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                                     <span className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground"><User className="h-3.5 w-3.5" /> UID: {item.patient_id.slice(0, 8)}</span>
+                                  </div>
+                               </div>
+                            </div>
+                            <Button 
+                               size="sm" 
+                               variant="outline" 
+                               className="w-full md:w-auto rounded-xl h-12 px-6 font-black uppercase tracking-widest text-[10px] border-primary/20 text-primary hover:bg-primary hover:text-primary-foreground transition-all gap-2 shadow-soft" 
+                               onClick={() => item.type === 'record' ? navigate(`/doctor/patient/${item.patient_id}`) : navigate(`/doctor/chat/${item.id}`)}
+                            >
+                               {item.type === 'record' ? 'Clinical Profile' : 'View Encounters'} <ArrowRight className="h-4 w-4" />
+                            </Button>
+                         </div>
+                      </CardContent>
+                   </Card>
+                 ))
+               )}
+            </TabsContent>
+          </div>
         </Tabs>
       </div>
     </div>

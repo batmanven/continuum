@@ -26,6 +26,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
+import { consultationRecordService } from '@/services/consultationRecordService';
 
 const SPECIALIZATIONS = [
   'General Practice',
@@ -366,7 +367,7 @@ export default function DoctorSearchPage() {
                       </div>
                     </div>
 
-                    <div className="flex flex-col sm:items-end gap-5 pt-6 sm:pt-0 sm:border-l border-border/40 sm:pl-8">
+                    <div className="flex flex-col sm:items-end justify-center gap-4 pt-6 sm:pt-0 sm:border-l border-border/40 sm:pl-8 min-w-[200px]">
                       {doctor.consultation_fee_usd && (
                         <div className="text-left sm:text-right">
                           <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Fee per session</p>
@@ -374,43 +375,16 @@ export default function DoctorSearchPage() {
                             ₹{doctor.consultation_fee_usd}
                           </p>
                         </div>
-                        <span className="text-sm font-medium text-slate-700">
-                          {doctor.average_rating?.toFixed(1)} ({doctor.total_consultations || 0} consultations)
-                        </span>
-                      </div>
-                    )}
-
-                    {/* Verification Badge */}
-                    <div className="mt-3 flex gap-2">
-                      {doctor.verification_status === 'verified' ? (
-                        <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
-                          ✓ Verified Doctor
-                        </Badge>
-                      ) : (
-                        <Badge variant="secondary" className="bg-amber-100 text-amber-800 hover:bg-amber-100 border-amber-200">
-                          ⚠ Verification Pending
-                        </Badge>
                       )}
+                      
+                      <Button
+                        onClick={() => handleStartConsultation(doctor)}
+                        className="w-full sm:w-auto group/btn gap-2 rounded-2xl h-12 px-6 shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all font-semibold"
+                      >
+                        Start Consultation
+                        <ChevronRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
+                      </Button>
                     </div>
-                  </div>
-
-                  {/* Consultation Fee and CTA */}
-                  <div className="ml-4 flex flex-col items-end justify-between h-full">
-                    {doctor.consultation_fee_usd && (
-                      <div className="text-right mb-4">
-                        <p className="text-xs text-slate-500">Consultation Fee</p>
-                        <p className="text-xl font-bold text-slate-900">
-                          ₹{doctor.consultation_fee_usd}
-                        </p>
-                      </div>
-                    )}
-                    <Button
-                      onClick={() => handleStartConsultation(doctor)}
-                      className="group/btn gap-2"
-                    >
-                      Start Consultation
-                      <ChevronRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
-                    </Button>
                   </div>
                 </Card>
               ))}

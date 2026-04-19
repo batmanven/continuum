@@ -49,6 +49,26 @@ export class ProfilesService {
       return { error: 'Failed to fetch profile' };
     }
   }
+
+  async checkEmailByRole(email: string): Promise<{ data?: UserProfile | null; error?: string }> {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('email', email)
+        .maybeSingle();
+
+      if (error) {
+        console.error('Error checking email role:', error);
+        return { error: error.message };
+      }
+
+      return { data };
+    } catch (error) {
+      console.error('Unexpected error checking email role:', error);
+      return { error: 'Failed to verify account category' };
+    }
+  }
 }
 
 export const profilesService = new ProfilesService();

@@ -112,40 +112,36 @@ const DoctorDashboard = () => {
   }
 
   return (
-    <div className="relative min-h-screen pb-20">
-      {/* Background */}
-      <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden">
-        <div
-          className="absolute inset-0 opacity-[0.04] blur-[80px] scale-125 animate-drift will-change-transform"
-          style={{
-            backgroundImage: "url('/dashboard-bg.png')",
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-          }}
-        />
-        <div className="absolute inset-0 bg-mesh opacity-10" />
-      </div>
+    <div className="relative min-h-screen pb-20 selection:bg-primary/10">
+      {/* Dynamic Backgrounds */}
+      <div className="fixed inset-0 pointer-events-none -z-10 bg-mesh opacity-60" />
+      <div className="fixed inset-0 pointer-events-none -z-10 bg-clinical opacity-[0.03]" />
+      
+      {/* Decorative Elements */}
+      <div className="fixed top-[-10%] right-[-5%] w-[40%] h-[40%] rounded-full bg-primary/5 blur-[120px] pointer-events-none -z-10 animate-orbit" />
+      <div className="fixed bottom-[-10%] left-[-5%] w-[30%] h-[30%] rounded-full bg-accent/5 blur-[100px] pointer-events-none -z-10" />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 py-8 animate-slide-up">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2 text-[10px] font-bold tracking-[0.3em] text-primary uppercase mb-2">
-              <Stethoscope className="h-3 w-3 fill-primary" />
-              Doctor Portal
+      <div className="max-w-7xl mx-auto px-6 relative z-10">
+        {/* Header Section */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 py-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+          <div className="space-y-1.5">
+            <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary mb-2 shadow-sm">
+              <Stethoscope className="h-3 w-3 fill-primary/20" />
+              <span className="text-[10px] font-black uppercase tracking-[0.2em]">Practitioner Access</span>
             </div>
-            <h1 className="font-display text-3xl font-bold tracking-tight">
-              Patient <span className="text-primary">Management</span>
+            <h1 className="text-4xl font-display font-bold text-foreground tracking-tight">
+              Clinical <span className="text-gradient font-black">Intelligence</span>
             </h1>
-            <p className="text-muted-foreground text-sm font-medium max-w-lg">
-              Welcome, {doctorProfile?.full_name || 'Doctor'}. Manage your patients and clinical records.
+            <p className="text-muted-foreground font-medium text-sm max-w-lg">
+              Welcome back, <span className="text-foreground font-bold">Dr. {doctorProfile?.full_name?.split(' ').pop() || 'Specialist'}</span>. Here is your practice overview and patient triage board.
             </p>
           </div>
           <Button 
             onClick={() => setShowAddPatient(true)}
-            className="rounded-full px-6 bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all hover:scale-105"
+            variant="hero"
+            className="rounded-2xl px-8 h-12 font-bold text-xs uppercase tracking-widest shadow-elevated transition-all hover:scale-105"
           >
-            <Plus className="h-4 w-4 mr-2" /> Add Patient
+            <Plus className="h-4 w-4 mr-2" /> New Patient Intake
           </Button>
         </div>
 

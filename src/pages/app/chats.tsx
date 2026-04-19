@@ -11,8 +11,7 @@ import {
   Inbox,
   Plus,
   Star,
-  Users,
-  Activity,
+  XCircle,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -29,7 +28,7 @@ interface ChatWithDoctor {
   patient_id?: string;
   doctor_id?: string;
   doctor_name: string;
-  status?: 'active' | 'closed' | 'archived';
+  status?: 'active' | 'closed' | 'archived' | 'cancelled';
   reason_for_consultation?: string;
   doctor_accepted_at?: string;
   consultation_complete_at?: string;
@@ -52,7 +51,7 @@ export default function ChatsPage() {
   const [filteredChats, setFilteredChats] = useState<ChatWithDoctor[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState<'active' | 'closed' | 'all'>(doctorIdParam ? 'all' : 'active');
+  const [activeTab, setActiveTab] = useState<'active' | 'closed' | 'cancelled' | 'all'>(doctorIdParam ? 'all' : 'active');
 
   useEffect(() => {
     if (authLoading) return;
@@ -84,7 +83,7 @@ export default function ChatsPage() {
         const chatsWithDoctors = await Promise.all(
           data.map(async (chat) => {
             if (!chat.doctor_id) return { ...chat, doctor_name: 'Doctor' };
-            
+
             const { data: doctorData } = await doctorProfileService.getDoctorProfile(chat.doctor_id);
             return {
               ...chat,
@@ -115,6 +114,8 @@ export default function ChatsPage() {
       filtered = filtered.filter((c) => c.status === 'active');
     } else if (activeTab === 'closed') {
       filtered = filtered.filter((c) => c.status === 'closed');
+    } else if (activeTab === 'cancelled') {
+      filtered = filtered.filter((c) => c.status === 'cancelled');
     }
 
     // Filter by URL doctorId param
@@ -169,7 +170,7 @@ export default function ChatsPage() {
             Manage your active medical conversations and review past clinical advice in one place.
           </p>
         </div>
-        
+
         <Button
           onClick={() => navigate('/app/doctor-search')}
           variant="hero"
@@ -251,68 +252,66 @@ export default function ChatsPage() {
                           <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center text-primary border border-primary/10 font-display font-bold text-xl uppercase group-hover:scale-105 transition-transform">
                             {chat.doctor_name.charAt(0)}
                           </div>
-                          <div>
+                        </div>
+
+                        {/* Info & Status */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex flex-wrap items-center gap-2 mb-1">
                             <h3 className="font-semibold text-slate-900 leading-tight">{chat.doctor_name}</h3>
-                            <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-0.5">
-                              {chat.doctor_specialty && (
-                                <span className="text-[10px] font-bold text-primary uppercase tracking-wider">
-                                  {chat.doctor_specialty}
-                                </span>
+                            <div className="flex items-center gap-1.5 ml-auto sm:ml-0">
+                              {chat.status === 'active' ? (
+                                <Badge className="h-5 bg-emerald-500/10 text-emerald-600 border-none px-2 rounded-md flex gap-1 items-center shrink-0">
+                                  <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+                                  <span className="text-[9px] font-bold uppercase tracking-wider">Active</span>
+                                </Badge>
+                              ) : chat.status === 'cancelled' ? (
+                                <Badge className="h-5 bg-red-500/10 text-red-600 border-none px-2 rounded-md flex gap-1 items-center shrink-0">
+                                  <XCircle className="w-2.5 h-2.5" />
+                                  <span className="text-[9px] font-bold uppercase tracking-wider">Cancelled</span>
+                                </Badge>
+                              ) : (
+                                <Badge className="h-5 bg-slate-100 text-slate-600 border-none px-2 rounded-md flex gap-1 items-center shrink-0">
+                                  <CheckCircle className="w-2.5 h-2.5" />
+                                  <span className="text-[9px] font-bold uppercase tracking-wider">Completed</span>
+                                </Badge>
                               )}
-                              {chat.doctor_hospital && (
-                                <span className="text-[10px] text-slate-500 font-medium">
-                                  • {chat.doctor_hospital}
-                                </span>
+
+                              {chat.status === 'active' && !chat.doctor_accepted_at && (
+                                <Badge className="h-5 bg-amber-500/10 text-amber-600 border-none px-2 rounded-md flex gap-1 items-center shrink-0">
+                                  <Clock className="w-2.5 h-2.5" />
+                                  <span className="text-[9px] font-bold uppercase tracking-wider">Pending</span>
+                                </Badge>
                               )}
                             </div>
-                            <p className="text-xs text-slate-600 truncate mt-1">
-                              {chat.reason_for_consultation}
-                            </p>
                           </div>
-                        </div>
 
-                        {/* Status and Date */}
-                        <div className="flex items-center gap-2 mt-2 ml-13">
-                          <Badge className={chat.status === 'active' ? "bg-green-100 text-green-800" : "bg-slate-100 text-slate-800"}>
-                            {chat.status === 'active' ? 'Active' : 'Completed'}
-                          </Badge>
-                          <span className="text-xs text-slate-500">
-                            {formatDate(chat.created_at)}
-                          </span>
-                        </div>
-
-                        {/* Status and Date */}
-                        <div className="flex items-center gap-2 mt-2 ml-13">
-                          {chat.status === 'active' ? (
-                            <Badge className="h-5 bg-green-100 text-green-800 hover:bg-green-100 gap-1">
-                              <div className="w-2 h-2 bg-green-600 rounded-full" />
-                              Active
-                            </Badge>
-                          ) : (
-                            <Badge className="h-5 bg-slate-100 text-slate-800 hover:bg-slate-100 gap-1">
-                              <CheckCircle className="w-3 h-3" />
-                              Completed
-                            </Badge>
-                          )}
-
-                          {/* Waiting indicator for active chats not accepted yet */}
-                          {chat.status === 'active' && !chat.doctor_accepted_at && (
-                            <span className="flex items-center gap-1 text-xs text-amber-600">
-                              <Clock className="w-3 h-3" />
-                              {formatDate(chat.created_at)}
-                            </div>
-
-                            {chat.status === 'active' && !chat.doctor_accepted_at && (
-                              <span className="flex items-center gap-1 text-[10px] text-amber-600 font-bold uppercase tracking-wider">
-                                <Activity className="w-3 h-3" />
-                                Pending Response
+                          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mb-1.5">
+                            {chat.doctor_specialty && (
+                              <span className="text-[10px] font-bold text-primary uppercase tracking-wider">
+                                {chat.doctor_specialty}
                               </span>
                             )}
+                            {chat.doctor_hospital && (
+                              <span className="text-[10px] text-slate-500 font-medium">
+                                • {chat.doctor_hospital}
+                              </span>
+                            )}
+                          </div>
+
+                          <p className="text-xs text-slate-600 line-clamp-1 mb-2">
+                            {chat.reason_for_consultation}
+                          </p>
+
+                          <div className="flex items-center gap-3">
+                            <span className="text-[11px] text-muted-foreground font-medium flex items-center gap-1">
+                              <Clock className="w-3 h-3" />
+                              {formatDate(chat.created_at)}
+                            </span>
 
                             {chat.status === 'closed' && chat.patient_satisfaction_rating && (
-                              <div className="flex items-center gap-1.5 bg-amber-400/10 px-2 py-0.5 rounded-lg border border-amber-400/20">
+                              <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-amber-400/10 border border-amber-400/20">
                                 <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
-                                <span className="text-[10px] font-bold text-amber-700">
+                                <span className="text-[9px] font-bold text-amber-700">
                                   {chat.patient_satisfaction_rating}/5
                                 </span>
                               </div>

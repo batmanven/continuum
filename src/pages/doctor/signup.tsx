@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/select';
 import { Stethoscope, ArrowRight, Loader2, AlertCircle, ArrowLeft, Heart, Briefcase, Award, User } from 'lucide-react';
 import { toast } from 'sonner';
+import { profilesService } from '@/services/profilesService';
 
 const SPECIALTIES = [
   'General Practice',
@@ -142,6 +143,22 @@ const DoctorSignup = () => {
 
     try {
       if (!user) {
+        // Check if email already exists with a different role
+        if (formData.email) {
+          const { data: existingProfile } = await profilesService.checkEmailByRole(formData.email);
+          if (existingProfile) {
+            if (existingProfile.is_doctor) {
+              setError("This email is already registered as a Doctor. Please sign in instead.");
+              setLoading(false);
+              return;
+            } else {
+              setError("This email is already registered as a Patient. Doctors must use a unique professional email.");
+              setLoading(false);
+              return;
+            }
+          }
+        }
+
         sessionStorage.setItem('pendingDoctorProfile', JSON.stringify(formData));
         sessionStorage.setItem('returnTo', '/doctor/signup');
 

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -7,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Heart, User, Phone, ArrowLeft, Stethoscope } from "lucide-react";
 import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
 import { toast } from "sonner";
+import { profilesService } from "@/services/profilesService";
 
 const validatePhone = (phone: string): boolean => {
   // Accepts formats: +1234567890, 1234567890, 123-456-7890, (123) 456-7890, +91 98765 43210
@@ -70,20 +72,40 @@ const Signup = () => {
 
     setLoading(true);
 
-    const { data, error } = await signUp(email, password, name, gender, dateOfBirth, combinedPhone);
-
-    if (error) {
-      toast.error(error.message);
-    } else {
+    try {
+      // Check if email already exists with a different role
       if (email) {
-        navigate(`/verify-email?email=${encodeURIComponent(email)}`);
-      } else {
-        toast.success("Account created! Verification code sent to your phone.");
-        navigate(`/verify-email?phone=${encodeURIComponent(combinedPhone)}`);
+        const { data: existingProfile } = await profilesService.checkEmailByRole(email);
+        if (existingProfile) {
+          if (existingProfile.is_doctor) {
+            toast.error("This email is already registered as a Doctor. Please log in through the Doctor Portal.");
+            setLoading(false);
+            return;
+          } else {
+            toast.error("This email is already registered. Please sign in instead.");
+            setLoading(false);
+            return;
+          }
+        }
       }
-    }
 
-    setLoading(false);
+      const { data, error } = await signUp(email, password, name, gender, dateOfBirth, combinedPhone);
+
+      if (error) {
+        toast.error(error.message);
+      } else {
+        if (email) {
+          navigate(`/verify-email?email=${encodeURIComponent(email)}`);
+        } else {
+          toast.success("Account created! Verification code sent to your phone.");
+          navigate(`/verify-email?phone=${encodeURIComponent(combinedPhone)}`);
+        }
+      }
+    } catch (err: any) {
+      toast.error(err.message || "An unexpected error occurred");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const isFormValid = name && (email || phoneNumber) && password && gender && dateOfBirth && !phoneError;
