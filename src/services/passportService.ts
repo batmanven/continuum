@@ -88,5 +88,44 @@ export const passportService = {
       return { error: error.message };
     }
     return { data };
+  },
+
+  async syncPassportWithPrescriptions(userId: string, dependentId: string | null) {
+    try {
+      // 1. Fetch official prescriptions
+      const { data: prescriptions, error: pError } = await supabase
+        .from('prescriptions')
+        .select('*')
+        .eq('patient_id', userId)
+        .eq('is_active', true);
+      
+      if (pError) throw pError;
+
+      // 2. Fetch existing passport
+      const { data: passport, error: passError } = await this.getPassportForProfile(userId, dependentId);
+      if (passError) throw new Error(passError);
+      if (!passport) return { error: "No passport found to sync" };
+
+      // 3. Prepare updated medications list from official records
+      const officialMeds = (prescriptions || []).map(p => ({
+        name: p.medication_name,
+        dosage: p.dosage,
+        stats: 'active',
+        frequency: p.frequency,
+        source: 'clinical_bank'
+      }));
+
+      // 4. Update shared_data if necessary
+      const updatedSharedData = {
+        ...passport.shared_data,
+        medications: officialMeds
+      };
+
+      const { data, error } = await this.updatePassportData(passport.id, updatedSharedData, passport.is_active);
+      return { data, error };
+    } catch (err: any) {
+      console.error("Sync failed:", err);
+      return { error: err.message };
+    }
   }
 };

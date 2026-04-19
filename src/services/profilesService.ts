@@ -7,6 +7,9 @@ export interface UserProfile {
   avatar_url?: string;
   bio?: string;
   is_doctor?: boolean;
+  subscription_tier?: 'free' | 'trial' | 'premium' | 'institutional';
+  trial_ends_at?: string;
+  created_at?: string;
 }
 
 export class ProfilesService {
@@ -67,6 +70,32 @@ export class ProfilesService {
     } catch (error) {
       console.error('Unexpected error checking email role:', error);
       return { error: 'Failed to verify account category' };
+    }
+  }
+
+  async updateSubscriptionTier(
+    userId: string, 
+    tier: 'free' | 'trial' | 'premium' | 'institutional',
+    trialEndsAt?: string
+  ): Promise<{ error?: string }> {
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ 
+          subscription_tier: tier,
+          trial_ends_at: trialEndsAt
+        })
+        .eq('id', userId);
+
+      if (error) {
+        console.error('Error updating subscription tier:', error);
+        return { error: error.message };
+      }
+
+      return {};
+    } catch (error) {
+      console.error('Unexpected error updating tiered access:', error);
+      return { error: 'Failed to update subscription' };
     }
   }
 }

@@ -1,6 +1,12 @@
-import { Brain, FileText, ClipboardList, Users, Activity, Shield, Stethoscope } from "lucide-react";
+import { Brain, FileText, ClipboardList, Users, Activity, Shield, Stethoscope, Building2 } from "lucide-react";
 
 const features = [
+  {
+    icon: Building2,
+    title: "Enterprise Hub",
+    description: "Practice-wide analytics, EHR synchronization, and institutional governance tools.",
+    color: "text-purple-600 bg-purple-600/10",
+  },
   {
     icon: Brain,
     title: "Clinical Memory",

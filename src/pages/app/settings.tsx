@@ -20,13 +20,14 @@ import {
   Mail,
   History
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
 import { toast } from "sonner";
 import { passportService } from "@/services/passportService";
 
 const SettingsPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, updateProfile } = useSupabaseAuth();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -63,6 +64,22 @@ const SettingsPage = () => {
       }
     }
   }, [user]);
+  
+  useEffect(() => {
+    if (location.state?.scrollTo === 'care-circle') {
+      const element = document.getElementById('tour-settings-care-circle');
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+    
+    if (location.state?.highlightMissing) {
+      toast.info("Please complete the highlighted fields to secure your clinical identity.");
+    }
+  }, [location]);
+
+  const isMissing = (val: any) => location.state?.highlightMissing && (!val || (typeof val === 'string' && !val.trim()));
+  const highlightClass = "ring-2 ring-amber-500/50 shadow-[0_0_15px_rgba(245,158,11,0.3)] animate-pulse border-amber-500/50";
 
   const addIceContact = () => {
     if (!iceName || !icePhone) {
@@ -214,7 +231,7 @@ const SettingsPage = () => {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Enter your name"
-                    className="h-12 rounded-xl bg-muted/20 border-transparent focus:border-primary focus:bg-background transition-all"
+                    className={`h-12 rounded-xl bg-muted/20 border-transparent focus:border-primary focus:bg-background transition-all ${isMissing(name) ? highlightClass : ''}`}
                   />
                 </div>
                 <div className="space-y-2">
@@ -224,14 +241,14 @@ const SettingsPage = () => {
                     type="date"
                     value={dateOfBirth}
                     onChange={(e) => setDateOfBirth(e.target.value)}
-                    className="h-12 rounded-xl bg-muted/20 border-transparent focus:border-primary focus:bg-background transition-all"
+                    className={`h-12 rounded-xl bg-muted/20 border-transparent focus:border-primary focus:bg-background transition-all ${isMissing(dateOfBirth) ? highlightClass : ''}`}
                   />
                 </div>
               </div>
 
               <div className="space-y-4">
                 <Label className="text-xs font-bold uppercase tracking-wider opacity-60">Gender Identification</Label>
-                <div className="grid grid-cols-3 gap-3">
+                <div className={`grid grid-cols-3 gap-3 p-1 rounded-2xl ${isMissing(gender) ? highlightClass : ''}`}>
                   {['male', 'female', 'other'].map((g) => (
                     <button
                       key={g}
@@ -258,7 +275,7 @@ const SettingsPage = () => {
                     </Badge>
                   )}
                 </div>
-                <div className="grid grid-cols-4 sm:grid-cols-8 gap-2">
+                <div className={`grid grid-cols-4 sm:grid-cols-8 gap-2 p-1 rounded-2xl ${isMissing(bloodGroup) ? highlightClass : ''}`}>
                   {['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map((bg) => (
                     <button
                       key={bg}
@@ -382,7 +399,13 @@ const SettingsPage = () => {
                       <SelectItem value="+81">+81</SelectItem>
                     </SelectContent>
                   </Select>
-                  <Input type="tel" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} placeholder="Mobile number" className="flex-1 h-12 rounded-xl bg-muted/20 border-transparent focus:border-primary transition-all font-mono" />
+                  <Input 
+                    type="tel" 
+                    value={phoneNumber} 
+                    onChange={(e) => setPhoneNumber(e.target.value)} 
+                    placeholder="Mobile number" 
+                    className={`flex-1 h-12 rounded-xl bg-muted/20 border-transparent focus:border-primary transition-all font-mono ${isMissing(phoneNumber) ? highlightClass : ''}`} 
+                  />
                 </div>
               </div>
 

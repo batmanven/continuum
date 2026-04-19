@@ -116,6 +116,36 @@ export class ChatService {
     }
   }
 
+  async getDoctorPatientChats(
+    doctorId: string,
+    patientId: string,
+    status?: 'active' | 'closed' | 'archived'
+  ): Promise<{ data?: PatientDoctorChat[]; error?: string }> {
+    try {
+      let query = supabase
+        .from('patient_doctor_chats')
+        .select('*')
+        .eq('doctor_id', doctorId)
+        .eq('patient_id', patientId);
+
+      if (status) {
+        query = query.eq('status', status);
+      }
+
+      const { data, error } = await query.order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching doctor patient chats:', error);
+        return { error: error.message };
+      }
+
+      return { data };
+    } catch (error) {
+      console.error('Unexpected error fetching chats:', error);
+      return { error: 'Failed to fetch chats' };
+    }
+  }
+
   async getChatById(chatId: string): Promise<{ data?: PatientDoctorChat; error?: string }> {
     try {
       const { data, error } = await supabase

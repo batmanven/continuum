@@ -206,7 +206,7 @@ export class ConsultationRecordService {
       const patientIds = [...new Set(data.map((c) => c.patient_id))];
       const { data: profiles } = await supabase
         .from('profiles')
-        .select('id, full_name, name')
+        .select('id, full_name')
         .in('id', patientIds);
 
       const enriched = data.map((c) => {

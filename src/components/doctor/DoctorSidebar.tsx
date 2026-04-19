@@ -9,7 +9,12 @@ import {
   Stethoscope,
   Pill,
   FileText,
+  Building2,
+  Database,
+  Wallet,
+  ShieldCheck,
 } from "lucide-react";
+import { useProfile } from "@/contexts/ProfileContext";
 import { NavLink } from "@/components/NavLink";
 import {
   Sidebar,
@@ -35,6 +40,13 @@ const clinicalLogItems = [
   { title: "Medical Reports", url: "/doctor/reports", icon: FileText },
 ];
 
+const enterpriseItems = [
+  { title: "Inst. Dashboard", url: "/doctor/enterprise", icon: Building2 },
+  { title: "EHR Sync Hub", url: "/doctor/enterprise/ehr-hub", icon: Database },
+  { title: "Billing Decoder", url: "/doctor/enterprise/billing", icon: Wallet },
+  { title: "Personnel Hub", url: "/doctor/enterprise/staff", icon: ShieldCheck },
+];
+
 const bottomItems = [
   { title: "Profile", url: "/doctor/profile", icon: User },
   { title: "Settings", url: "/doctor/settings", icon: Settings },
@@ -44,6 +56,7 @@ export function DoctorSidebar() {
   const { state, setOpen } = useSidebar();
   const collapsed = state === "collapsed";
   const location = useLocation();
+  const { subscriptionTier } = useProfile();
 
   const isActive = (url: string) =>
     url === "/doctor"
@@ -108,12 +121,12 @@ export function DoctorSidebar() {
         </div>
       </SidebarHeader>
 
-      <SidebarContent className="flex flex-col justify-between h-full py-4 transition-all duration-500 px-2 overflow-hidden">
+      <SidebarContent className="flex flex-col h-full py-4 transition-all duration-500 overflow-y-auto custom-scrollbar px-0">
         <div className="flex flex-col gap-4">
           {/* Main Navigation */}
           <SidebarGroup className="p-0">
             <SidebarGroupContent>
-              <SidebarMenu className="gap-1.5">
+              <SidebarMenu className={`gap-1.5 ${collapsed ? 'px-0' : 'px-2'}`}>
                 {topItems.map((item) => renderNavItem(item))}
               </SidebarMenu>
             </SidebarGroupContent>
@@ -128,17 +141,34 @@ export function DoctorSidebar() {
               </SidebarGroupLabel>
             )}
             <SidebarGroupContent>
-              <SidebarMenu className="gap-1.5">
+              <SidebarMenu className={`gap-1.5 ${collapsed ? 'px-0' : 'px-2'}`}>
                 {clinicalLogItems.map((item) => renderNavItem(item, true))}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
+
+          {/* Enterprise Suite Section - Gated by Tier */}
+          {(subscriptionTier === 'trial' || subscriptionTier === 'institutional') && (
+            <SidebarGroup className="p-0">
+              {!collapsed && (
+                <SidebarGroupLabel className="px-3 py-2 text-[9px] font-bold uppercase tracking-[0.3em] text-primary/60 flex items-center gap-2">
+                  <Building2 className="h-3 w-3" />
+                  Enterprise Suite
+                </SidebarGroupLabel>
+              )}
+              <SidebarGroupContent>
+                <SidebarMenu className={`gap-1.5 ${collapsed ? 'px-0' : 'px-2'}`}>
+                  {enterpriseItems.map((item) => renderNavItem(item, true))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          )}
         </div>
 
         {/* Bottom Navigation */}
         <SidebarGroup className="mt-auto pb-4 p-0">
           <SidebarGroupContent>
-            <SidebarMenu className="gap-1.5">
+            <SidebarMenu className={`gap-1.5 ${collapsed ? 'px-0' : 'px-2'}`}>
               {bottomItems.map((item) => renderNavItem(item))}
             </SidebarMenu>
           </SidebarGroupContent>

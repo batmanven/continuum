@@ -51,7 +51,7 @@ const HeroSection = () => {
             </div>
             <div className="p-8 bg-gradient-to-br from-card to-secondary/20">
               <div className="grid grid-cols-3 gap-4">
-                {["Unified Records", "Care Hub", "Clinical Insights"].map(
+                {["Unified Records", "Enterprise Hub", "Clinical Insights"].map(
                   (label, i) => (
                     <div
                       key={label}

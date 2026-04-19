@@ -35,6 +35,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { useProfile } from "@/contexts/ProfileContext";
 
 const clinicalIntelligence = [
   { title: "Dashboard", url: "/app", icon: LayoutDashboard },
@@ -66,9 +67,20 @@ export function AppSidebar() {
   const { state, setOpen, isMobile } = useSidebar();
   const collapsed = !isMobile && state === "collapsed";
   const location = useLocation();
+  const { subscriptionTier } = useProfile();
+
+  const isPremium = subscriptionTier === 'trial' || subscriptionTier === 'premium';
+
+  // Reactive filtering of premium items
+  const filteredIntelligence = clinicalIntelligence.filter(item => {
+    if (item.url === "/app/bill-explainer") return isPremium;
+    return true;
+  });
+
+  const filteredCommunity = communityCare;
 
   const renderNavItems = (navItems: any[]) => (
-    <SidebarMenu className="gap-1 px-2">
+    <SidebarMenu className={`gap-1 ${collapsed ? 'px-0' : 'px-2'}`}>
       {navItems.map((item) => {
         const isActive = location.pathname === item.url || (item.url === "/app" && (location.pathname === "/app/" || location.pathname === "/app"));
         return (
@@ -120,24 +132,8 @@ export function AppSidebar() {
       className="border-r border-border/5 shadow-2xl transition-all duration-500 ease-in-out bg-sidebar"
       onMouseEnter={() => setOpen(true)}
       onMouseLeave={() => setOpen(false)}
-    >
-      <SidebarHeader className="h-20 border-b border-border/5 bg-muted/10 p-4 px-6 flex items-center overflow-hidden">
-        <div className={`flex items-center gap-3 min-w-0 transition-all duration-500 ${collapsed ? 'opacity-0 translate-x-[-10px]' : 'opacity-100 translate-x-0'}`}>
-          <div className="flex shrink-0 items-center justify-center rounded-2xl bg-indigo-600 shadow-lg shadow-indigo-600/20 h-10 w-10">
-            <Heart className="h-5 w-5 text-white fill-white/20 animate-pulse" />
-          </div>
-          <div className="flex flex-col">
-            <span className="text-sm font-display font-black tracking-tight text-foreground whitespace-nowrap">
-              Continuum
-            </span>
-            <span className="text-[9px] font-black uppercase tracking-[0.2em] text-indigo-500 whitespace-nowrap">
-              Vanguard Suite
-            </span>
-          </div>
-        </div>
-      </SidebarHeader>
-      
-      <SidebarContent className="flex flex-col justify-between h-full py-4 transition-all duration-500">
+    >      
+      <SidebarContent className="flex flex-col h-full py-4 transition-all duration-500 overflow-y-auto custom-scrollbar px-0">
         <div className="space-y-6">
           {/* Clinical Intelligence Section */}
           <Collapsible defaultOpen className="group/collapsible">
@@ -153,7 +149,7 @@ export function AppSidebar() {
               </SidebarGroupLabel>
               <CollapsibleContent>
                 <SidebarGroupContent>
-                  {renderNavItems(clinicalIntelligence)}
+                  {renderNavItems(filteredIntelligence)}
                 </SidebarGroupContent>
               </CollapsibleContent>
             </SidebarGroup>
@@ -193,7 +189,7 @@ export function AppSidebar() {
               </SidebarGroupLabel>
               <CollapsibleContent>
                 <SidebarGroupContent>
-                  {renderNavItems(communityCare)}
+                  {renderNavItems(filteredCommunity)}
                 </SidebarGroupContent>
               </CollapsibleContent>
             </SidebarGroup>
@@ -202,8 +198,8 @@ export function AppSidebar() {
 
         {/* Global Identity Section */}
         <SidebarGroup className="mt-auto pb-4 p-0">
-            <SidebarGroupLabel className="px-5 mb-2 h-auto">
-                <span className="text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground">Identity Hub</span>
+            <SidebarGroupLabel className="px-5 mb-2 h-auto text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground opacity-60">
+                Identity Hub
             </SidebarGroupLabel>
           <SidebarGroupContent>
             {renderNavItems(accountItems)}

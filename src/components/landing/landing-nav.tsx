@@ -1,4 +1,5 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Heart, LogOut, Moon, Sun } from "lucide-react";
@@ -9,6 +10,37 @@ import { toast } from "sonner";
 const LandingNav = () => {
   const { user, signOut } = useSupabaseAuth();
   const { theme, toggle } = useTheme();
+  const location = useLocation();
+  const [activeSection, setActiveSection] = useState("");
+
+  useEffect(() => {
+    // If we're not on the home page, the active section is just the path
+    if (location.pathname !== "/") {
+      setActiveSection(location.pathname.substring(1));
+      return;
+    }
+
+    // Intersection Observer for landing page sections
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setActiveSection(entry.target.id);
+          }
+        });
+      },
+      { threshold: 0.5 }
+    );
+
+    const sections = ["features", "how-it-works"];
+    sections.forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) observer.observe(el);
+    });
+
+    return () => observer.disconnect();
+  }, [location.pathname]);
+
   const initials = user?.user_metadata?.name?.split(" ").map((n: string) => n[0]).join("").toUpperCase() || user?.email?.[0]?.toUpperCase() || "U";
 
   const handleLogout = async () => {
@@ -19,6 +51,37 @@ const LandingNav = () => {
       toast.error("Error logging out");
       console.error("Logout error:", error);
     }
+  };
+
+  const NavLink = ({ to, href, children, sectionId }: { to?: string; href?: string; children: React.ReactNode; sectionId: string }) => {
+    const isActive = activeSection === sectionId;
+    const baseClass = `text-sm font-medium transition-all duration-300 relative py-2 ${
+      isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
+    }`;
+
+    const Indicator = () => (
+      <span 
+        className={`absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-full transition-all duration-500 origin-left ${
+          isActive ? "scale-x-100 opacity-100" : "scale-x-0 opacity-0"
+        }`} 
+      />
+    );
+
+    if (to) {
+      return (
+        <Link to={to} className={baseClass}>
+          {children}
+          <Indicator />
+        </Link>
+      );
+    }
+
+    return (
+      <a href={href} className={baseClass}>
+        {children}
+        <Indicator />
+      </a>
+    );
   };
 
   return (
@@ -34,18 +97,12 @@ const LandingNav = () => {
         </Link>
 
         <div className="hidden md:flex items-center gap-8">
-          <a
-            href="#features"
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
+          <NavLink href="/#features" sectionId="features">
             Features
-          </a>
-          <a
-            href="#how-it-works"
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
+          </NavLink>
+          <NavLink href="/#how-it-works" sectionId="how-it-works">
             How it works
-          </a>
+          </NavLink>
         </div>
 
         <div className="flex items-center gap-2 md:gap-4">

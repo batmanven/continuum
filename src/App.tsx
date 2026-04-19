@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Outlet } from "react-router-dom";
+import ScrollToTop from "./components/ScrollToTop";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/hooks/use-theme";
@@ -10,7 +11,10 @@ import Landing from "./pages";
 import Login from "./pages/login";
 import Signup from "./pages/sign-up";
 import VerifyEmail from "./pages/verify-email";
+import PlanSelection from "./pages/plan-selection";
 import PublicPassport from "./pages/passport";
+import About from "./pages/about";
+import Pricing from "./pages/pricing";
 import AppLayout from "./components/app/AppLayout";
 import NotFound from "./pages/not-found";
 import Dashboard from "./pages/app/dashboard";
@@ -43,6 +47,12 @@ import MyDoctorsPage from "./pages/app/my-doctors";
 import DoctorDetailPage from "./pages/app/doctor-detail";
 import AppPrescriptionsPage from "./pages/app/prescriptions";
 import AppReportsPage from "./pages/app/reports";
+
+import InstitutionalDashboard from "./pages/doctor/enterprise/institutional-dashboard";
+import EHRHub from "./pages/doctor/enterprise/ehr-hub";
+import BillingAnalysis from "./pages/doctor/enterprise/billing";
+import StaffManagement from "./pages/doctor/enterprise/staff";
+
 import { Toaster } from "sonner";
 
 const queryClient = new QueryClient();
@@ -52,14 +62,19 @@ const App = () => (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <BrowserRouter>
+          <ScrollToTop />
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
             <Route path="/signup" element={<PublicRoute><Signup /></PublicRoute>} />
             <Route path="/verify-email" element={<PublicRoute><VerifyEmail /></PublicRoute>} />
             <Route path="/passport/:token" element={<PublicPassport />} />
-            <Route element={<ProtectedRoute><DoctorProvider><Outlet /></DoctorProvider></ProtectedRoute>}>
-              <Route path="app" element={<ProfileProvider><AppLayout /></ProfileProvider>}>
+            <Route path="/about" element={<About />} />
+            <Route path="/pricing" element={<Pricing />} />
+            <Route element={<ProtectedRoute><ProfileProvider><DoctorProvider><Outlet /></DoctorProvider></ProfileProvider></ProtectedRoute>}>
+              <Route path="/plan-selection" element={<PlanSelection />} />
+              
+              <Route path="app" element={<AppLayout />}>
                 <Route index element={<Dashboard />} />
                 <Route path="doctor/:doctorId" element={<DoctorDetailPage />} />
                 <Route path="prescriptions" element={<AppPrescriptionsPage />} />
@@ -88,6 +103,12 @@ const App = () => (
                 <Route path="settings" element={<DoctorSettingsPage />} />
                 <Route path="prescriptions" element={<PrescriptionsListPage />} />
                 <Route path="reports" element={<ReportsListPage />} />
+                
+                {/* Enterprise Hub Routes */}
+                <Route path="enterprise" element={<InstitutionalDashboard />} />
+                <Route path="enterprise/ehr-hub" element={<EHRHub />} />
+                <Route path="enterprise/billing" element={<BillingAnalysis />} />
+                <Route path="enterprise/staff" element={<StaffManagement />} />
               </Route>
             </Route>
 

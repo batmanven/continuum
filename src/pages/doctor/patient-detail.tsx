@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { doctorPatientRelationshipService } from '@/services/doctorPatientRelationshipService';
-import { chatService } from '@/services/chatService';
+import { chatService, PatientDoctorChat } from '@/services/chatService';
 import {
   Card,
   CardContent,
@@ -141,15 +141,50 @@ const DoctorPatientDetail = () => {
       const { data: entries } = await healthService.getUserHealthEntries(patientId || '', 50, 0);
       if (entries) setHealthEntries(entries);
 
-      // Load consultations
+      // Load consultations & encounters
       if (user) {
+        // 1. Fetch formal consultation records
         const { data: consultationData } = await consultationRecordService.getDoctorPatientConsultations(
           user.id,
           patientId || '',
-          20,
+          50,
           0
         );
-        if (consultationData) setConsultations(consultationData);
+
+        // 2. Fetch closed clinical chats
+        const { data: closedChats } = await chatService.getDoctorPatientChats(
+          user.id,
+          patientId || '',
+          'closed'
+        );
+
+        // 3. Unified Merging & Deduplication
+        const recordLinkedIds = new Set(consultationData?.map(r => r.linked_consultation_id).filter(Boolean));
+        const unified = [...(consultationData || [])];
+
+        closedChats?.forEach(chat => {
+          // Only add the chat if it hasn't already been explicitly converted to a record
+          if (!recordLinkedIds.has(chat.id)) {
+            unified.push({
+              id: chat.id,
+              doctor_id: chat.doctor_id,
+              patient_id: chat.patient_id,
+              consultation_date: chat.consultation_complete_at || chat.created_at || new Date().toISOString(),
+              consultation_type: 'general',
+              chief_complaint: chat.reason_for_consultation || 'Archive Encounter',
+              diagnosis: chat.doctor_summary || 'Synchronized History',
+              clinical_findings: chat.doctor_notes || 'Session summary archived.',
+              treatment_plan: chat.follow_up_required ? `Follow-up required: ${chat.follow_up_date}` : 'Routine archived session.',
+              consultation_mode: 'chat',
+              is_completed: true,
+              metadata: { isEncounter: true } // Internal flag for UI badging
+            } as any);
+          }
+        });
+
+        // Sort by most recent encounter
+        unified.sort((a, b) => new Date(b.consultation_date).getTime() - new Date(a.consultation_date).getTime());
+        setConsultations(unified);
 
         // Load reports
         const { data: reportData } = await medicalReportService.getDoctorPatientReports(
@@ -919,8 +954,8 @@ const DoctorPatientDetail = () => {
                             )}
                           </div>
                         </div>
-                        <Badge variant="outline" className="text-[10px] uppercase font-bold text-primary border-primary/20">
-                          {c.consultation_type}
+                        <Badge variant="outline" className={`text-[10px] uppercase font-bold border-primary/20 ${(c as any).metadata?.isEncounter ? 'bg-muted text-muted-foreground' : 'text-primary'}`}>
+                          {(c as any).metadata?.isEncounter ? 'Encounter History' : c.consultation_type}
                         </Badge>
                       </div>
                       <div className="grid md:grid-cols-2 gap-6">
