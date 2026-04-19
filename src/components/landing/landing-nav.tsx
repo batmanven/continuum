@@ -1,18 +1,14 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Heart, LogOut } from "lucide-react";
+import { Heart, LogOut, Moon, Sun } from "lucide-react";
 import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
+import { useTheme } from "@/hooks/use-theme";
 import { toast } from "sonner";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 const LandingNav = () => {
   const { user, signOut } = useSupabaseAuth();
+  const { theme, toggle } = useTheme();
   const initials = user?.user_metadata?.name?.split(" ").map((n: string) => n[0]).join("").toUpperCase() || user?.email?.[0]?.toUpperCase() || "U";
 
   const handleLogout = async () => {
@@ -53,6 +49,21 @@ const LandingNav = () => {
         </div>
 
         <div className="flex items-center gap-2 md:gap-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggle}
+            className="text-muted-foreground hover:text-foreground hover:bg-primary/5 transition-all duration-300"
+            title={`Switch to ${theme === "light" ? "dark" : "light"} mode`}
+          >
+            {theme === "light" ? (
+              <Moon className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all" />
+            ) : (
+              <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all" />
+            )}
+            <span className="sr-only">Toggle theme</span>
+          </Button>
+
           {user ? (
             <>
               <Button variant="default" size="sm" asChild>
@@ -80,14 +91,14 @@ const LandingNav = () => {
             <>
               <div className="hidden md:flex items-center gap-4">
                 <Button variant="ghost" size="sm" asChild>
-                  <Link to="/login">Login</Link>
+                  <Link to="/role-selection?mode=login">Login</Link>
                 </Button>
                 <Button variant="hero" size="sm" asChild>
-                  <Link to="/signup">Sign Up</Link>
+                  <Link to="/role-selection?mode=signup">Sign Up</Link>
                 </Button>
               </div>
               <Button variant="ghost" size="icon" asChild className="md:hidden">
-                <Link to="/login" className="text-sm">Login</Link>
+                <Link to="/role-selection?mode=login" className="text-sm">Login</Link>
               </Button>
             </>
           )}

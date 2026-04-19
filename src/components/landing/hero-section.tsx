@@ -1,8 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, BarChart3, LayoutDashboard } from "lucide-react";
+import { ArrowRight, BarChart3, LayoutDashboard, Heart } from "lucide-react";
 import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
-
 
 const HeroSection = () => {
   const { user } = useSupabaseAuth();
@@ -15,51 +14,27 @@ const HeroSection = () => {
       <div className="container mx-auto px-6 pt-24 pb-16 text-center relative z-10">
         <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card/80 px-4 py-1.5 text-xs text-muted-foreground mb-8 opacity-0 animate-fade-in backdrop-blur-sm">
           <span className="h-1.5 w-1.5 rounded-full bg-success animate-pulse" />
-          AI-powered health companion
+          Synchronized clinical intelligence
         </div>
 
         <h1
           className="font-display text-5xl sm:text-6xl lg:text-7xl font-semibold tracking-tight text-foreground leading-[1.1] mb-6 opacity-0 animate-fade-in"
           style={{ animationDelay: "100ms" }}
         >
-          Your Health, <span className="text-gradient">Remembered</span>
+          Healthcare, <span className="text-gradient">Synchronized</span>
           <br />
-          Clearly
+          & Intelligent
         </h1>
 
         <p
           className="mx-auto max-w-xl text-lg text-muted-foreground leading-relaxed mb-10 opacity-0 animate-fade-in"
           style={{ animationDelay: "200ms" }}
         >
-          Track symptoms, understand treatments, and decode medical bills — all
-          in one intelligent system.
+          Unify medical records, decrypt complex clinical data, and optimize care
+          coordination in one high-performance interface.
         </p>
 
-        <div
-          className="flex items-center justify-center gap-4 opacity-0 animate-fade-in flex-wrap"
-          style={{ animationDelay: "300ms" }}
-        >
-          {user ? (
-            <Button variant="hero" size="lg" asChild>
-              <Link to="/app" className="gap-2">
-                Go to Dashboard
-              </Link>
-            </Button>
-          ) : (
-            <div className="flex items-center justify-center gap-4">
-              <Button variant="hero" size="lg" asChild>
-                <Link to="/signup" className="gap-2">
-                  Sign Up <ArrowRight className="h-4 w-4" />
-                </Link>
-              </Button>
-              <Button variant="outline" size="lg" asChild>
-                <Link to="/login" className="gap-2">
-                  Login <ArrowRight className="h-4 w-4" />
-                </Link>
-              </Button>
-            </div>
-          )}
-        </div>
+        {/* Action container removed for minimalist experience */}
 
         <div
           className="mt-16 mx-auto max-w-4xl opacity-0 animate-fade-in"
@@ -76,7 +51,7 @@ const HeroSection = () => {
             </div>
             <div className="p-8 bg-gradient-to-br from-card to-secondary/20">
               <div className="grid grid-cols-3 gap-4">
-                {["Health Memory", "Bill Explainer", "Insights"].map(
+                {["Unified Records", "Care Hub", "Clinical Insights"].map(
                   (label, i) => (
                     <div
                       key={label}

@@ -4,23 +4,23 @@ const steps = [
   {
     icon: MessageSquare,
     step: "01",
-    title: "Setup Family Profiles",
+    title: "Integrate Intelligence",
     description:
-      "Create digital profiles for yourself and your loved ones in seconds.",
+      "Connect your existing workflows and medical history to our unified, secure system.",
   },
   {
     icon: Sparkles,
     step: "02",
-    title: "Chat & Log Data",
+    title: "Capture Conversations",
     description:
-      "Talk to our AI about symptoms, or upload bills. We handle the heavy lifting.",
+      "Leverage AI-assisted processing to turn clinical events and documents into structured intelligence.",
   },
   {
     icon: BarChart3,
     step: "03",
-    title: "Proactive Insights",
+    title: "Deploy Insights",
     description:
-      "Receive real-time trend alerts and doctor-ready reports automatically.",
+      "Utilize predictive analytics and advanced reporting to optimize every medical decision.",
   },
 ];
 
