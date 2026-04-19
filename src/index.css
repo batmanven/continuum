@@ -170,6 +170,10 @@
     box-shadow: var(--shadow-elevated);
   }
 
+  .shadow-hero-vibrant {
+    box-shadow: 0 4px 6px hsl(var(--primary) / 0.04), 0 20px 50px hsl(var(--primary) / 0.15);
+  }
+
   .glass {
     background: hsl(var(--card) / 0.7);
     backdrop-filter: blur(12px);

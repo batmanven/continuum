@@ -27,6 +27,7 @@ import {
   FileText,
   Search,
   AlertCircle,
+  Building2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -136,13 +137,22 @@ const DoctorDashboard = () => {
               Welcome back, <span className="text-foreground font-bold">Dr. {doctorProfile?.full_name?.split(' ').pop() || 'Specialist'}</span>. Here is your practice overview and patient triage board.
             </p>
           </div>
-          <Button 
-            onClick={() => setShowAddPatient(true)}
-            variant="hero"
-            className="rounded-2xl px-8 h-12 font-bold text-xs uppercase tracking-widest shadow-elevated transition-all hover:scale-105"
-          >
-            <Plus className="h-4 w-4 mr-2" /> New Patient Intake
-          </Button>
+          <div className="flex items-center gap-3">
+            <Button 
+              onClick={() => navigate('/doctor/enterprise')}
+              variant="outline"
+              className="rounded-2xl px-6 h-12 bg-primary/5 border-primary/20 text-primary font-bold text-xs uppercase tracking-widest hover:bg-primary/10 transition-all shadow-soft"
+            >
+              <Building2 className="h-4 w-4 mr-2" /> Enterprise Hub
+            </Button>
+            <Button 
+              onClick={() => navigate('/doctor/patients')}
+              variant="hero"
+              className="rounded-2xl px-8 h-12 font-bold text-xs uppercase tracking-widest shadow-elevated transition-all hover:scale-105"
+            >
+              <Plus className="h-4 w-4 mr-2" /> New Patient Intake
+            </Button>
+          </div>
         </div>
 
         {/* Doctor Profile Info */}

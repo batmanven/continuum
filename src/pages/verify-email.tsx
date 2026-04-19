@@ -39,7 +39,7 @@ const VerifyEmail = () => {
         sessionStorage.removeItem('returnTo');
         navigate(returnTo);
       } else {
-        navigate("/app"); // Because OTP automatically sets the session
+        navigate("/plan-selection"); // Guide to tiered selection after verification
       }
     }
   };

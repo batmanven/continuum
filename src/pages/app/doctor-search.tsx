@@ -351,19 +351,7 @@ export default function DoctorSearchPage() {
                           </div>
                         </div>
 
-                        {doctor.average_rating !== undefined && (
-                          <div className="flex items-center gap-3 mt-4">
-                            <div className="flex items-center bg-primary/5 px-2.5 py-1 rounded-lg border border-primary/10">
-                              <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400 mr-1.5" />
-                              <span className="text-sm font-bold text-foreground">
-                                {doctor.average_rating?.toFixed(1) || '5.0'}
-                              </span>
-                            </div>
-                            <span className="text-xs text-muted-foreground font-medium">
-                              ({doctor.total_consultations || 0} Successful Consultations)
-                            </span>
-                          </div>
-                        )}
+
                       </div>
                     </div>
 

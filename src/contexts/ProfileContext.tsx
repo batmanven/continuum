@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { supabase } from '@/lib/supabase';
+import { profilesService, UserProfile } from '@/services/profilesService';
 import { toast } from "sonner";
 
 export interface Dependent {
@@ -33,6 +34,8 @@ interface ProfileContextType {
   setActiveProfileId: (id: string | null) => void;
   dependents: Dependent[];
   refreshDependents: () => Promise<void>;
+  subscriptionTier: UserProfile['subscription_tier'];
+  trialEndsAt: string | null;
   isLoading: boolean;
 }
 
@@ -42,6 +45,8 @@ export const ProfileProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const { user } = useSupabaseAuth();
   const [dependents, setDependents] = useState<Dependent[]>([]);
   const [activeProfileId, setActiveProfileId] = useState<string | null>(null);
+  const [subscriptionTier, setSubscriptionTier] = useState<UserProfile['subscription_tier']>('free');
+  const [trialEndsAt, setTrialEndsAt] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const refreshDependents = async () => {
@@ -61,12 +66,24 @@ export const ProfileProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setIsLoading(false);
   };
 
+  const fetchProfile = async () => {
+    if (!user) return;
+    const { data, error } = await profilesService.getProfile(user.id);
+    if (!error && data) {
+      setSubscriptionTier(data.subscription_tier || 'free');
+      setTrialEndsAt(data.trial_ends_at || null);
+    }
+  };
+
   useEffect(() => {
     if (user) {
+      fetchProfile();
       refreshDependents();
     } else {
       setDependents([]);
       setActiveProfileId(null);
+      setSubscriptionTier('free');
+      setTrialEndsAt(null);
       setIsLoading(false);
     }
   }, [user]);
@@ -114,7 +131,15 @@ export const ProfileProvider: React.FC<{ children: React.ReactNode }> = ({ child
   }, [activeProfileId, user, dependents]);
 
   return (
-    <ProfileContext.Provider value={{ activeProfile, setActiveProfileId, dependents, refreshDependents, isLoading }}>
+    <ProfileContext.Provider value={{ 
+      activeProfile, 
+      setActiveProfileId, 
+      dependents, 
+      refreshDependents, 
+      subscriptionTier,
+      trialEndsAt,
+      isLoading 
+    }}>
       {children}
     </ProfileContext.Provider>
   );

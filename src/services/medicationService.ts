@@ -63,7 +63,7 @@ export const medicationService = {
       if (doctorIds.length > 0) {
         const { data: profiles } = await supabase
           .from('profiles')
-          .select('id, full_name, name')
+          .select('id, full_name')
           .in('id', doctorIds);
         
         profiles?.forEach(p => {

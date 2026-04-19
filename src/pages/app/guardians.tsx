@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { QRCodeSVG } from "qrcode.react";
 import { useProfile } from "@/contexts/ProfileContext";
 import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
@@ -25,7 +26,9 @@ import { Label } from "@/components/ui/label";
 
 const GuardiansDashboard = () => {
   const { user } = useSupabaseAuth();
-  const { dependents, refreshDependents, activeProfile } = useProfile();
+  const { dependents, refreshDependents, activeProfile, subscriptionTier } = useProfile();
+  const navigate = useNavigate();
+  const isPremium = subscriptionTier === 'premium' || subscriptionTier === 'trial';
   
   // State for adding a dependent
   const [showAddModal, setShowAddModal] = useState(false);
@@ -528,9 +531,15 @@ const GuardiansDashboard = () => {
             </p>
           </div>
 
-          <Button id="tour-guard-add" onClick={() => setShowAddModal(true)} className="rounded-full px-6 bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all hover:scale-105">
-            <Plus className="h-4 w-4 mr-2" /> Add Member
-          </Button>
+          {isPremium ? (
+            <Button id="tour-guard-add" onClick={() => setShowAddModal(true)} className="rounded-full px-6 bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all hover:scale-105">
+              <Plus className="h-4 w-4 mr-2" /> Add Member
+            </Button>
+          ) : (
+            <Button onClick={() => navigate('/plan-selection')} className="rounded-full px-6 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 shadow-lg shadow-amber-500/20 transition-all hover:scale-105 border-none text-white font-bold">
+              <Zap className="h-4 w-4 mr-2" /> Upgrade to add family members
+            </Button>
+          )}
         </div>
 
         <div id="tour-guard-cards" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mt-4">

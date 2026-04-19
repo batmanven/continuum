@@ -193,56 +193,89 @@ const DoctorSummaries = () => {
     setPreVisitBrief(null);
     
     try {
-      // 1. Fetch real health entries for the last 30 days
-      const { data: entries, error } = await healthService.getUserHealthEntries(user.id, 100, 0, activeProfile.id);
+      // 1. Fetch real health entries & summaries for the last 30 days
+      const [entriesRes, summariesRes] = await Promise.all([
+        healthService.getUserHealthEntries(user.id, 100, 0, activeProfile.id),
+        doctorSummaryService.getUserDoctorSummaries(user.id, 10, 0, activeProfile.id)
+      ]);
       
-      if (error || !entries) {
-        toast.error("Could not fetch health data for brief");
+      const entries = entriesRes.data || [];
+      const pastSummaries = summariesRes.data || [];
+      
+      if (entries.length === 0 && pastSummaries.length === 0) {
+        toast.info("No recent health data found to generate a brief.");
         setLoading(false);
         return;
       }
 
-      // 2. Aggregate Symptoms
+      // 2. Aggregate Symptoms from ALL entries (not just entry_type='symptom')
       const symptomCounts: Record<string, { count: number, severities: number[], notes: string[] }> = {};
-      entries.filter(e => e.entry_type === 'symptom').forEach(entry => {
+      
+      entries.forEach(entry => {
         const symptoms = entry.structured_data?.symptoms || [];
+        // Optional: simple keyword scan if no structured symptoms but entry is a symptom type
+        if (symptoms.length === 0 && entry.entry_type === 'symptom' && entry.raw_content) {
+             // Basic extraction for robustness
+             const words = entry.raw_content.split(/\s+/);
+             if (words.length < 5) symptoms.push({ name: entry.raw_content, severity: 'moderate' });
+        }
+
         symptoms.forEach((s: any) => {
           const name = s.name;
           if (!symptomCounts[name]) {
             symptomCounts[name] = { count: 0, severities: [], notes: [] };
           }
           symptomCounts[name].count++;
-          if (s.severity === 'mild') symptomCounts[name].severities.push(3);
-          if (s.severity === 'moderate') symptomCounts[name].severities.push(6);
-          if (s.severity === 'severe') symptomCounts[name].severities.push(9);
+          const sevMap = { 'mild': 3, 'moderate': 6, 'severe': 9 };
+          symptomCounts[name].severities.push(sevMap[s.severity as keyof typeof sevMap] || 5);
           if (entry.raw_content) symptomCounts[name].notes.push(entry.raw_content);
+        });
+      });
+
+      // 3. Extract and Merge Insights from Past Summaries
+      const summaryInsights: string[] = [];
+      pastSummaries.forEach(s => {
+        if (s.insights) summaryInsights.push(...s.insights);
+        // Also look for symptoms mentioned in the summary text
+        const painWords = ["pain", "ache", "sore", "headache", "fever", "cough"];
+        painWords.forEach(word => {
+            if (s.summary.toLowerCase().includes(word) && !symptomCounts[word]) {
+                // If the summary mentions a symptom not in the raw logs, add it as a "Historical Observation"
+                if (!symptomCounts[word]) {
+                    symptomCounts[word] = { count: 1, severities: [6], notes: ["Mentioned in previous summary: " + s.title] };
+                }
+            }
         });
       });
 
       const chiefComplaints = Object.entries(symptomCounts)
         .sort((a, b) => b[1].count - a[1].count)
-        .slice(0, 3)
+        .slice(0, 4) // Show up to 4
         .map(([name, data]) => {
           const avgSeverity = data.severities.reduce((a, b) => a + b, 0) / data.severities.length;
           return {
             symptom: name,
             frequency: data.count > 4 ? "High" : data.count > 2 ? "Moderate" : "Low",
-            trend: data.severities[0] > data.severities[data.severities.length - 1] ? "Declining" : "Increasing",
-            notes: data.notes[0]?.substring(0, 50) + "..."
+            trend: data.severities.length > 1 && data.severities[0] < data.severities[data.severities.length - 1] ? "Increasing" : 
+                   data.severities.length > 1 && data.severities[0] > data.severities[data.severities.length - 1] ? "Declining" : "Stable",
+            notes: data.notes[0]?.substring(0, 60) + (data.notes[0]?.length > 60 ? "..." : "") || "Observed in clinical record."
           };
         });
 
-      // 3. Aggregate active days for clinical insight
-      const uniqueDays = new Set(entries.map(e => new Date(e.created_at!).toDateString()));
-
       // 4. Generate dynamic queries based on findings
-      const dynamicQueries = chiefComplaints.map(cc => [
-        `Is the ${cc.trend.toLowerCase()} intensity of ${cc.symptom} cause for immediate clinical concern?`,
-        `Given the ${cc.frequency.toLowerCase()} frequency of ${cc.symptom}, should we consider diagnostic imaging or bloodwork?`,
-        `Are there specific lifestyle adjustments to manage the ${cc.trend.toLowerCase()} pattern of ${cc.symptom}?`
-      ]).flat().slice(0, 3);
+      const dynamicQueries = chiefComplaints.map(cc => {
+        const queries = [];
+        if (cc.trend === 'Increasing') {
+            queries.push(`Is the worsening pattern of ${cc.symptom} indicative of a progressive condition?`);
+        }
+        if (cc.frequency === 'High') {
+            queries.push(`Given the high frequency of ${cc.symptom}, what diagnostic tests can rule out chronic etiology?`);
+        }
+        queries.push(`What specific triggers have been identified for the ${cc.symptom} in my longitudinal data?`);
+        return queries;
+      }).flat().slice(0, 4);
 
-      if (dynamicQueries.length === 0) {
+      if (dynamicQueries.length < 3) {
         dynamicQueries.push(
           "What baseline metrics should I track to better evaluate my current state?",
           "Are there preventative screenings recommended for my demographic and history?",
@@ -251,19 +284,21 @@ const DoctorSummaries = () => {
       }
 
       // 5. Construct Brief
+      const uniqueDays = new Set(entries.map(e => new Date(e.created_at!).toDateString()));
       const brief = {
         patientName: activeProfile.name || user?.user_metadata?.full_name || "Patient",
         patientAge: calculateAge(activeProfile.date_of_birth),
         period: "Last 30 Days",
         chiefComplaints: chiefComplaints.length > 0 ? chiefComplaints : [
-          { symptom: "No acute symptoms", frequency: "N/A", trend: "Stable", notes: "Longitudinal tracking shows no deviations." }
+          { symptom: "No acute symptoms", frequency: "N/A", trend: "Stable", notes: "Longitudinal tracking shows no deviations from baseline." }
         ],
         clinicalFocus: [
-          `Analysis indicates ${chiefComplaints.length} primary clinical vectors across ${entries.length} data points.`,
-          chiefComplaints.length > 0 ? `${chiefComplaints[0].symptom} is the primary focus with a ${chiefComplaints[0].trend} trend.` : "Clinical state appears baseline stable.",
-          `Patient tracked data consistently across ${uniqueDays.size} unique intervals.`
+          `Analysis incorporates ${entries.length} raw data points and ${pastSummaries.length} clinical summaries.`,
+          chiefComplaints.length > 0 ? `${chiefComplaints[0].symptom} is the primary clinical vector with a ${chiefComplaints[0].trend} trend.` : "Clinical state appears baseline stable.",
+          `Patient tracked data consistently across ${uniqueDays.size} unique intervals.`,
+          summaryInsights.length > 0 ? `Historical focus from previous summaries: ${summaryInsights[0].substring(0, 50)}...` : "No prior clinical summaries found in this window."
         ],
-        suggestedQueries: dynamicQueries
+        suggestedQueries: [...new Set(dynamicQueries)].slice(0, 4)
       };
       
       setPreVisitBrief(brief);

@@ -8,7 +8,6 @@ import { useTheme } from "@/hooks/use-theme";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
 import { useDoctor } from "@/contexts/DoctorContext";
-import { WalkthroughOverlay } from "@/components/app/WalkthroughOverlay";
 
 const DoctorLayout = () => {
   const { theme, toggle } = useTheme();
@@ -89,8 +88,6 @@ const DoctorLayout = () => {
           >
             <Outlet />
           </main>
-          
-          <WalkthroughOverlay />
         </div>
       </div>
     </SidebarProvider>

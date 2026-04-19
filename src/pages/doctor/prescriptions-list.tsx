@@ -62,7 +62,7 @@ export default function PrescriptionsListPage() {
       const patientIds = [...new Set(data.map((p) => p.patient_id))];
       const { data: profiles } = await supabase
         .from('profiles')
-        .select('id, full_name, name')
+        .select('id, full_name')
         .in('id', patientIds);
 
       const enriched: EnrichedPrescription[] = data.map((p) => {

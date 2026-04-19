@@ -54,52 +54,59 @@ export function useSupabaseAuth() {
     return { error }
   }
 
-  const updateProfile = async (profileData: { 
-    name?: string; 
-    gender?: string; 
-    dateOfBirth?: string; 
-    phone?: string; 
-    bloodGroup?: string;
-    ice_contacts?: any[];
-    ice_name?: string;
-    ice_phone?: string;
-    ice_relationship?: string;
-  }) => {
-    const updatePayload: Record<string, any> = {};
-    if (profileData.name !== undefined) updatePayload.name = profileData.name;
-    if (profileData.gender !== undefined) updatePayload.gender = profileData.gender;
-    if (profileData.dateOfBirth !== undefined) updatePayload.date_of_birth = profileData.dateOfBirth;
-    if (profileData.phone !== undefined) updatePayload.phone = profileData.phone;
-    if (profileData.bloodGroup !== undefined) updatePayload.blood_type = profileData.bloodGroup;
-    
-    // ICE Data
-    if (profileData.ice_contacts !== undefined) updatePayload.ice_contacts = profileData.ice_contacts;
-    if (profileData.ice_name !== undefined) updatePayload.ice_name = profileData.ice_name;
-    if (profileData.ice_phone !== undefined) updatePayload.ice_phone = profileData.ice_phone;
-    if (profileData.ice_relationship !== undefined) updatePayload.ice_relationship = profileData.ice_relationship;
+  const updateProfile = async (updates: any) => {
+    if (!user) return { data: null, error: new Error("User not found") };
 
-    const { data, error } = await supabase.auth.updateUser({
-      data: updatePayload,
-    })
-    return { data, error }
-  }
+    try {
+      setLoading(true);
+
+      // 1. Sync to Auth Metadata (for session/header)
+      const { data: authData, error: authError } = await supabase.auth.updateUser({
+        data: updates,
+      });
+
+      if (authError) throw authError;
+
+      // 2. Sync to SQL Profiles Table (for relational integrity/search)
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .update({
+          full_name: updates.name || updates.full_name,
+          gender: updates.gender,
+          date_of_birth: updates.dateOfBirth || updates.date_of_birth,
+          blood_type: updates.blood_type || updates.bloodGroup,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", user.id);
+
+      if (profileError) throw profileError;
+
+      setUser(authData.user);
+      return { data: authData, error: null };
+    } catch (error: any) {
+      console.error("Error updating profile:", error);
+      return { data: null, error };
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const verifyOtp = async (email: string, token: string) => {
     const { data, error } = await supabase.auth.verifyOtp({
       email,
       token,
-      type: 'email',
-    })
-    return { data, error }
-  }
+      type: "email",
+    });
+    return { data, error };
+  };
 
   const resendOtp = async (email: string) => {
     const { data, error } = await supabase.auth.resend({
-      type: 'signup',
+      type: "signup",
       email,
-    })
-    return { data, error }
-  }
+    });
+    return { data, error };
+  };
 
   return {
     user,
@@ -111,5 +118,5 @@ export function useSupabaseAuth() {
     updateProfile,
     verifyOtp,
     resendOtp,
-  }
-}
+  };
+}

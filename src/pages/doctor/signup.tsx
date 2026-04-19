@@ -191,7 +191,7 @@ const DoctorSignup = () => {
         if (profileError) throw profileError;
 
         toast.success('Professional profile created! Verification pending.');
-        setTimeout(() => navigate('/doctor'), 1500);
+        setTimeout(() => navigate('/plan-selection'), 1500);
       }
     } catch (err: any) {
       setError(err.message || 'An error occurred during profile setup');

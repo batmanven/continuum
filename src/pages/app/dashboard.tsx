@@ -2,6 +2,7 @@ import { Activity, Plus, FileUp, Brain, DollarSign, TrendingUp, TrendingDown, Mi
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
 import { useProfile } from "@/contexts/ProfileContext";
 import { useDashboardData } from "@/hooks/useDashboardData";
@@ -16,7 +17,7 @@ import {
 
 const Dashboard = () => {
   const { user } = useSupabaseAuth();
-  const { activeProfile } = useProfile();
+  const { activeProfile, subscriptionTier } = useProfile();
   const userName = activeProfile.name || user?.user_metadata?.name || user?.email || "User";
   const { data, loading, error } = useDashboardData();
   const [showScoreBreakdown, setShowScoreBreakdown] = useState(false);
@@ -85,6 +86,7 @@ const Dashboard = () => {
               <Link
                 id="tour-dashboard-completion"
                 to="/app/settings"
+                state={{ highlightMissing: true }}
                 className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-[10px] font-bold text-amber-600 uppercase tracking-tighter hover:bg-amber-500/20 transition-all"
               >
                 <Shield className="h-3 w-3" /> Complete Your Profile
@@ -162,8 +164,8 @@ const Dashboard = () => {
              </Link>
           </div>
 
-          {/* SATELLITE 4: My Specialists (Left-Bottom Orbit) */}
-          <div className="absolute bottom-[20%] left-[5%] md:left-[10%] group animate-slide-up" style={{ animationDelay: '500ms' }}>
+          {/* SATELLITE 4: My Specialists (Right-Top Orbit) */}
+          <div className="absolute top-[15%] right-[5%] md:right-[15%] group animate-slide-up" style={{ animationDelay: '500ms' }}>
              <Link to="/app/my-doctors" className="block">
                <div className="glass-premium rounded-3xl p-5 flex flex-col items-center justify-center gap-3 border-white/5 hover:border-emerald-500/30 shadow-2xl transition-all hover:scale-110 active:scale-95 text-center min-w-[140px]">
                   <div className="h-10 w-10 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-500">
@@ -186,16 +188,18 @@ const Dashboard = () => {
              </Link>
           </div>
 
-          {/* SATELLITE 2: Medical Spending (Right-Top Orbit) */}
-          <div className="absolute top-[15%] right-[5%] md:right-[15%] group animate-slide-up" style={{ animationDelay: '400ms' }}>
-            <Link to="/app/bill-explainer" className="block">
-              <div className="floating-blob w-32 h-32 md:w-36 md:h-36 flex flex-col items-center justify-center gap-2 text-center p-6 border-white/10 hover:border-accent/30 shadow-2xl transition-all hover:scale-110 active:scale-95" style={{ borderRadius: '60% 40% 30% 70% / 50% 30% 70% 50%' }}>
-                <DollarSign className="h-6 w-6 text-accent mb-2" />
-                <div className="text-xl font-display font-bold">₹{data.financialStats.thisMonthExpenses.toLocaleString()}</div>
-                <div className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest leading-none">Spending</div>
-              </div>
-            </Link>
-          </div>
+          {/* SATELLITE 2: Medical Spending (Right-Top Orbit) - Premium Feature */}
+          {subscriptionTier !== 'free' && (
+            <div className="absolute top-[15%] right-[5%] md:right-[15%] group animate-slide-up" style={{ animationDelay: '400ms' }}>
+              <Link to="/app/bill-explainer" className="block">
+                <div className="floating-blob w-32 h-32 md:w-36 md:h-36 flex flex-col items-center justify-center gap-2 text-center p-6 border-white/10 hover:border-accent/30 shadow-2xl transition-all hover:scale-110 active:scale-95" style={{ borderRadius: '60% 40% 30% 70% / 50% 30% 70% 50%' }}>
+                  <DollarSign className="h-6 w-6 text-accent mb-2" />
+                  <div className="text-xl font-display font-bold">₹{data.financialStats.thisMonthExpenses.toLocaleString()}</div>
+                  <div className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest leading-none">Spending</div>
+                </div>
+              </Link>
+            </div>
+          )}
 
           {/* SATELLITE 3: AI Insights (Bottom Orbit) */}
           <div className="absolute bottom-[0%] group animate-slide-up" style={{ animationDelay: '600ms' }}>
@@ -217,70 +221,7 @@ const Dashboard = () => {
 
         </div>
 
-        {/* The Life-Spine (Timeline Thread) */}
-        <div className="py-8 animate-slide-up" style={{ animationDelay: '800ms' }}>
-          <div className="flex items-center justify-between mb-12 px-2">
-            <h3 className="font-display text-2xl font-bold">Life Thread</h3>
-            <div className="flex gap-2">
-              <span className="h-2 w-2 rounded-full bg-primary" />
-              <span className="h-2 w-2 rounded-full bg-accent" />
-              <span className="h-2 w-2 rounded-full bg-purple-400" />
-            </div>
-          </div>
 
-          <div className="relative pb-12">
-            {/* The Spine Line */}
-            <div className="absolute top-1/2 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-y-1/2" />
-
-            <div className="flex justify-between items-center gap-4 overflow-x-auto pb-8 px-8 no-scrollbar">
-              {data.recentActivity.length === 0 ? (
-                <div className="w-full text-center py-10 text-muted-foreground italic text-[10px] uppercase tracking-widest">
-                  Initializing Life Thread...
-                </div>
-              ) : (
-                data.recentActivity.map((activity, i) => (
-                  <div key={activity.id} className="relative flex flex-col items-center shrink-0 min-w-[200px] group">
-                    <div className="text-[9px] font-bold text-muted-foreground uppercase mb-6 opacity-0 group-hover:opacity-100 transition-opacity">
-                      {activity.date}
-                    </div>
-
-                    {/* Timeline Node */}
-                    <div className={`h-12 w-12 rounded-2xl flex items-center justify-center z-10 glass-premium transition-all group-hover:scale-125 group-hover:shadow-2xl ${
-                      activity.type === 'health' ? 'border-primary/40 shadow-primary/5 hover:border-primary' :
-                      activity.type === 'bill' ? 'border-accent/40 shadow-accent/5 hover:border-accent' :
-                      activity.type === 'consultation' ? 'border-emerald-500/40 shadow-emerald-500/5 hover:border-emerald-500' :
-                      activity.type === 'prescription' ? 'border-blue-500/40 shadow-blue-500/5 hover:border-blue-500' :
-                      activity.type === 'report' ? 'border-amber-500/40 shadow-amber-500/5 hover:border-amber-500' :
-                      'border-purple-400/40 shadow-purple-400/5 hover:border-purple-400'
-                    }`}>
-                      {activity.type === 'health' ? <Heart className="h-5 w-5 text-primary" /> :
-                       activity.type === 'bill' ? <FileText className="h-5 w-5 text-accent" /> :
-                       activity.type === 'consultation' ? <Stethoscope className="h-5 w-5 text-emerald-500" /> :
-                       activity.type === 'prescription' ? <Pill className="h-5 w-5 text-blue-500" /> :
-                       activity.type === 'report' ? <ClipboardList className="h-5 w-5 text-amber-500" /> :
-                       <Brain className="h-5 w-5 text-purple-400" />}
-                    </div>
-
-                    <div className="mt-6 text-center">
-                      <div className="text-xs font-bold truncate max-w-[150px] mb-1">{activity.title}</div>
-                      <div className="text-[10px] text-muted-foreground truncate max-w-[150px]">{activity.description}</div>
-                    </div>
-
-                    {/* Connecting Bud */}
-                    <div className={`absolute top-1/2 -translate-y-1/2 h-2 w-2 rounded-full z-0 group-hover:scale-150 transition-all ${
-                      activity.type === 'health' ? 'bg-primary' :
-                      activity.type === 'bill' ? 'bg-accent' :
-                      activity.type === 'consultation' ? 'bg-emerald-500' :
-                      activity.type === 'prescription' ? 'bg-blue-500' :
-                      activity.type === 'report' ? 'bg-amber-500' :
-                      'bg-purple-400'
-                    }`} />
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-        </div>
 
         {/* Quick Links - Centered Layout */}
         <div className="max-w-3xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-6 py-12 animate-slide-up" style={{ animationDelay: '1000ms' }}>
@@ -299,9 +240,9 @@ const Dashboard = () => {
         </div>
       </div>
       <Dialog open={showScoreBreakdown} onOpenChange={setShowScoreBreakdown}>
-        <DialogContent aria-describedby={undefined} className="max-w-md p-0 overflow-hidden border border-border bg-card text-card-foreground rounded-[2rem] shadow-2xl">
-          <div className="p-8 space-y-8">
-            <div className="flex justify-between items-center">
+        <DialogContent aria-describedby={undefined} className="max-w-md p-0 overflow-hidden border border-border bg-card text-card-foreground rounded-[2rem] shadow-2xl max-h-[90vh] flex flex-col">
+          <div className="p-8 pb-0">
+            <div className="flex justify-between items-center mb-6">
               <div>
                 <h2 className="text-xl font-display font-bold">Continuum Analysis</h2>
                 <p className="text-[10px] font-bold text-primary tracking-[0.3em] uppercase opacity-60">Scoring Engine v2.0</p>
@@ -310,7 +251,10 @@ const Dashboard = () => {
                 <Zap className="h-6 w-6 fill-primary" />
               </div>
             </div>
+            <Separator className="opacity-20" />
+          </div>
 
+          <div className="flex-1 overflow-y-auto p-8 pt-6 space-y-6 custom-scrollbar">
             <div className="space-y-4">
               {/* Baseline */}
               <div className="flex items-center justify-between p-4 rounded-2xl bg-secondary/50 border border-border">
@@ -322,28 +266,30 @@ const Dashboard = () => {
               </div>
 
               {/* Factors */}
-              {data.continuumScore.breakdown.map((item, i) => (
-                <div key={i} className="flex flex-col gap-2 p-4 rounded-2xl bg-secondary/30 border border-border group hover:bg-secondary/50 transition-colors">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className={`h-2 w-2 rounded-full ${item.impact >= 0 ? 'bg-primary' : 'bg-destructive'}`} />
-                      <span className="text-sm font-semibold">{item.label}</span>
+              <div className="space-y-4">
+                {data.continuumScore.breakdown.map((item, i) => (
+                  <div key={i} className="flex flex-col gap-2 p-4 rounded-2xl bg-secondary/30 border border-border group hover:bg-secondary/50 transition-colors">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className={`h-2 w-2 rounded-full ${item.impact >= 0 ? 'bg-primary' : 'bg-destructive'}`} />
+                        <span className="text-sm font-semibold">{item.label}</span>
+                      </div>
+                      <span className={`font-mono font-bold ${item.impact >= 0 ? 'text-primary' : 'text-destructive'}`}>
+                        {item.impact >= 0 ? '+' : ''}{item.impact} pts
+                      </span>
                     </div>
-                    <span className={`font-mono font-bold ${item.impact >= 0 ? 'text-primary' : 'text-destructive'}`}>
-                      {item.impact >= 0 ? '+' : ''}{item.impact} pts
-                    </span>
+                    {item.details && item.details.length > 0 && (
+                      <div className="ml-5 space-y-1">
+                        {item.details.map((detail, di) => (
+                          <div key={di} className="text-[10px] text-muted-foreground leading-relaxed font-semibold bg-primary/5 py-1 px-2 rounded-lg border border-primary/10">
+                            ↳ {detail}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                  {item.details && item.details.length > 0 && (
-                    <div className="ml-5 space-y-1">
-                      {item.details.map((detail, di) => (
-                        <div key={di} className="text-[10px] text-muted-foreground leading-relaxed font-semibold bg-primary/5 py-1 px-2 rounded-lg border border-primary/10">
-                          ↳ {detail}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))}
+                ))}
+              </div>
 
               {/* Resulting Score */}
               <div className="mt-8 pt-6 border-t border-border flex items-center justify-between">
@@ -363,10 +309,12 @@ const Dashboard = () => {
             <p className="text-[9px] text-muted-foreground leading-relaxed text-center px-4">
               Our algorithm synthesizes clinical tracking consistency, AI summary sentiment, symptom intensity patterns, and medication safety to arrive at your Continuum Index.
             </p>
+          </div>
 
-            <Button onClick={() => setShowScoreBreakdown(false)} className="w-full h-12 rounded-2xl bg-foreground text-background hover:bg-foreground/80 font-bold transition-all shadow-lg">
-              Close Analysis
-            </Button>
+          <div className="p-8 pt-0 mt-auto">
+             <Button onClick={() => setShowScoreBreakdown(false)} className="w-full h-12 rounded-2xl bg-foreground text-background hover:bg-foreground/80 font-bold transition-all shadow-lg">
+                Close Analysis
+              </Button>
           </div>
         </DialogContent>
       </Dialog>
