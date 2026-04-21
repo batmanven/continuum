@@ -29,8 +29,32 @@ const MedicationsDashboard = () => {
   const [newFrequency, setNewFrequency] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   
+  // Real-time Search State
+  const [searchResults, setSearchResults] = useState<string[]>([]);
+  const [showResults, setShowResults] = useState(false);
+  const [isSelecting, setIsSelecting] = useState(false);
+
   // Pending override state
   const [interactionWarning, setInteractionWarning] = useState<any>(null);
+
+  useEffect(() => {
+    const timer = setTimeout(async () => {
+      if (isSelecting) {
+        setIsSelecting(false);
+        return;
+      }
+      if (newName.length >= 2 && !interactionWarning) {
+        const results = await medicationProcessor.searchMedications(newName);
+        setSearchResults(results);
+        setShowResults(results.length > 0);
+      } else {
+        setSearchResults([]);
+        setShowResults(false);
+      }
+    }, 600);
+
+    return () => clearTimeout(timer);
+  }, [newName, interactionWarning]);
 
   useEffect(() => {
     if (user) {
@@ -191,15 +215,39 @@ const MedicationsDashboard = () => {
                       </Badge>
                     </div>
 
-                    {/* Safety Insight Area */}
-                    <div className="flex-1">
+                    {/* Safety & Clinical Insight Area */}
+                    <div className="flex-1 space-y-3">
                       {med.drug_interactions_cache ? (
-                        <div className="p-3 rounded-xl bg-red-500/5 border border-red-500/20 flex gap-3 animate-pulse">
-                          <ShieldAlert className="h-4 w-4 text-red-500 shrink-0 mt-0.5" />
-                          <p className="text-[10px] font-semibold text-red-500 leading-relaxed italic line-clamp-2">
-                            {med.drug_interactions_cache.description}
-                          </p>
-                        </div>
+                        <>
+                          {med.drug_interactions_cache.severity !== 'none' && (
+                            <div className="p-3 rounded-xl bg-red-500/5 border border-red-500/20 flex gap-3">
+                              <ShieldAlert className="h-4 w-4 text-red-500 shrink-0 mt-0.5" />
+                              <p className="text-[10px] font-semibold text-red-500 leading-relaxed italic line-clamp-2">
+                                {med.drug_interactions_cache.description}
+                              </p>
+                            </div>
+                          )}
+                          
+                          {med.drug_interactions_cache.patientFriendlyInfo && (
+                            <div className="p-3 rounded-xl bg-indigo-500/5 border border-indigo-500/10 space-y-1.5">
+                              <div className="flex items-center gap-1.5 text-[9px] font-bold text-indigo-500 uppercase tracking-wider">
+                                <Info className="h-3 w-3" /> Patient Guide
+                              </div>
+                              <p className="text-[10px] text-muted-foreground leading-relaxed line-clamp-3">
+                                {med.drug_interactions_cache.patientFriendlyInfo}
+                              </p>
+                            </div>
+                          )}
+
+                          {med.drug_interactions_cache.standardized && med.drug_interactions_cache.standardized.is_indian_brand && (
+                            <div className="flex items-center gap-1.5 px-1">
+                              <Badge variant="outline" className="bg-amber-500/10 text-amber-500 border-amber-500/20 text-[8px] font-bold py-0 h-4">
+                                CDSCO Standardized
+                              </Badge>
+                              <span className="text-[8px] text-muted-foreground/60 italic font-medium">Mapped to {med.drug_interactions_cache.standardized.generic_name}</span>
+                            </div>
+                          )}
+                        </>
                       ) : med.active ? (
                         <div className="p-3 rounded-xl bg-indigo-500/5 border border-indigo-500/10 flex gap-3">
                           <CheckCircle2 className="h-4 w-4 text-indigo-500 shrink-0 mt-0.5" />
@@ -299,9 +347,50 @@ const MedicationsDashboard = () => {
             </div>
           ) : (
             <form onSubmit={(e) => handleCreateMedication(e, false)} className="space-y-6">
-              <div className="space-y-2">
+              <div className="space-y-2 relative">
                 <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Medication Name</Label>
-                <Input required value={newName} onChange={e => setNewName(e.target.value)} placeholder="e.g. Lisinopril" className="h-12 rounded-xl bg-muted/30 border-border/50 focus:bg-background transition-all focus:border-indigo-500/50" />
+                <div className="relative group">
+                  <Input 
+                    required 
+                    value={newName} 
+                    onChange={e => {
+                      setNewName(e.target.value);
+                      setShowResults(true);
+                    }} 
+                    onFocus={() => {
+                      if (searchResults.length > 0) setShowResults(true);
+                    }}
+                    placeholder="e.g. Lisinopril" 
+                    className="h-12 rounded-xl bg-muted/30 border-border/50 focus:bg-background transition-all focus:border-indigo-500/50 pr-10" 
+                  />
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                     <Pill className={`h-4 w-4 transition-colors ${showResults && searchResults.length > 0 ? 'text-indigo-500 animate-pulse' : 'text-muted-foreground/30'}`} />
+                  </div>
+                </div>
+
+                {showResults && searchResults.length > 0 && (
+                  <div className="absolute z-[100] w-full mt-2 bg-white border border-indigo-500/30 rounded-2xl shadow-2xl overflow-hidden py-2 animate-in fade-in zoom-in-95 duration-200">
+                    <div className="px-3 py-1 mb-1 text-[8px] font-bold text-indigo-500/50 uppercase tracking-[0.2em] flex items-center gap-1.5 border-b border-indigo-500/5 pb-2">
+                      <Zap className="h-2.5 w-2.5" /> Clinical Suggestions
+                    </div>
+                    {searchResults.map((name) => (
+                      <button
+                        key={name}
+                        type="button"
+                        className="w-full text-left px-4 py-2.5 text-[11px] font-bold text-slate-700 hover:bg-indigo-500/10 hover:text-indigo-600 transition-all flex items-center gap-2 group/item"
+                        onClick={() => {
+                          setIsSelecting(true);
+                          setNewName(name);
+                          setShowResults(false);
+                          setSearchResults([]);
+                        }}
+                      >
+                        <div className="h-1 w-1 rounded-full bg-indigo-500/0 group-hover/item:bg-indigo-500 transition-all" />
+                        {name}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
