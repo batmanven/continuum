@@ -211,7 +211,7 @@ export class ConsultationRecordService {
 
       const enriched = data.map((c) => {
         const profile = profiles?.find((p) => p.id === c.patient_id);
-        return { ...c, patient_name: profile?.full_name || profile?.name || 'Patient' };
+        return { ...c, patient_name: profile?.full_name || 'Patient' };
       });
 
       return { data: enriched as ConsultationRecord[] };
