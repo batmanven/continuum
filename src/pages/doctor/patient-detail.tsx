@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { supabase } from '@/lib/supabase';
 import { useDoctor } from '@/contexts/DoctorContext';
@@ -66,14 +66,17 @@ import {
 } from '@/components/ui/tabs';
 import { medicalReportService, MedicalReport } from '@/services/medicalReportService';
 import { healthProcessor } from '@/services/healthProcessor';
+import { medicationProcessor } from '@/services/medicationProcessor';
 import { toast } from 'sonner';
 
 const DoctorPatientDetail = () => {
   const { patientId } = useParams<{ patientId: string }>();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useSupabaseAuth();
   const { doctorProfile } = useDoctor();
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'overview');
   const [requestedConsultation, setRequestedConsultation] = useState<any>(null);
   const [healthEntries, setHealthEntries] = useState<any[]>([]);
   const [consultations, setConsultations] = useState<ConsultationRecord[]>([]);
@@ -127,6 +130,30 @@ const DoctorPatientDetail = () => {
     report_date: new Date().toISOString().split('T')[0],
   });
   const [reportFile, setReportFile] = useState<File | null>(null);
+  
+  // Real-time Search State for Doctor
+  const [medSearchResults, setMedSearchResults] = useState<string[]>([]);
+  const [showMedResults, setShowMedResults] = useState(false);
+  const [isSelecting, setIsSelecting] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(async () => {
+      if (isSelecting) {
+        setIsSelecting(false);
+        return;
+      }
+      if (currentMedication.medication_name.length >= 2) {
+        const results = await medicationProcessor.searchMedications(currentMedication.medication_name);
+        setMedSearchResults(results);
+        setShowMedResults(results.length > 0);
+      } else {
+        setMedSearchResults([]);
+        setShowMedResults(false);
+      }
+    }, 600);
+
+    return () => clearTimeout(timer);
+  }, [currentMedication.medication_name]);
 
   useEffect(() => {
     if (user && patientId) {
@@ -299,6 +326,8 @@ const DoctorPatientDetail = () => {
       setStagedMedications(prev => [...prev, medicationWithRange]);
     }
 
+    setMedSearchResults([]);
+    setShowMedResults(false);
     setCurrentMedication({
       medication_name: '',
       dosage: '',
@@ -736,7 +765,14 @@ const DoctorPatientDetail = () => {
         </div>
 
         {/* Main Content Tabs */}
-        <Tabs defaultValue="overview" className="space-y-6">
+        <Tabs 
+          value={activeTab} 
+          onValueChange={(val) => {
+            setActiveTab(val);
+            setSearchParams({ tab: val });
+          }} 
+          className="space-y-6"
+        >
           <TabsList className="bg-muted/30 border border-white/5 p-1 rounded-xl h-12">
             <TabsTrigger value="overview" className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Overview</TabsTrigger>
             <TabsTrigger value="timeline" className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Timeline</TabsTrigger>
@@ -1355,7 +1391,7 @@ const DoctorPatientDetail = () => {
 
             {/* Form for current medication */}
             {showMedicationForm ? (
-              <div className="space-y-4 p-5 rounded-2xl bg-muted/30 border border-white/10 relative overflow-hidden animate-in zoom-in-95 duration-200">
+              <div className="space-y-4 p-5 rounded-2xl bg-muted/30 border border-white/10 relative animate-in zoom-in-95 duration-200">
                 <div className="flex items-center justify-between mb-2">
                   <h4 className="text-xs font-bold text-primary flex items-center gap-2">
                     <Pill className="h-3 w-3" />
@@ -1378,14 +1414,44 @@ const DoctorPatientDetail = () => {
                 </div>
 
                 <div className="grid grid-cols-2 gap-x-4 gap-y-4">
-                  <div className="space-y-2">
+                  <div className="space-y-2 relative">
                     <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Medication Name</label>
                     <Input
                       placeholder="e.g., Amoxicillin"
                       value={currentMedication.medication_name}
-                      onChange={(e) => setCurrentMedication(prev => ({ ...prev, medication_name: e.target.value }))}
+                      onChange={(e) => {
+                        setCurrentMedication(prev => ({ ...prev, medication_name: e.target.value }));
+                        setShowMedResults(true);
+                      }}
+                      onFocus={() => {
+                        if (medSearchResults.length > 0) setShowMedResults(true);
+                      }}
                       className="h-10 rounded-lg bg-muted/30"
                     />
+                    
+                    {showMedResults && medSearchResults.length > 0 && (
+                      <div className="absolute z-[100] w-full mt-2 bg-white border border-primary/30 rounded-2xl shadow-2xl overflow-hidden py-2 animate-in fade-in zoom-in-95 duration-200">
+                        <div className="px-3 py-1 mb-1 text-[8px] font-bold text-primary/50 uppercase tracking-[0.2em] flex items-center gap-1.5 border-b border-primary/5 pb-2">
+                          <Zap className="h-2.5 w-2.5" /> Clinical Suggestions
+                        </div>
+                        {medSearchResults.map((name) => (
+                          <button
+                            key={name}
+                            type="button"
+                            className="w-full text-left px-4 py-2 text-[11px] font-bold text-slate-700 hover:bg-primary/10 hover:text-primary transition-all flex items-center gap-2 group/item"
+                            onClick={() => {
+                              setIsSelecting(true);
+                              setCurrentMedication(prev => ({ ...prev, medication_name: name }));
+                              setShowMedResults(false);
+                              setMedSearchResults([]);
+                            }}
+                          >
+                            <div className="h-1 w-1 rounded-full bg-primary/0 group-hover/item:bg-primary transition-all" />
+                            {name}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
                   <div className="space-y-2">

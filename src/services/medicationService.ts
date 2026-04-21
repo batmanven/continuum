@@ -67,7 +67,7 @@ export const medicationService = {
           .in('id', doctorIds);
         
         profiles?.forEach(p => {
-          doctorMap[p.id] = p.full_name || p.name || 'Doctor';
+          doctorMap[p.id] = p.full_name || 'Doctor';
         });
       }
 
