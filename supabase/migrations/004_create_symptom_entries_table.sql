@@ -10,7 +10,7 @@ create table symptom_entries (
   start_time timestamp with time zone,
   end_time timestamp with time zone,
   weather_data jsonb,
-  stress_level integer check (stress_level >= 1 and stress <= 10),
+  stress_level integer check (stress_level >= 1 and stress_level <= 10),
   sleep_hours numeric check (sleep_hours >= 0 and sleep_hours <= 24),
   created_at timestamp with time zone default now(),
   updated_at timestamp with time zone default now()

@@ -188,9 +188,9 @@ const Dashboard = () => {
              </Link>
           </div>
 
-          {/* SATELLITE 2: Medical Spending (Right-Top Orbit) - Premium Feature */}
+          {/* SATELLITE 2: Medical Spending (Left-Bottom Orbit) - Premium Feature */}
           {subscriptionTier !== 'free' && (
-            <div className="absolute top-[15%] right-[5%] md:right-[15%] group animate-slide-up" style={{ animationDelay: '400ms' }}>
+            <div className="absolute bottom-[20%] left-[5%] md:left-[10%] group animate-slide-up" style={{ animationDelay: '400ms' }}>
               <Link to="/app/bill-explainer" className="block">
                 <div className="floating-blob w-32 h-32 md:w-36 md:h-36 flex flex-col items-center justify-center gap-2 text-center p-6 border-white/10 hover:border-accent/30 shadow-2xl transition-all hover:scale-110 active:scale-95" style={{ borderRadius: '60% 40% 30% 70% / 50% 30% 70% 50%' }}>
                   <DollarSign className="h-6 w-6 text-accent mb-2" />
