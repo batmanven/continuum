@@ -29,7 +29,7 @@ export const useHealthMemory = (): UseHealthMemoryReturn => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [summary, setSummary] = useState<any>(null);
   const [loadingSummary, setLoadingSummary] = useState(false);
-  const [activeMeds, setActiveMeds] = useState<string[]>([]);
+  const [activeMeds, setActiveMeds] = useState<{name: string, dosage?: string}[]>([]);
 
   const getUserContext = (): UserContext | undefined => {
     if (!user) return undefined;
@@ -84,7 +84,7 @@ export const useHealthMemory = (): UseHealthMemoryReturn => {
         activeProfile.linked_user_id
       );
       if (medsData) {
-        setActiveMeds(medsData.filter(m => m.active).map(m => m.name));
+        setActiveMeds(medsData.filter(m => m.active).map(m => ({ name: m.name, dosage: m.dosage })));
       }
     } catch (error) {
       toast.error("Error loading health entries");
@@ -265,6 +265,7 @@ export const useHealthMemory = (): UseHealthMemoryReturn => {
   };
 
   const deleteEntry = async (entryId: string) => {
+    const entry = entries.find(e => e.id === entryId);
     try {
       const { error } = await healthService.deleteHealthEntry(entryId);
       if (error) {
@@ -272,6 +273,36 @@ export const useHealthMemory = (): UseHealthMemoryReturn => {
       } else {
         toast.success("Health entry deleted");
         setEntries(prev => prev.filter(entry => entry.id !== entryId));
+
+        if (entry && user) {
+          // 1. Delete matching symptom_entries
+          if (entry.entry_type === 'symptom') {
+            const { data: symData } = await supabase
+              .from('symptom_entries')
+              .select('id')
+              .eq('user_id', user.id)
+              .eq('description', entry.raw_content);
+              
+            if (symData && symData.length > 0) {
+              for (const sym of symData) {
+                await supabase.from('symptom_entries').delete().eq('id', sym.id);
+              }
+            }
+          }
+
+          // 2. Delete matching doctor_summaries
+          const { data: docData } = await supabase
+            .from('doctor_summaries')
+            .select('id')
+            .eq('user_id', user.id)
+            .contains('health_entry_ids', [entryId]);
+            
+          if (docData && docData.length > 0) {
+            for (const doc of docData) {
+              await supabase.from('doctor_summaries').delete().eq('id', doc.id);
+            }
+          }
+        }
       }
     } catch (error) {
       toast.error("Error deleting entry");

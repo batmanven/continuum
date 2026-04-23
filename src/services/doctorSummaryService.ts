@@ -14,6 +14,7 @@ export interface DoctorSummary {
   generated_at?: string;
   is_favorite: boolean;
   tags: string[];
+  suggested_medications?: any[];
   created_at?: string;
   updated_at?: string;
 }

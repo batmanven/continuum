@@ -3,6 +3,7 @@ import { symptomCheckerService, SymptomEntry, SymptomPattern, SymptomInsight } f
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { useProfile } from '@/contexts/ProfileContext';
 import { toast } from 'sonner';
+import { supabase } from '@/lib/supabase';
 
 interface UseSymptomCheckerReturn {
   
@@ -128,6 +129,7 @@ export const useSymptomChecker = (): UseSymptomCheckerReturn => {
   };
 
   const deleteSymptomEntry = async (id: string): Promise<boolean> => {
+    const entryToDelete = entries.find(e => e.id === id);
     try {
       const { error } = await symptomCheckerService.deleteSymptomEntry(id);
       
@@ -139,6 +141,31 @@ export const useSymptomChecker = (): UseSymptomCheckerReturn => {
         setEntries(prev => prev.filter(entry => entry.id !== id));
         toast.success('Symptom entry deleted successfully');
         
+        if (entryToDelete && entryToDelete.description && user) {
+          const { data: healthData } = await supabase
+            .from('health_entries')
+            .select('id')
+            .eq('user_id', user.id)
+            .eq('raw_content', entryToDelete.description);
+            
+          if (healthData && healthData.length > 0) {
+            for (const h of healthData) {
+              await supabase.from('health_entries').delete().eq('id', h.id);
+              
+              const { data: docData } = await supabase
+                .from('doctor_summaries')
+                .select('id')
+                .eq('user_id', user.id)
+                .contains('health_entry_ids', [h.id]);
+                
+              if (docData && docData.length > 0) {
+                for (const doc of docData) {
+                  await supabase.from('doctor_summaries').delete().eq('id', doc.id);
+                }
+              }
+            }
+          }
+        }
         
         setTimeout(() => {
           analyzePatterns();

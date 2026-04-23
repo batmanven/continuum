@@ -279,8 +279,26 @@ const DoctorPatientDetail = () => {
   const handleGenerateSummary = async () => {
     if (!healthEntries.length) return;
     setGeneratingSummary(true);
+    
+    let age: number | undefined;
+    if (patientProfile?.date_of_birth) {
+      const birthDate = new Date(patientProfile.date_of_birth);
+      const today = new Date();
+      age = today.getFullYear() - birthDate.getFullYear();
+    }
+    
+    const userContext = {
+      name: patientProfile?.full_name || patientProfile?.name,
+      gender: patientProfile?.gender,
+      age,
+      activeMedications: prescriptions.filter((p: any) => p.is_active).map((p: any) => ({
+        name: p.medication_name,
+        dosage: p.dosage
+      }))
+    };
+
     try {
-      const summary = await healthProcessor.generateHealthSummary(healthEntries);
+      const summary = await healthProcessor.generateHealthSummary(healthEntries, userContext);
       setClinicalSummary(summary);
     } catch (err) {
       toast.error('Failed to generate summary');
@@ -834,6 +852,35 @@ const DoctorPatientDetail = () => {
                             </ul>
                           </div>
                         </div>
+
+                        {clinicalSummary.suggested_medications && clinicalSummary.suggested_medications.length > 0 && (
+                          <div className="mt-6 pt-6 border-t border-white/5 space-y-4">
+                            <div className="flex items-center gap-2">
+                              <Pill className="h-4 w-4 text-amber-500" />
+                              <h4 className="text-sm font-bold text-foreground">AI Medication Suggestions</h4>
+                            </div>
+                            <div className="bg-amber-500/10 p-3 rounded-lg border border-amber-500/20 text-xs text-amber-600 flex gap-2">
+                              <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+                              <p><strong>Review Required:</strong> This is an AI-generated suggestion based on patient symptoms. Please exercise clinical judgment before prescribing.</p>
+                            </div>
+                            <div className="grid md:grid-cols-2 gap-4">
+                              {clinicalSummary.suggested_medications.map((med: any, i: number) => (
+                                <div key={i} className="bg-muted/30 p-4 rounded-xl border border-white/5 flex flex-col gap-2">
+                                  <div className="flex items-start justify-between">
+                                    <div>
+                                      <p className="font-bold text-sm">{med.name}</p>
+                                      <p className="text-xs text-muted-foreground">{med.dosage}</p>
+                                    </div>
+                                    <Badge variant="outline" className={med.is_dosage_change ? "bg-blue-500/10 text-blue-500 border-blue-500/20 text-[9px] uppercase tracking-tighter" : "bg-emerald-500/10 text-emerald-500 border-emerald-500/20 text-[9px] uppercase tracking-tighter"}>
+                                      {med.is_dosage_change ? "Dosage Change" : "New Suggestion"}
+                                    </Badge>
+                                  </div>
+                                  {med.reason && <p className="text-xs text-muted-foreground mt-1">{med.reason}</p>}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
                   </CardContent>

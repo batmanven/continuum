@@ -25,13 +25,16 @@ import {
   ArrowRight,
   MessageSquare,
   Activity as ActivityIcon,
-  Brain
+  Brain,
+  Pill,
+  AlertTriangle
 } from "lucide-react";
 import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
 import { useProfile } from "@/contexts/ProfileContext";
 import { toast } from "sonner";
 import { doctorSummaryService, DoctorSummary } from "@/services/doctorSummaryService";
 import { healthService } from "@/services/healthService";
+import { supabase } from "@/lib/supabase";
 import {
   Dialog,
   DialogContent,
@@ -145,12 +148,34 @@ const DoctorSummaries = () => {
   const handleDeleteSummary = async (summaryId: string) => {
     setDeletingId(summaryId);
     try {
+      const summaryToDelete = summaries.find(s => s.id === summaryId);
       const { error } = await doctorSummaryService.deleteDoctorSummary(summaryId);
       if (error) {
         toast.error("Failed to delete summary: " + error);
       } else {
         toast.success("Summary deleted successfully");
         setSummaries(prev => prev.filter(s => s.id !== summaryId));
+        
+        if (summaryToDelete && summaryToDelete.health_entry_ids && user) {
+           for (const hid of summaryToDelete.health_entry_ids) {
+              const { data: healthEntry } = await supabase
+                .from('health_entries')
+                .select('raw_content')
+                .eq('id', hid)
+                .single();
+              
+              await supabase.from('health_entries').delete().eq('id', hid);
+
+              if (healthEntry && healthEntry.raw_content) {
+                 await supabase
+                   .from('symptom_entries')
+                   .delete()
+                   .eq('user_id', user.id)
+                   .eq('description', healthEntry.raw_content);
+              }
+           }
+        }
+        
         await loadStats();
       }
     } catch (error) {
@@ -399,7 +424,7 @@ const DoctorSummaries = () => {
       <div className="flex items-center justify-between animate-fade-in">
         <div>
           <h1 className="font-display text-2xl font-semibold text-foreground">
-            Doctor Summaries
+            AI Summaries
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
             Your clinical insights and AI-generated health summaries
@@ -675,6 +700,32 @@ const DoctorSummaries = () => {
                   <ul className="space-y-2 text-green-800">
                     {selectedSummary.recommendations.map((rec, i) => (
                       <li key={i}>📋 {rec}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {selectedSummary.suggested_medications && selectedSummary.suggested_medications.length > 0 && (
+                <div className="rounded-xl bg-amber-50 p-4 border border-amber-200">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Pill className="h-4 w-4 text-amber-600" />
+                    <h4 className="font-semibold text-amber-900">Suggested Medications</h4>
+                  </div>
+                  <div className="bg-amber-100/50 p-3 rounded-lg border border-amber-200 mb-3 text-xs text-amber-800 flex gap-2">
+                    <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
+                    <p><strong>Disclaimer:</strong> This is AI-generated advice. Please cross-check these suggestions with your doctor or medical staff before making any changes to your medication.</p>
+                  </div>
+                  <ul className="space-y-3">
+                    {selectedSummary.suggested_medications.map((med: any, i: number) => (
+                      <li key={i} className="bg-white/60 p-3 rounded-lg border border-amber-100 flex flex-col gap-1">
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-amber-900">{med.name} <span className="text-amber-700 font-medium">({med.dosage})</span></span>
+                          <Badge variant={med.is_dosage_change ? "secondary" : "default"} className={med.is_dosage_change ? "bg-blue-100 text-blue-700 hover:bg-blue-200" : "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"}>
+                            {med.is_dosage_change ? "Dosage Change" : "New Suggestion"}
+                          </Badge>
+                        </div>
+                        {med.reason && <span className="text-xs text-amber-800/80">{med.reason}</span>}
+                      </li>
                     ))}
                   </ul>
                 </div>
