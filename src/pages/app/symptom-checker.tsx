@@ -20,6 +20,17 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const mapSymptomToRegion = (symptom: string): BodyRegion[] => {
   const s = symptom.toLowerCase();
@@ -221,9 +232,7 @@ const SymptomChecker = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (window.confirm('Are you sure you want to delete this symptom entry?')) {
-      await deleteSymptomEntry(id);
-    }
+    await deleteSymptomEntry(id);
   };
 
   const getSeverityColor = (severity: number) => {
@@ -454,10 +463,26 @@ const SymptomChecker = () => {
                             className="h-8 w-8 p-0 rounded-xl hover:bg-white/5 text-muted-foreground hover:text-primary">
                             <Edit className="h-3.5 w-3.5" />
                           </Button>
-                          <Button variant="ghost" size="sm" onClick={() => handleDelete(entry.id!)}
-                            className="h-8 w-8 p-0 rounded-xl hover:bg-red-500/10 text-muted-foreground hover:text-red-500">
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="ghost" size="sm"
+                                className="h-8 w-8 p-0 rounded-xl hover:bg-red-500/10 text-muted-foreground hover:text-red-500">
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent className="glass-premium border-border/20 rounded-[2rem]">
+                              <AlertDialogHeader>
+                                <AlertDialogTitle className="font-display">Delete Symptom Record?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Are you sure you want to permanently delete this record of <strong className="text-foreground">{entry.symptom_name}</strong>? This action cannot be undone.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel className="rounded-xl border-white/5 bg-white/5 hover:bg-white/10">Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => handleDelete(entry.id!)} className="rounded-xl bg-red-600 hover:bg-red-700 text-white border-0">Delete</AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
                         </div>
                       </div>
                     </div>

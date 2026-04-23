@@ -79,6 +79,8 @@ const MedicationsDashboard = () => {
     e.preventDefault();
     if (!user || !newName) return;
 
+    let finalAnalysis = interactionWarning;
+
     if (!skipCheck) {
       setIsAnalyzing(true);
       const activeDrugNames = medications.filter(m => m.active).map(m => m.name);
@@ -90,6 +92,8 @@ const MedicationsDashboard = () => {
         setInteractionWarning(analysis);
         return; // Halt creation, wait for user confirmation
       }
+      
+      finalAnalysis = analysis;
     }
 
     try {
@@ -100,7 +104,7 @@ const MedicationsDashboard = () => {
         dosage: newDosage,
         frequency: newFrequency,
         active: true,
-        drug_interactions_cache: interactionWarning
+        drug_interactions_cache: finalAnalysis
       });
 
       if (error) throw error;
@@ -247,6 +251,15 @@ const MedicationsDashboard = () => {
                               <span className="text-[8px] text-muted-foreground/60 italic font-medium">Mapped to {med.drug_interactions_cache.standardized.generic_name}</span>
                             </div>
                           )}
+
+                          {med.drug_interactions_cache.severity === 'none' && med.active && (
+                            <div className="p-3 rounded-xl bg-indigo-500/5 border border-indigo-500/10 flex gap-3">
+                              <CheckCircle2 className="h-4 w-4 text-indigo-500 shrink-0 mt-0.5" />
+                              <p className="text-[10px] font-semibold text-muted-foreground/80 leading-relaxed italic">
+                                Safe against current profile records.
+                              </p>
+                            </div>
+                          )}
                         </>
                       ) : med.active ? (
                         <div className="p-3 rounded-xl bg-indigo-500/5 border border-indigo-500/10 flex gap-3">
@@ -289,23 +302,6 @@ const MedicationsDashboard = () => {
               ))}
             </div>
           )}
-        </div>
-
-        {/* Quick Links */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 py-12 animate-slide-up" style={{ animationDelay: '300ms' }}>
-           {[
-             { label: 'Summaries', icon: Info, color: 'text-indigo-400', link: '/app/doctor-summaries' },
-             { label: 'Dashboard', icon: Heart, color: 'text-rose-400', link: '/app/dashboard' },
-             { label: 'Previous Bills', icon: FileUp, color: 'text-amber-400', link: '/app/previous-bills' },
-             { label: 'Life Thread', icon: Activity, color: 'text-emerald-400', link: '/app/dashboard' }
-           ].map((item, i) => (
-             <Link key={i} to={item.link} className="flex items-center gap-3 p-4 glass-premium rounded-2xl hover:bg-white/[0.05] transition-all group">
-                <div className={`h-8 w-8 rounded-xl bg-white/5 flex items-center justify-center ${item.color} group-hover:scale-110 transition-transform`}>
-                  <item.icon className="h-4 w-4" />
-                </div>
-                <span className="text-[10px] font-bold uppercase tracking-widest">{item.label}</span>
-             </Link>
-           ))}
         </div>
       </div>
 

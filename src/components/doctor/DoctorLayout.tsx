@@ -3,7 +3,7 @@ import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { DoctorSidebar } from "@/components/doctor/DoctorSidebar";
 import { Button } from "@/components/ui/button";
-import { Moon, Sun, LogOut, Heart } from "lucide-react";
+import { Moon, Sun, LogOut } from "lucide-react";
 import { useTheme } from "@/hooks/use-theme";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
@@ -41,14 +41,14 @@ const DoctorLayout = () => {
       <div className="h-screen flex w-full bg-background overflow-hidden selection:bg-primary/20">
         <DoctorSidebar />
         <div className="flex-1 flex flex-col h-full min-w-0 relative overflow-hidden">
-          {/* Subtle Global Glow */}
           <div className="absolute top-0 right-0 w-[50vw] h-[50vh] bg-emerald-600/5 blur-[150px] -mr-[10vw] -mt-[10vw] pointer-events-none -z-10 opacity-60" />
           
-          <header className="h-16 flex items-center justify-between px-8 bg-background/60 backdrop-blur-xl sticky top-0 z-40 border-b border-white/10 shadow-lg shadow-black/20">
-            <div className="flex items-center gap-4">
-              <div className="flex flex-col">
+          <header className="h-16 flex items-center justify-between px-4 md:px-8 bg-background/60 backdrop-blur-xl sticky top-0 z-40 border-b border-white/10 shadow-lg shadow-black/20">
+            <div className="flex items-center gap-2 md:gap-4">
+              <SidebarTrigger className="md:hidden h-9 w-9 text-muted-foreground hover:text-primary transition-colors" />
+              <div className="flex flex-col animate-fade-in">
                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/40">Doctor Portal</span>
-                 <span className="text-xs font-bold text-foreground/60">
+                 <span className="text-[15px] font-display font-black tracking-tight text-foreground whitespace-nowrap leading-tight">
                    {location.pathname === '/doctor' 
                      ? 'Dashboard' 
                      : location.pathname.includes('/patient/') 

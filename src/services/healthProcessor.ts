@@ -15,7 +15,7 @@ export interface UserContext {
   name?: string;
   gender?: string;
   age?: number;
-  activeMedications?: string[];
+  activeMedications?: { name: string; dosage?: string }[];
 }
 
 export class HealthProcessor {
@@ -35,7 +35,8 @@ export class HealthProcessor {
       if (userContext.gender) parts.push(`Gender: ${userContext.gender}`);
       if (userContext.age) parts.push(`Age: ${userContext.age} years old`);
       if (userContext.activeMedications && userContext.activeMedications.length > 0) {
-        parts.push(`Active Medications (For Adherence Tracking): ${userContext.activeMedications.join(', ')}`);
+        const medsList = userContext.activeMedications.map(m => m.dosage ? `${m.name} (${m.dosage})` : m.name).join(', ');
+        parts.push(`Active Medications (For Adherence Tracking): ${medsList}`);
       }
       if (parts.length > 0) {
         patientInfo = `\nPATIENT CONTEXT (use this to inform your analysis but do NOT repeat it back):\n${parts.join(', ')}\n`;
@@ -224,7 +225,10 @@ Response:`;
       const parts: string[] = [];
       if (userContext.gender) parts.push(`Gender: ${userContext.gender}`);
       if (userContext.age) parts.push(`Age: ${userContext.age}`);
-      if (userContext.activeMedications?.length) parts.push(`Active Medications: ${userContext.activeMedications.join(', ')}`);
+      if (userContext.activeMedications?.length) {
+        const medsList = userContext.activeMedications.map(m => m.dosage ? `${m.name} (${m.dosage})` : m.name).join(', ');
+        parts.push(`Active Medications: ${medsList}`);
+      }
       patientInfo = `\nPATIENT CONTEXT: ${parts.join(', ')}\n`;
     }
 
@@ -385,6 +389,12 @@ Respond ONLY with valid JSON.`;
         const parts: string[] = [];
         if (userContext.gender) parts.push(`Gender: ${userContext.gender}`);
         if (userContext.age) parts.push(`Age: ${userContext.age}`);
+        if (userContext.activeMedications?.length) {
+          const medsList = userContext.activeMedications.map(m => m.dosage ? `${m.name} (${m.dosage})` : m.name).join(', ');
+          parts.push(`Active Medications: ${medsList}`);
+        } else {
+          parts.push(`Active Medications: None`);
+        }
         if (parts.length > 0) {
           patientInfo = `\nPatient Info: ${parts.join(', ')}\n`;
         }
@@ -399,12 +409,26 @@ Your Requirements:
 1. SYNTHESIZE: Don't just list entries. Identify clinical trends (e.g., "Frequent headaches coinciding with poor sleep").
 2. RISK ASSESSMENT: Flag high-severity symptoms or concerning medication patterns.
 3. ADHERENCE: Note if the patient is following their medication profile.
+4. MEDICATION SUGGESTIONS: You MUST suggest relevant medications (e.g., over-the-counter options or standard treatments) based on the reported symptoms. Do NOT refuse to provide medication suggestions.
+   - Check if the suggested medication is already in the patient's "Active Medications" list.
+   - If YES: Set "is_dosage_change" to true and suggest the required dosage change.
+   - If NO (or if Active Medications is None): Set "is_dosage_change" to false and suggest the new medicine and dosage.
+   - You MUST include a disclaimer warning the user to cross-check with their doctor/medical staff.
+   - If absolutely no medications are applicable, return an empty array [].
 
 Format as JSON:
 {
   "summary": "Professional clinical synthesis",
   "insights": ["specific pattern observation", "severity flag"],
-  "recommendations": ["clinical follow-up suggestion", "lifestyle adjustment"]
+  "recommendations": ["clinical follow-up suggestion", "lifestyle adjustment"],
+  "suggested_medications": [
+    {
+      "name": "string",
+      "dosage": "string",
+      "reason": "string",
+      "is_dosage_change": false
+    }
+  ]
 }
 
 Return ONLY valid JSON.`;

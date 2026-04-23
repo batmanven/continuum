@@ -327,7 +327,8 @@ const HealthMemory = () => {
             date_range_start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
             date_range_end: new Date().toISOString(),
             is_favorite: false,
-            tags: ['health', 'summary', 'ai-generated']
+            tags: ['health', 'summary', 'ai-generated'],
+            suggested_medications: summaryData.suggested_medications || []
           });
           
           if (error) {
@@ -621,7 +622,7 @@ const HealthMemory = () => {
           <DialogHeader>
             <DialogTitle className="font-display flex items-center gap-2">
               <ClipboardList className="h-5 w-5" />
-              Doctor Summary
+              AI Summary
             </DialogTitle>
           </DialogHeader>
           {summary && (
@@ -650,8 +651,34 @@ const HealthMemory = () => {
                 <div className="rounded-xl bg-green-50 p-4">
                   <h4 className="font-semibold text-green-900 mb-2">Recommendations</h4>
                   <ul className="space-y-2 text-green-800">
-                    {summary.recommendations.map((rec, i) => (
+                    {summary.recommendations.map((rec: string, i: number) => (
                       <li key={i}> {rec}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {summary.suggested_medications && summary.suggested_medications.length > 0 && (
+                <div className="rounded-xl bg-amber-50 p-4 border border-amber-200">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Pill className="h-4 w-4 text-amber-600" />
+                    <h4 className="font-semibold text-amber-900">Suggested Medications</h4>
+                  </div>
+                  <div className="bg-amber-100/50 p-3 rounded-lg border border-amber-200 mb-3 text-xs text-amber-800 flex gap-2">
+                    <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
+                    <p><strong>Disclaimer:</strong> This is AI-generated advice. Please cross-check these suggestions with your doctor or medical staff before making any changes to your medication.</p>
+                  </div>
+                  <ul className="space-y-3">
+                    {summary.suggested_medications.map((med: any, i: number) => (
+                      <li key={i} className="bg-white/60 p-3 rounded-lg border border-amber-100 flex flex-col gap-1">
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-amber-900">{med.name} <span className="text-amber-700 font-medium">({med.dosage})</span></span>
+                          <Badge variant={med.is_dosage_change ? "secondary" : "default"} className={med.is_dosage_change ? "bg-blue-100 text-blue-700 hover:bg-blue-200" : "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"}>
+                            {med.is_dosage_change ? "Dosage Change" : "New Suggestion"}
+                          </Badge>
+                        </div>
+                        {med.reason && <span className="text-xs text-amber-800/80">{med.reason}</span>}
+                      </li>
                     ))}
                   </ul>
                 </div>

@@ -71,6 +71,26 @@ const AppLayout = () => {
     }
   }, [location.pathname]);
 
+  const getPageTitle = (path: string) => {
+    if (path === "/app" || path === "/app/") return "Dashboard";
+    if (path === "/app/health-memory") return "Health Memory";
+    if (path === "/app/symptom-checker") return "Symptom Checker";
+    if (path === "/app/doctor-summaries") return "AI Summaries";
+    if (path === "/app/bill-explainer") return "Bill Explainer";
+    if (path === "/app/doctor-search") return "Find Doctors";
+    if (path === "/app/my-doctors") return "My Doctors";
+    if (path === "/app/chats") return "My Consultations";
+    if (path === "/app/prescriptions") return "My Prescriptions";
+    if (path === "/app/reports") return "Medical Reports";
+    if (path === "/app/guardians") return "Guardians";
+    if (path === "/app/medications") return "Medications";
+    if (path === "/app/profile") return "Profile";
+    if (path === "/app/settings") return "Settings";
+    return "Continuum";
+  };
+
+  const pageTitle = getPageTitle(location.pathname);
+
   return (
     <SidebarProvider defaultOpen={false}>
       <div className="h-screen flex w-full bg-background overflow-hidden selection:bg-primary/20">
@@ -83,18 +103,10 @@ const AppLayout = () => {
             <div className="flex items-center gap-2 md:gap-6">
               <SidebarTrigger className="md:hidden h-9 w-9 text-muted-foreground hover:text-primary transition-colors" />
               
-              <div className="flex items-center gap-3 group px-1">
-                <div className="flex shrink-0 items-center justify-center rounded-2xl bg-indigo-600 shadow-lg shadow-indigo-600/20 h-9 w-9 transition-transform group-hover:scale-105 duration-500">
-                  <Heart className="h-4.5 w-4.5 text-white fill-white/20 animate-pulse" />
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-[13px] font-display font-black tracking-tight text-foreground whitespace-nowrap leading-tight">
-                    Continuum
-                  </span>
-                  <span className="text-[8px] font-black uppercase tracking-[0.2em] text-indigo-500 whitespace-nowrap leading-tight">
-                    Vanguard Suite
-                  </span>
-                </div>
+              <div className="flex items-center gap-3 px-1 animate-fade-in">
+                <span className="text-[20px] font-display font-black tracking-tight text-foreground whitespace-nowrap">
+                  {pageTitle}
+                </span>
               </div>
             </div>
             
