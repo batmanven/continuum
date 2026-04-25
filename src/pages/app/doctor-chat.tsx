@@ -1,3 +1,5 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
@@ -21,11 +23,11 @@ import {
   User,
   XCircle
 } from 'lucide-react';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
   DialogDescription,
   DialogFooter
 } from '@/components/ui/dialog';
@@ -191,7 +193,7 @@ export default function DoctorChatPage() {
 
     try {
       setIsSharing(true);
-      
+
       // 1. Upload File & Create Record
       let content = "";
       let type: any = 'lab_result';
@@ -199,32 +201,32 @@ export default function DoctorChatPage() {
       if (pendingShareType === 'report') {
         const { url, error } = await medicalReportService.uploadFile(user.id, file);
         if (error) throw new Error(error);
-        
+
         await medicalReportService.uploadReport({
-            patient_id: user.id,
-            report_title: `Shared: ${file.name}`,
-            report_type: 'lab_report',
-            file_url: url!,
-            doctor_id: chat?.doctor_id,
-            is_confidential: false,
-            metadata: { source: 'chat_share' }
+          patient_id: user.id,
+          report_title: `Shared: ${file.name}`,
+          report_type: 'lab_report',
+          file_url: url!,
+          doctor_id: chat?.doctor_id,
+          is_confidential: false,
+          metadata: { source: 'chat_share' }
         });
         content = `Shared a medical report: ${file.name}`;
       } else {
         const { url, error } = await medicalReportService.uploadFile(user.id, file); // Reusing upload logic
         if (error) throw new Error(error);
 
-        await prescriptionService.createPrescription(chat?.doctor_id!, {
-            patient_id: user.id,
-            medication_name: `Shared: ${file.name}`,
-            dosage: "See document",
-            frequency: "See document",
-            duration: "See document",
-            instructions: "Shared via consultation chat",
-            refills_allowed: 0,
-            refills_remaining: 0,
-            is_active: true,
-            patient_acknowledged: true
+        await prescriptionService.createPrescription(chat?.doctor_id, {
+          patient_id: user.id,
+          medication_name: `Shared: ${file.name}`,
+          dosage: "See document",
+          frequency: "See document",
+          duration: "See document",
+          instructions: "Shared via consultation chat",
+          refills_allowed: 0,
+          refills_remaining: 0,
+          is_active: true,
+          patient_acknowledged: true
         });
         content = `Shared a prescription/medication record: ${file.name}`;
         type = 'prescription';
@@ -260,9 +262,9 @@ export default function DoctorChatPage() {
       const { error } = await chatService.cancelChat(chatId);
       if (error) throw new Error(error);
 
-      toast({ 
-        title: 'Request Cancelled', 
-        description: 'Your consultation request has been withdrawn.' 
+      toast({
+        title: 'Request Cancelled',
+        description: 'Your consultation request has been withdrawn.'
       });
       navigate('/app/chats');
     } catch (err: any) {
@@ -328,8 +330,8 @@ export default function DoctorChatPage() {
           <div>
             <h1 className="text-lg font-display font-bold text-foreground leading-tight">{doctorName}</h1>
             <p className="text-[10px] font-bold uppercase tracking-widest text-primary mt-0.5">
-              {chat.status === 'active' 
-                ? (chat.doctor_accepted_at ? 'Active consultation' : 'Pending Specialist') 
+              {chat.status === 'active'
+                ? (chat.doctor_accepted_at ? 'Active consultation' : 'Pending Specialist')
                 : (chat.status === 'cancelled' ? 'Cancelled consultation' : 'Closed consultation')}
             </p>
           </div>
@@ -407,32 +409,30 @@ export default function DoctorChatPage() {
                 className={`flex ${message.sender_id === user.id ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-bottom-2 duration-300`}
               >
                 <div
-                  className={`max-w-[80%] px-4 py-3 rounded-2xl shadow-xl transition-all ${
-                    message.sender_id === user.id
-                      ? 'bg-primary text-primary-foreground element-glow-subtle'
-                      : 'bg-card text-foreground border border-white/5'
-                  }`}
+                  className={`max-w-[80%] px-4 py-3 rounded-2xl shadow-xl transition-all ${message.sender_id === user.id
+                    ? 'bg-primary text-primary-foreground element-glow-subtle'
+                    : 'bg-card text-foreground border border-white/5'
+                    }`}
                 >
                   {message.message_type !== 'text' ? (
-                     <div className="flex items-center gap-4 py-1">
-                        <div className={`h-12 w-12 rounded-xl flex items-center justify-center shrink-0 ${message.sender_id === user.id ? 'bg-white/20' : 'bg-primary/10 text-primary'}`}>
-                           {message.message_type === 'prescription' ? <Pill className="h-6 w-6" /> : <FileText className="h-6 w-6" />}
-                        </div>
-                        <div className="min-w-0">
-                           <p className="text-xs font-bold truncate leading-tight">{message.content}</p>
-                           <p className={`text-[10px] uppercase font-black tracking-widest mt-1 ${message.sender_id === user.id ? 'text-primary-foreground/60' : 'text-primary'}`}>Clinical Record Attached</p>
-                        </div>
-                        <Button variant="ghost" size="icon" className={`h-9 w-9 rounded-xl ${message.sender_id === user.id ? 'hover:bg-white/20 text-white' : 'hover:bg-white/5 text-muted-foreground hover:text-primary'}`}>
-                           <Download className="h-4 w-4" />
-                        </Button>
-                     </div>
+                    <div className="flex items-center gap-4 py-1">
+                      <div className={`h-12 w-12 rounded-xl flex items-center justify-center shrink-0 ${message.sender_id === user.id ? 'bg-white/20' : 'bg-primary/10 text-primary'}`}>
+                        {message.message_type === 'prescription' ? <Pill className="h-6 w-6" /> : <FileText className="h-6 w-6" />}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold truncate leading-tight">{message.content}</p>
+                        <p className={`text-[10px] uppercase font-black tracking-widest mt-1 ${message.sender_id === user.id ? 'text-primary-foreground/60' : 'text-primary'}`}>Clinical Record Attached</p>
+                      </div>
+                      <Button variant="ghost" size="icon" className={`h-9 w-9 rounded-xl ${message.sender_id === user.id ? 'hover:bg-white/20 text-white' : 'hover:bg-white/5 text-muted-foreground hover:text-primary'}`}>
+                        <Download className="h-4 w-4" />
+                      </Button>
+                    </div>
                   ) : (
                     <p className="text-[13px] leading-relaxed font-medium">{message.content}</p>
                   )}
                   <div
-                    className={`flex items-center gap-2 mt-2 text-[9px] font-bold uppercase tracking-widest ${
-                      message.sender_id === user.id ? 'text-primary-foreground/60' : 'text-muted-foreground/60'
-                    }`}
+                    className={`flex items-center gap-2 mt-2 text-[9px] font-bold uppercase tracking-widest ${message.sender_id === user.id ? 'text-primary-foreground/60' : 'text-muted-foreground/60'
+                      }`}
                   >
                     <span>{new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                     {message.sender_id === user.id && (
@@ -454,26 +454,26 @@ export default function DoctorChatPage() {
       {chat.status === 'active' ? (
         <div className="shrink-0 sticky bottom-0 bg-card/40 backdrop-blur-xl border-t border-white/10 px-6 py-4 z-30">
           <div className="max-w-3xl mx-auto flex items-center gap-3">
-            <input 
-              type="file" 
-              ref={fileInputRef} 
-              className="hidden" 
-              onChange={handleShareFile} 
+            <input
+              type="file"
+              ref={fileInputRef}
+              className="hidden"
+              onChange={handleShareFile}
             />
-            
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button 
-                   variant="ghost" 
-                   size="icon" 
-                   disabled={isSharing}
-                   className="h-11 w-11 shrink-0 rounded-2xl bg-white/5 hover:bg-white/10 text-muted-foreground hover:text-primary border border-white/5 transition-all"
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  disabled={isSharing}
+                  className="h-11 w-11 shrink-0 rounded-2xl bg-white/5 hover:bg-white/10 text-muted-foreground hover:text-primary border border-white/5 transition-all"
                 >
                   {isSharing ? <Loader2 className="h-5 w-5 animate-spin text-primary" /> : <Plus className="h-5 w-5" />}
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" side="top" className="glass-premium border-white/10 w-56 p-2">
-                <DropdownMenuItem 
+                <DropdownMenuItem
                   onClick={() => initiateShare('report')}
                   className="rounded-xl gap-4 py-3 cursor-pointer group"
                 >
@@ -485,7 +485,7 @@ export default function DoctorChatPage() {
                     <span className="text-[9px] text-muted-foreground font-medium">Lab results & records</span>
                   </div>
                 </DropdownMenuItem>
-                <DropdownMenuItem 
+                <DropdownMenuItem
                   onClick={() => initiateShare('prescription')}
                   className="rounded-xl gap-4 py-3 cursor-pointer group"
                 >
@@ -541,23 +541,23 @@ export default function DoctorChatPage() {
           </DialogHeader>
           <div className="py-6 space-y-4">
             <div className="p-5 rounded-3xl bg-amber-500/5 border border-amber-500/10 flex gap-4">
-               <AlertCircle className="h-6 w-6 text-amber-500 shrink-0" />
-               <div className="space-y-2">
-                  <p className="text-sm font-bold text-amber-200/90">Clinical Data Sharing Warning</p>
-                  <p className="text-[11px] leading-relaxed text-amber-200/60">
-                    You are about to share a sensitive medical document directly with this specialist. Ensure you trust the recipient before proceeding with the data transfer.
-                  </p>
-               </div>
+              <AlertCircle className="h-6 w-6 text-amber-500 shrink-0" />
+              <div className="space-y-2">
+                <p className="text-sm font-bold text-amber-200/90">Clinical Data Sharing Warning</p>
+                <p className="text-[11px] leading-relaxed text-amber-200/60">
+                  You are about to share a sensitive medical document directly with this specialist. Ensure you trust the recipient before proceeding with the data transfer.
+                </p>
+              </div>
             </div>
           </div>
           <DialogFooter className="gap-2 sm:gap-0">
             <Button variant="ghost" onClick={() => setShowPrivacyWarning(false)} className="rounded-xl font-bold uppercase tracking-widest text-[10px]">Back</Button>
-            <Button 
-                onClick={() => {
-                  setShowPrivacyWarning(false);
-                  fileInputRef.current?.click();
-                }}
-                className="rounded-xl font-bold uppercase tracking-widest text-[10px] bg-primary hover:bg-primary/90"
+            <Button
+              onClick={() => {
+                setShowPrivacyWarning(false);
+                fileInputRef.current?.click();
+              }}
+              className="rounded-xl font-bold uppercase tracking-widest text-[10px] bg-primary hover:bg-primary/90"
             >
               I Understand & Share
             </Button>
@@ -576,23 +576,23 @@ export default function DoctorChatPage() {
           </DialogHeader>
           <div className="py-6 space-y-4">
             <div className="space-y-2">
-               <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
-                  Reason for Conclusion
-               </label>
-               <Textarea 
-                  placeholder="e.g. Symptoms resolved, Second opinion obtained, Administrative..." 
-                  className="min-h-[120px] glass-premium border-white/5 resize-none text-sm p-4 rounded-xl"
-                  value={closureReason}
-                  onChange={(e) => setClosureReason(e.target.value)}
-               />
+              <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
+                Reason for Conclusion
+              </label>
+              <Textarea
+                placeholder="e.g. Symptoms resolved, Second opinion obtained, Administrative..."
+                className="min-h-[120px] glass-premium border-white/5 resize-none text-sm p-4 rounded-xl"
+                value={closureReason}
+                onChange={(e) => setClosureReason(e.target.value)}
+              />
             </div>
           </div>
           <DialogFooter className="gap-2 sm:gap-0">
             <Button variant="ghost" onClick={() => setShowClosureDialog(false)} className="rounded-xl font-bold uppercase tracking-widest text-[10px]">Cancel</Button>
-            <Button 
-                onClick={handleEndConsultation}
-                disabled={isClosing || !closureReason.trim()}
-                className="rounded-xl font-bold uppercase tracking-widest text-[10px] bg-red-600 hover:bg-red-700 shadow-lg shadow-red-500/20"
+            <Button
+              onClick={handleEndConsultation}
+              disabled={isClosing || !closureReason.trim()}
+              className="rounded-xl font-bold uppercase tracking-widest text-[10px] bg-red-600 hover:bg-red-700 shadow-lg shadow-red-500/20"
             >
               {isClosing ? <Loader2 className="h-3 w-3 animate-spin mr-2" /> : <Lock className="h-3 w-3 mr-2" />}
               Confirm Closure
