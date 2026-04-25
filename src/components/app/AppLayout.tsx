@@ -3,10 +3,11 @@ import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app/AppSidebar";
 import { Button } from "@/components/ui/button";
-import { Moon, Sun, LogOut, Heart } from "lucide-react";
+import { Moon, Sun, LogOut, Heart, Bell } from "lucide-react";
 import { useTheme } from "@/hooks/use-theme";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
+import { supabase } from "@/lib/supabase";
 import { useDoctor } from "@/contexts/DoctorContext";
 import { ProfileSwitcher } from "@/components/app/ProfileSwitcher";
 import { passportService, HealthPassport } from "@/services/passportService";
@@ -70,6 +71,36 @@ const AppLayout = () => {
       mainRef.current.scrollTop = 0;
     }
   }, [location.pathname]);
+
+  useEffect(() => {
+    if (!user) return;
+
+    // Listen for connection verifications targeting this user
+    const channel = supabase
+      .channel('connection_verifications_receiver')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'connection_verifications',
+          filter: `target_user_id=eq.${user.id}`
+        },
+        (payload) => {
+          const newCode = payload.new.code;
+          toast.success(`Connection Verification Code: ${newCode}`, {
+            description: "A family member is requesting to link your health profile. Share this code with them.",
+            duration: 15000,
+            icon: <Bell className="h-4 w-4 text-primary" />,
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
 
   const getPageTitle = (path: string) => {
     if (path === "/app" || path === "/app/") return "Dashboard";

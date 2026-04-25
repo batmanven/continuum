@@ -7,7 +7,7 @@ import { supabase } from '@/lib/supabase';
 import { healthService } from '@/services/healthService';
 
 interface UseSymptomCheckerReturn {
-  
+
   entries: SymptomEntry[];
   patterns: SymptomPattern[];
   insights: SymptomInsight[];
@@ -15,7 +15,7 @@ interface UseSymptomCheckerReturn {
   analyzing: boolean;
   error: string | null;
 
-  
+
   addSymptomEntry: (entryData: Omit<SymptomEntry, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => Promise<boolean>;
   updateSymptomEntry: (id: string, updates: Partial<SymptomEntry>) => Promise<boolean>;
   deleteSymptomEntry: (id: string) => Promise<boolean>;
@@ -43,13 +43,13 @@ export const useSymptomChecker = (): UseSymptomCheckerReturn => {
 
   const loadEntries = async () => {
     if (!user) return;
-    
+
     setLoading(true);
     setError(null);
-    
+
     try {
       const { data, error } = await symptomCheckerService.getUserSymptomEntries(user.id, 50, 0, activeProfile.id);
-      
+
       if (error) {
         setError(error);
         toast.error('Failed to load symptom entries');
@@ -75,7 +75,7 @@ export const useSymptomChecker = (): UseSymptomCheckerReturn => {
 
     try {
       const { data, error } = await symptomCheckerService.createSymptomEntry(user.id, entryData, activeProfile.id);
-      
+
       if (error) {
         setError(error);
         toast.error('Failed to add symptom entry');
@@ -86,7 +86,7 @@ export const useSymptomChecker = (): UseSymptomCheckerReturn => {
         // Sync to Health Timeline
         const severityMap = ['mild', 'moderate', 'severe'];
         const severityIdx = Math.min(2, Math.floor((entryData.severity - 1) / 3.34));
-        
+
         await healthService.createHealthEntry(
           user.id,
           `${entryData.symptom_name}${entryData.description ? `: ${entryData.description}` : ''}${entryData.body_part ? ` (Area: ${entryData.body_part})` : ''}`,
@@ -97,7 +97,7 @@ export const useSymptomChecker = (): UseSymptomCheckerReturn => {
         setTimeout(() => {
           analyzePatterns();
         }, 500);
-        
+
         return true;
       }
       return false;
@@ -112,17 +112,17 @@ export const useSymptomChecker = (): UseSymptomCheckerReturn => {
   const updateSymptomEntry = async (id: string, updates: Partial<SymptomEntry>): Promise<boolean> => {
     try {
       const { error } = await symptomCheckerService.updateSymptomEntry(id, updates);
-      
+
       if (error) {
         setError(error);
         toast.error('Failed to update symptom entry');
         return false;
       } else {
-        setEntries(prev => prev.map(entry => 
+        setEntries(prev => prev.map(entry =>
           entry.id === id ? { ...entry, ...updates } : entry
         ));
         toast.success('Symptom entry updated successfully');
-        
+
         // Sync to Health Timeline as a new status update
         if (user) {
           const symptomName = updates.symptom_name || entries.find(e => e.id === id)?.symptom_name;
@@ -137,7 +137,7 @@ export const useSymptomChecker = (): UseSymptomCheckerReturn => {
         setTimeout(() => {
           analyzePatterns();
         }, 500);
-        
+
         return true;
       }
     } catch (error) {
@@ -152,7 +152,7 @@ export const useSymptomChecker = (): UseSymptomCheckerReturn => {
     const entryToDelete = entries.find(e => e.id === id);
     try {
       const { error } = await symptomCheckerService.deleteSymptomEntry(id);
-      
+
       if (error) {
         setError(error);
         toast.error('Failed to delete symptom entry');
@@ -160,7 +160,7 @@ export const useSymptomChecker = (): UseSymptomCheckerReturn => {
       } else {
         setEntries(prev => prev.filter(entry => entry.id !== id));
         toast.success('Symptom entry deleted successfully');
-        
+
         if (entryToDelete && user) {
           const contentToMatch = entryToDelete.description || `Log of symptom: ${entryToDelete.symptom_name}`;
           const { data: healthData } = await supabase
@@ -168,17 +168,17 @@ export const useSymptomChecker = (): UseSymptomCheckerReturn => {
             .select('id')
             .eq('user_id', user.id)
             .eq('raw_content', contentToMatch);
-            
+
           if (healthData && healthData.length > 0) {
             for (const h of healthData) {
               await supabase.from('health_entries').delete().eq('id', h.id);
-              
+
               const { data: docData } = await supabase
                 .from('doctor_summaries')
                 .select('id')
                 .eq('user_id', user.id)
                 .contains('health_entry_ids', [h.id]);
-                
+
               if (docData && docData.length > 0) {
                 for (const doc of docData) {
                   await supabase.from('doctor_summaries').delete().eq('id', doc.id);
@@ -187,11 +187,11 @@ export const useSymptomChecker = (): UseSymptomCheckerReturn => {
             }
           }
         }
-        
+
         setTimeout(() => {
           analyzePatterns();
         }, 500);
-        
+
         return true;
       }
     } catch (error) {
@@ -204,21 +204,21 @@ export const useSymptomChecker = (): UseSymptomCheckerReturn => {
 
   const analyzePatterns = async (symptomName?: string) => {
     if (!user) return;
-    
+
     setAnalyzing(true);
     setError(null);
-    
+
     try {
-      const { patterns: newPatterns, insights: newInsights, error: analyzeError } = 
+      const { patterns: newPatterns, insights: newInsights, error: analyzeError } =
         await symptomCheckerService.analyzeSymptomPatterns(user.id, symptomName, activeProfile.id);
-      
+
       if (analyzeError) {
         setError(analyzeError);
         toast.error('Failed to analyze patterns');
       } else if (newPatterns && newInsights) {
         setPatterns(newPatterns);
         setInsights(newInsights);
-        
+
         if (newInsights.length > 0) {
           toast.success(`Found ${newInsights.length} insights for your symptoms`);
         }
@@ -234,7 +234,7 @@ export const useSymptomChecker = (): UseSymptomCheckerReturn => {
 
   const refreshEntries = async () => {
     await loadEntries();
-    
+
     setTimeout(() => {
       analyzePatterns();
     }, 500);
@@ -245,7 +245,7 @@ export const useSymptomChecker = (): UseSymptomCheckerReturn => {
   };
 
   return {
-    
+
     entries,
     patterns,
     insights,
@@ -253,7 +253,7 @@ export const useSymptomChecker = (): UseSymptomCheckerReturn => {
     analyzing,
     error,
 
-    
+
     addSymptomEntry,
     updateSymptomEntry,
     deleteSymptomEntry,

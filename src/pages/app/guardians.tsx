@@ -225,7 +225,10 @@ const GuardiansDashboard = () => {
           });
 
         if (otpError) throw otpError;
-        toast.success(`Verification code requested for ${profData.full_name}`);
+        toast.success(`Verification code dispatched to ${profData.full_name}`, {
+          description: `For demo purposes, the code is: ${randomCode}`,
+          duration: 8000
+        });
         setModalStep(2); 
       } else {
         toast.error("User not found on Continuum.");

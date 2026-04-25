@@ -313,16 +313,21 @@ export default function DoctorChatPage() {
   }
 
   return (
-    <div className="h-[calc(100vh-6rem)] flex flex-col bg-slate-50 overflow-hidden relative -mt-4 -mx-8">
+    <div className="h-[calc(100vh-6rem)] flex flex-col bg-background overflow-hidden relative -mt-4 -mx-8">
+      {/* Immersive Background Layer */}
+      <div className="absolute inset-0 pointer-events-none -z-0">
+        <div className="absolute top-0 right-0 w-[50vw] h-[50vh] bg-primary/5 blur-[150px] -mr-[10vw] -mt-[10vw] opacity-60" />
+      </div>
+
       {/* Header */}
-      <div className="shrink-0 sticky top-0 bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between z-30">
+      <div className="shrink-0 sticky top-0 bg-card/40 backdrop-blur-xl border-b border-white/10 px-6 py-4 flex items-center justify-between z-30">
         <div className="flex items-center gap-4">
-          <button onClick={() => navigate(-1)} className="p-2 hover:bg-slate-100 rounded-lg">
-            <ArrowLeft className="w-5 h-5 text-slate-600" />
+          <button onClick={() => navigate(-1)} className="p-2 hover:bg-white/5 rounded-xl transition-colors">
+            <ArrowLeft className="w-5 h-5 text-muted-foreground" />
           </button>
           <div>
-            <h1 className="text-lg font-semibold text-slate-900">{doctorName}</h1>
-            <p className="text-sm text-slate-500">
+            <h1 className="text-lg font-display font-bold text-foreground leading-tight">{doctorName}</h1>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-primary mt-0.5">
               {chat.status === 'active' 
                 ? (chat.doctor_accepted_at ? 'Active consultation' : 'Pending Specialist') 
                 : (chat.status === 'cancelled' ? 'Cancelled consultation' : 'Closed consultation')}
@@ -333,32 +338,32 @@ export default function DoctorChatPage() {
         <div className="flex items-center gap-2">
           {chat.status === 'active' && (
             <>
-              <Button variant="ghost" size="icon" className="text-slate-600 hover:bg-slate-100">
-                <Phone className="w-5 h-5" />
+              <Button variant="ghost" size="icon" className="text-muted-foreground hover:bg-white/5 rounded-xl">
+                <Phone className="w-4 h-4" />
               </Button>
-              <Button variant="ghost" size="icon" className="text-slate-600 hover:bg-slate-100">
-                <Video className="w-5 h-5" />
+              <Button variant="ghost" size="icon" className="text-muted-foreground hover:bg-white/5 rounded-xl">
+                <Video className="w-4 h-4" />
               </Button>
             </>
           )}
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon">
-                <MoreVertical className="w-5 h-5" />
+              <Button variant="ghost" size="icon" className="rounded-xl">
+                <MoreVertical className="w-4 h-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="glass-premium border-white/10">
-              <DropdownMenuItem onClick={() => navigate(`/app/doctor-detail/${chat.doctor_id}`)}>
+            <DropdownMenuContent align="end" className="glass-premium border-white/10 p-2">
+              <DropdownMenuItem onClick={() => navigate(`/app/doctor-detail/${chat.doctor_id}`)} className="rounded-lg py-2">
                 <User className="h-4 w-4 mr-2" /> Specialist Profile
               </DropdownMenuItem>
               {chat.status === 'active' && !chat.doctor_accepted_at && (
-                <DropdownMenuItem className="text-red-500 font-medium" onClick={handleCancelConsultation}>
+                <DropdownMenuItem className="text-red-500 font-bold rounded-lg py-2" onClick={handleCancelConsultation}>
                   <XCircle className="h-4 w-4 mr-2" /> Cancel Consultation
                 </DropdownMenuItem>
               )}
               {chat.status === 'active' && chat.doctor_accepted_at && (
-                <DropdownMenuItem className="text-red-500" onClick={() => setShowClosureDialog(true)}>
+                <DropdownMenuItem className="text-red-500 font-bold rounded-lg py-2" onClick={() => setShowClosureDialog(true)}>
                   <AlertCircle className="h-4 w-4 mr-2" /> End Consultation
                 </DropdownMenuItem>
               )}
@@ -369,68 +374,71 @@ export default function DoctorChatPage() {
 
       {/* Consultation Info */}
       {chat.reason_for_consultation && (
-        <div className="shrink-0 sticky top-[68px] bg-blue-50 border-b border-blue-200 px-6 py-3 z-20">
-          <p className="text-sm text-blue-900">
-            <span className="font-medium">Reason:</span> {chat.reason_for_consultation}
+        <div className="shrink-0 sticky top-[73px] bg-primary/5 backdrop-blur-md border-b border-white/5 px-6 py-3 z-20">
+          <p className="text-[10px] font-medium text-primary uppercase tracking-widest">
+            <span className="opacity-60">Nexus Link Reason:</span> {chat.reason_for_consultation}
           </p>
         </div>
       )}
 
       {/* Status Badge */}
       {chat.status === 'closed' && (
-        <div className="bg-amber-50 border-b border-amber-200 px-6 py-3">
-          <p className="text-sm text-amber-900">
-            <span className="font-medium">Consultation closed:</span> {chat.doctor_summary || 'No summary provided'}
+        <div className="bg-amber-500/5 backdrop-blur-md border-b border-amber-500/20 px-6 py-3">
+          <p className="text-[10px] font-medium text-amber-500 uppercase tracking-widest">
+            <span className="opacity-60">Consultation concluded:</span> {chat.doctor_summary || 'No summary provided'}
           </p>
         </div>
       )}
 
       {/* Messages Container */}
-      <div className="flex-1 overflow-y-auto p-6">
-        <div className="max-w-3xl mx-auto space-y-4">
+      <div className="flex-1 overflow-y-auto p-6 relative z-10 scrollbar-premium">
+        <div className="max-w-3xl mx-auto space-y-6">
           {messages.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-slate-600">No messages yet. Start the conversation!</p>
+            <div className="text-center py-20 animate-pulse">
+              <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4 border border-primary/20">
+                <Send className="h-6 w-6 text-primary" />
+              </div>
+              <p className="text-muted-foreground text-[10px] font-bold uppercase tracking-[0.2em]">Ready for initialization</p>
             </div>
           ) : (
             messages.map((message) => (
               <div
                 key={message.id}
-                className={`flex ${message.sender_id === user.id ? 'justify-end' : 'justify-start'}`}
+                className={`flex ${message.sender_id === user.id ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-bottom-2 duration-300`}
               >
                 <div
-                  className={`max-w-[75%] px-4 py-2 rounded-2xl shadow-sm ${
+                  className={`max-w-[80%] px-4 py-3 rounded-2xl shadow-xl transition-all ${
                     message.sender_id === user.id
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-white text-slate-900 border border-slate-200'
+                      ? 'bg-primary text-primary-foreground element-glow-subtle'
+                      : 'bg-card text-foreground border border-white/5'
                   }`}
                 >
                   {message.message_type !== 'text' ? (
-                     <div className="flex items-center gap-3 py-1">
-                        <div className={`h-10 w-10 rounded-xl flex items-center justify-center shrink-0 ${message.sender_id === user.id ? 'bg-white/20' : 'bg-primary/10 text-primary'}`}>
-                           {message.message_type === 'prescription' ? <Pill className="h-5 w-5" /> : <FileText className="h-5 w-5" />}
+                     <div className="flex items-center gap-4 py-1">
+                        <div className={`h-12 w-12 rounded-xl flex items-center justify-center shrink-0 ${message.sender_id === user.id ? 'bg-white/20' : 'bg-primary/10 text-primary'}`}>
+                           {message.message_type === 'prescription' ? <Pill className="h-6 w-6" /> : <FileText className="h-6 w-6" />}
                         </div>
                         <div className="min-w-0">
                            <p className="text-xs font-bold truncate leading-tight">{message.content}</p>
-                           <p className={`text-[10px] uppercase font-black tracking-tighter mt-0.5 ${message.sender_id === user.id ? 'text-primary-foreground/60' : 'text-muted-foreground'}`}>Clinical Record Attached</p>
+                           <p className={`text-[10px] uppercase font-black tracking-widest mt-1 ${message.sender_id === user.id ? 'text-primary-foreground/60' : 'text-primary'}`}>Clinical Record Attached</p>
                         </div>
-                        <Button variant="ghost" size="icon" className={`h-8 w-8 rounded-lg ${message.sender_id === user.id ? 'hover:bg-white/20' : 'hover:bg-black/5'}`}>
-                           <Download className="h-3.5 w-3.5" />
+                        <Button variant="ghost" size="icon" className={`h-9 w-9 rounded-xl ${message.sender_id === user.id ? 'hover:bg-white/20 text-white' : 'hover:bg-white/5 text-muted-foreground hover:text-primary'}`}>
+                           <Download className="h-4 w-4" />
                         </Button>
                      </div>
                   ) : (
-                    <p className="text-sm leading-relaxed">{message.content}</p>
+                    <p className="text-[13px] leading-relaxed font-medium">{message.content}</p>
                   )}
                   <div
-                    className={`flex items-center gap-1 mt-1 text-[10px] ${
-                      message.sender_id === user.id ? 'text-primary-foreground/60' : 'text-slate-500'
+                    className={`flex items-center gap-2 mt-2 text-[9px] font-bold uppercase tracking-widest ${
+                      message.sender_id === user.id ? 'text-primary-foreground/60' : 'text-muted-foreground/60'
                     }`}
                   >
                     <span>{new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                     {message.sender_id === user.id && (
-                      <div className="flex items-center gap-1 ml-1">
-                        {message.is_read && <span className={message.is_read ? "text-blue-300 font-bold" : ""}>Seen</span>}
-                        <CheckCheck className={`w-3 h-3 ${message.is_read ? 'text-blue-300' : 'opacity-50'}`} />
+                      <div className="flex items-center gap-1.5 ml-auto">
+                        <CheckCheck className={`w-3 h-3 ${message.is_read ? 'text-white' : 'opacity-40'}`} />
+                        {message.is_read && <span className="text-white">Seen</span>}
                       </div>
                     )}
                   </div>
@@ -444,7 +452,7 @@ export default function DoctorChatPage() {
 
       {/* Input Area */}
       {chat.status === 'active' ? (
-        <div className="shrink-0 sticky bottom-0 bg-white border-t border-slate-200 px-6 py-4 z-30">
+        <div className="shrink-0 sticky bottom-0 bg-card/40 backdrop-blur-xl border-t border-white/10 px-6 py-4 z-30">
           <div className="max-w-3xl mx-auto flex items-center gap-3">
             <input 
               type="file" 
@@ -459,45 +467,53 @@ export default function DoctorChatPage() {
                    variant="ghost" 
                    size="icon" 
                    disabled={isSharing}
-                   className="h-11 w-11 shrink-0 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-600"
+                   className="h-11 w-11 shrink-0 rounded-2xl bg-white/5 hover:bg-white/10 text-muted-foreground hover:text-primary border border-white/5 transition-all"
                 >
-                  {isSharing ? <Loader2 className="h-5 w-5 animate-spin" /> : <Plus className="h-5 w-5" />}
+                  {isSharing ? <Loader2 className="h-5 w-5 animate-spin text-primary" /> : <Plus className="h-5 w-5" />}
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" side="top" className="glass-premium border-white/10 w-48 p-2">
+              <DropdownMenuContent align="start" side="top" className="glass-premium border-white/10 w-56 p-2">
                 <DropdownMenuItem 
                   onClick={() => initiateShare('report')}
-                  className="rounded-xl gap-3 py-2.5 cursor-pointer"
+                  className="rounded-xl gap-4 py-3 cursor-pointer group"
                 >
-                  <div className="h-8 w-8 rounded-lg bg-indigo-500/10 text-indigo-500 flex items-center justify-center">
-                    <FileText className="h-4 w-4" />
+                  <div className="h-10 w-10 rounded-xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <FileText className="h-5 w-5" />
                   </div>
-                  <span className="text-[11px] font-bold uppercase tracking-widest text-foreground">Share Report</span>
+                  <div className="flex flex-col">
+                    <span className="text-[11px] font-bold uppercase tracking-widest text-foreground">Nexus Report</span>
+                    <span className="text-[9px] text-muted-foreground font-medium">Lab results & records</span>
+                  </div>
                 </DropdownMenuItem>
                 <DropdownMenuItem 
                   onClick={() => initiateShare('prescription')}
-                  className="rounded-xl gap-3 py-2.5 cursor-pointer"
+                  className="rounded-xl gap-4 py-3 cursor-pointer group"
                 >
-                  <div className="h-8 w-8 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
-                    <Pill className="h-4 w-4" />
+                  <div className="h-10 w-10 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <Pill className="h-5 w-5" />
                   </div>
-                  <span className="text-[11px] font-bold uppercase tracking-widest text-foreground">Share Script</span>
+                  <div className="flex flex-col">
+                    <span className="text-[11px] font-bold uppercase tracking-widest text-foreground">Active Script</span>
+                    <span className="text-[9px] text-muted-foreground font-medium">Medication history</span>
+                  </div>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
 
             <form onSubmit={handleSendMessage} className="flex-1 flex gap-3">
-              <Input
-                placeholder="Type clinical inquiry..."
-                value={messageInput}
-                onChange={(e) => setMessageInput(e.target.value)}
-                disabled={sending}
-                className="flex-1 h-11 rounded-2xl border-slate-200 focus:ring-primary/20"
-              />
+              <div className="relative flex-1">
+                <Input
+                  placeholder="Type clinical inquiry..."
+                  value={messageInput}
+                  onChange={(e) => setMessageInput(e.target.value)}
+                  disabled={sending}
+                  className="w-full h-11 rounded-2xl border-white/5 bg-background/50 focus:bg-background transition-all px-4 text-sm font-medium"
+                />
+              </div>
               <Button
                 type="submit"
                 disabled={sending || !messageInput.trim()}
-                className="bg-primary hover:bg-primary/90 gap-2 h-11 px-6 rounded-2xl shadow-lg shadow-primary/20 transition-all font-bold uppercase tracking-widest text-[11px]"
+                className="bg-primary hover:bg-primary/90 gap-2 h-11 px-6 rounded-2xl shadow-xl shadow-primary/20 transition-all font-bold uppercase tracking-widest text-[10px]"
               >
                 {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="w-4 h-4" />}
                 Send
@@ -506,8 +522,8 @@ export default function DoctorChatPage() {
           </div>
         </div>
       ) : (
-        <div className="shrink-0 sticky bottom-0 bg-slate-100 border-t border-slate-200 px-6 py-4 text-center z-30">
-          <p className="text-slate-600 text-[10px] font-black uppercase tracking-widest">Consultation records archived</p>
+        <div className="shrink-0 sticky bottom-0 bg-muted/30 backdrop-blur-md border-t border-white/5 px-6 py-4 text-center z-30">
+          <p className="text-muted-foreground text-[10px] font-bold uppercase tracking-[0.3em]">Nexus Link Terminated • Records Archived</p>
         </div>
       )}
 

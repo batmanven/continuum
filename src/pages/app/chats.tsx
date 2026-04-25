@@ -257,7 +257,7 @@ export default function ChatsPage() {
                         {/* Info & Status */}
                         <div className="flex-1 min-w-0">
                           <div className="flex flex-wrap items-center gap-2 mb-1">
-                            <h3 className="font-semibold text-slate-900 leading-tight">{chat.doctor_name}</h3>
+                            <h3 className="font-display font-bold text-foreground leading-tight">{chat.doctor_name}</h3>
                             <div className="flex items-center gap-1.5 ml-auto sm:ml-0">
                               {chat.status === 'active' ? (
                                 <Badge className="h-5 bg-emerald-500/10 text-emerald-600 border-none px-2 rounded-md flex gap-1 items-center shrink-0">
@@ -270,7 +270,7 @@ export default function ChatsPage() {
                                   <span className="text-[9px] font-bold uppercase tracking-wider">Cancelled</span>
                                 </Badge>
                               ) : (
-                                <Badge className="h-5 bg-slate-100 text-slate-600 border-none px-2 rounded-md flex gap-1 items-center shrink-0">
+                                <Badge className="h-5 bg-secondary text-secondary-foreground border-none px-2 rounded-md flex gap-1 items-center shrink-0">
                                   <CheckCircle className="w-2.5 h-2.5" />
                                   <span className="text-[9px] font-bold uppercase tracking-wider">Completed</span>
                                 </Badge>
@@ -292,13 +292,13 @@ export default function ChatsPage() {
                               </span>
                             )}
                             {chat.doctor_hospital && (
-                              <span className="text-[10px] text-slate-500 font-medium">
+                              <span className="text-[10px] text-muted-foreground font-bold">
                                 • {chat.doctor_hospital}
                               </span>
                             )}
                           </div>
 
-                          <p className="text-xs text-slate-600 line-clamp-1 mb-2">
+                          <p className="text-xs text-muted-foreground line-clamp-1 mb-2 font-medium">
                             {chat.reason_for_consultation}
                           </p>
 
