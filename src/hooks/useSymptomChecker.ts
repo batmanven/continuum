@@ -83,7 +83,6 @@ export const useSymptomChecker = (): UseSymptomCheckerReturn => {
       } else if (data) {
         setEntries(prev => [data, ...prev]);
         toast.success('Symptom entry added successfully');
-        
         // Sync to Health Timeline
         const severityMap = ['mild', 'moderate', 'severe'];
         const severityIdx = Math.min(2, Math.floor((entryData.severity - 1) / 3.34));
@@ -162,12 +161,13 @@ export const useSymptomChecker = (): UseSymptomCheckerReturn => {
         setEntries(prev => prev.filter(entry => entry.id !== id));
         toast.success('Symptom entry deleted successfully');
         
-        if (entryToDelete && entryToDelete.description && user) {
+        if (entryToDelete && user) {
+          const contentToMatch = entryToDelete.description || `Log of symptom: ${entryToDelete.symptom_name}`;
           const { data: healthData } = await supabase
             .from('health_entries')
             .select('id')
             .eq('user_id', user.id)
-            .eq('raw_content', entryToDelete.description);
+            .eq('raw_content', contentToMatch);
             
           if (healthData && healthData.length > 0) {
             for (const h of healthData) {

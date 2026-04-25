@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { GoogleGenAI } from '@google/genai';
 
 const apiKey = import.meta.env.VITE_GOOGLE_AI_API_KEY;

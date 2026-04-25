@@ -1,13 +1,14 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Send, 
-  ClipboardList, 
-  User, 
-  Bot, 
+import {
+  Send,
+  ClipboardList,
+  User,
+  Bot,
   Search,
   Filter,
   Calendar,
@@ -73,7 +74,7 @@ const HealthMemory = () => {
     analyzing
   } = useSymptomChecker();
   const { activeProfile } = useProfile();
-  
+
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [showSummary, setShowSummary] = useState(false);
@@ -144,9 +145,9 @@ const HealthMemory = () => {
         age--;
       }
     }
-    return { 
-      name: activeProfile.name || user?.user_metadata?.name, 
-      gender: activeProfile.gender || user?.user_metadata?.gender, 
+    return {
+      name: activeProfile.name || user?.user_metadata?.name,
+      gender: activeProfile.gender || user?.user_metadata?.gender,
       age
     };
   };
@@ -168,27 +169,27 @@ const HealthMemory = () => {
     recognitionRef.current.continuous = true;
     recognitionRef.current.interimResults = true;
 
-    let finalTranscript = input; 
+    let finalTranscript = input;
 
     recognitionRef.current.onresult = (event: any) => {
-       for (let i = event.resultIndex; i < event.results.length; ++i) {
-         if (event.results[i].isFinal) {
-           finalTranscript += event.results[i][0].transcript + ' ';
-           setInput(finalTranscript);
-         }
-       }
-    };
-    
-    recognitionRef.current.onerror = (event: any) => {
-        console.error("Speech recognition error", event.error);
-        setIsRecording(false);
-        if(event.error !== 'no-speech'){
-            toast.error("Microphone error: " + event.error);
+      for (let i = event.resultIndex; i < event.results.length; ++i) {
+        if (event.results[i].isFinal) {
+          finalTranscript += event.results[i][0].transcript + ' ';
+          setInput(finalTranscript);
         }
+      }
     };
-    
+
+    recognitionRef.current.onerror = (event: any) => {
+      console.error("Speech recognition error", event.error);
+      setIsRecording(false);
+      if (event.error !== 'no-speech') {
+        toast.error("Microphone error: " + event.error);
+      }
+    };
+
     recognitionRef.current.onend = () => {
-        setIsRecording(false);
+      setIsRecording(false);
     };
 
     recognitionRef.current.start();
@@ -238,7 +239,7 @@ const HealthMemory = () => {
     setIsAiResponding(true);
     // Contextual AI Processing via Gemini
     const result = await healthProcessor.processChat(
-      currentInput, 
+      currentInput,
       currentMessages.slice(-5), // Send last 5 messages for context
       getUserContext()
     );
@@ -259,10 +260,10 @@ const HealthMemory = () => {
 
     setSyncStatus('analyzing');
     toast.loading("Analyzing conversation for timeline items...", { id: "sync" });
-    
+
     try {
       const extractedFacts = await healthProcessor.summarizeConversation(messages);
-      
+
       if (extractedFacts && extractedFacts.length > 0) {
         // Commit extracted facts to the timeline
         for (const fact of extractedFacts) {
@@ -271,22 +272,23 @@ const HealthMemory = () => {
             if (typeof sev === 'string') {
               sev = sev.toLowerCase().includes('severe') ? 8 : sev.toLowerCase().includes('moderate') ? 5 : 2;
             }
-            
+
             await addSymptomEntry({
               ...fact.structured_data,
               severity: typeof sev === 'number' ? Math.max(1, Math.min(10, sev)) : 3,
               description: fact.raw_content,
               start_time: new Date().toISOString()
             });
+            // Skip manual healthService.createHealthEntry as addSymptomEntry now handles it
+          } else {
+            // Always add to the global health timeline for non-symptom items
+            await healthService.createHealthEntry(
+              user!.id,
+              fact.raw_content,
+              fact.entry_type,
+              activeProfile.id
+            );
           }
-          
-          // Always add to the global health timeline
-          await healthService.createHealthEntry(
-            user!.id,
-            fact.raw_content,
-            fact.entry_type,
-            activeProfile.id
-          );
         }
         await refreshEntries();
         toast.success(`Sync complete: ${extractedFacts.length} items added to timeline`, { id: "sync" });
@@ -299,10 +301,10 @@ const HealthMemory = () => {
       // Finally, generate the doctor summary
       await handleGenerateSummary();
     } catch (error) {
-       console.error("Sync error:", error);
-       toast.error("Failed to sync chat to timeline", { id: "sync" });
+      console.error("Sync error:", error);
+      toast.error("Failed to sync chat to timeline", { id: "sync" });
     } finally {
-       setSyncStatus(null);
+      setSyncStatus(null);
     }
   };
 
@@ -310,13 +312,13 @@ const HealthMemory = () => {
   const handleClearChat = () => {
     const storageKey = `health-chat-messages-${activeProfile.id}`;
     localStorage.removeItem(storageKey);
-    
+
     setMessages([{
       role: "ai",
       content: "Hey! I'm your health buddy. I can help you track symptoms, medications, mood, and sleep. I'll also analyze patterns in your symptoms! What's on your mind today?",
       timestamp: new Date().toISOString()
     }]);
-    
+
     toast.success("Chat cleared successfully!");
   };
 
@@ -325,7 +327,7 @@ const HealthMemory = () => {
     if (summaryData) {
       if (user) {
         try {
-          
+
           const { error } = await doctorSummaryService.createDoctorSummary(user.id, {
             title: summaryData.title || `Health Summary - ${new Date().toLocaleDateString()}`,
             summary: summaryData.summary,
@@ -338,7 +340,7 @@ const HealthMemory = () => {
             tags: ['health', 'summary', 'ai-generated'],
             suggested_medications: summaryData.suggested_medications || []
           });
-          
+
           if (error) {
             toast.error("Failed to save summary: " + error);
           } else {
@@ -429,9 +431,8 @@ const HealthMemory = () => {
                 {messages.map((message, index) => (
                   <div
                     key={index}
-                    className={`flex gap-3 mb-4 ${
-                      message.role === "user" ? "justify-end" : "justify-start"
-                    }`}
+                    className={`flex gap-3 mb-4 ${message.role === "user" ? "justify-end" : "justify-start"
+                      }`}
                   >
                     {message.role === "ai" && (
                       <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
@@ -439,11 +440,10 @@ const HealthMemory = () => {
                       </div>
                     )}
                     <div
-                      className={`max-w-[80%] p-3 rounded-lg ${
-                        message.role === "user"
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted"
-                      }`}
+                      className={`max-w-[80%] p-3 rounded-lg ${message.role === "user"
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted"
+                        }`}
                     >
                       <p className="text-sm">{message.content}</p>
                       {(message as any).imageUrl && (
@@ -479,11 +479,11 @@ const HealthMemory = () => {
                 )}
                 <div ref={messagesEndRef} />
               </div>
-              
+
               {imagePreview && (
                 <div className="mb-4 flex items-start p-3 bg-muted/50 rounded-lg relative w-max">
                   <img src={imagePreview} alt="Preview" className="h-20 w-auto rounded border border-border" />
-                  <button 
+                  <button
                     onClick={handleRemoveImage}
                     className="absolute -top-2 -right-2 bg-background rounded-full hover:bg-muted"
                   >
@@ -500,19 +500,19 @@ const HealthMemory = () => {
                   onKeyPress={(e) => e.key === "Enter" && handleSend()}
                   disabled={isProcessing || isAiResponding}
                 />
-                <input 
-                  type="file" 
-                  accept="image/*" 
-                  className="hidden" 
-                  ref={fileInputRef} 
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  ref={fileInputRef}
                   onChange={handleFileSelect}
                 />
-                <input 
-                  type="file" 
-                  accept="image/*" 
+                <input
+                  type="file"
+                  accept="image/*"
                   capture="environment"
-                  className="hidden" 
-                  ref={cameraInputRef} 
+                  className="hidden"
+                  ref={cameraInputRef}
                   onChange={handleFileSelect}
                 />
                 <Button
@@ -607,9 +607,9 @@ const HealthMemory = () => {
                               {entry.entry_type}
                             </Badge>
                           </div>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
+                          <Button
+                            variant="ghost"
+                            size="icon"
                             className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-red-500 hover:bg-red-50"
                             onClick={() => deleteEntry(entry.id!)}
                           >
@@ -658,7 +658,7 @@ const HealthMemory = () => {
                   {summary.summary}
                 </p>
               </div>
-              
+
               {summary.insights.length > 0 && (
                 <div className="rounded-xl bg-blue-50 p-4">
                   <h4 className="font-semibold text-blue-900 mb-2">Key Insights</h4>
@@ -669,7 +669,7 @@ const HealthMemory = () => {
                   </ul>
                 </div>
               )}
-              
+
               {summary.recommendations.length > 0 && (
                 <div className="rounded-xl bg-green-50 p-4">
                   <h4 className="font-semibold text-green-900 mb-2">Recommendations</h4>

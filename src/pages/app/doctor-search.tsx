@@ -230,43 +230,43 @@ export default function DoctorSearchPage() {
 
       <div className="max-w-6xl mx-auto px-4 py-8">
         {/* Search and Filters */}
-        <div id="tour-doctor-search-box" className="bg-white rounded-lg border border-slate-200 p-6 mb-8">
+        <div id="tour-doctor-search-box" className="bg-card/40 backdrop-blur-sm rounded-[2rem] border border-border/40 p-6 mb-8 shadow-sm">
           <div className="space-y-4">
             {/* Search Box */}
             <div className="relative">
-              <Search className="absolute left-3 top-3 w-5 h-5 text-slate-400" />
+              <Search className="absolute left-4 top-3.5 w-5 h-5 text-muted-foreground/60" />
               <Input
                 placeholder="Search by doctor name or specialty..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 h-12 rounded-xl bg-background/50 border-border/40 focus:border-primary/40 focus:ring-primary/10 transition-all text-sm"
+                className="pl-12 h-12 rounded-2xl bg-background/50 border-border/40 focus:border-primary/40 focus:ring-primary/10 transition-all text-sm"
               />
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:w-96">
               <Select value={selectedSpecialization} onValueChange={setSelectedSpecialization}>
-                <SelectTrigger className="h-12 rounded-xl bg-background/50 border-border/40 focus:border-primary/40 focus:ring-primary/10">
+                <SelectTrigger className="h-12 rounded-2xl bg-background/50 border-border/40 focus:border-primary/40 focus:ring-primary/10">
                   <div className="flex items-center gap-2">
                     <Filter className="w-4 h-4 text-muted-foreground" />
                     <SelectValue placeholder="Specialty" />
                   </div>
                 </SelectTrigger>
-                <SelectContent position="popper" sideOffset={8} className="rounded-xl border-border/60">
+                <SelectContent position="popper" sideOffset={8} className="rounded-2xl border-border/60">
                   <SelectItem value="all">All Specialties</SelectItem>
                   {SPECIALIZATIONS.map((spec) => (
                     <SelectItem key={spec} value={spec}>{spec}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-
+  
               <Select value={selectedHospital} onValueChange={setSelectedHospital}>
-                <SelectTrigger className="h-12 rounded-xl bg-background/50 border-border/40 focus:border-primary/40 focus:ring-primary/10">
+                <SelectTrigger className="h-12 rounded-2xl bg-background/50 border-border/40 focus:border-primary/40 focus:ring-primary/10">
                   <div className="flex items-center gap-2">
                     <MapPin className="w-4 h-4 text-muted-foreground" />
                     <SelectValue placeholder="Hospital" />
                   </div>
                 </SelectTrigger>
-                <SelectContent position="popper" sideOffset={8} className="rounded-xl border-border/60">
+                <SelectContent position="popper" sideOffset={8} className="rounded-2xl border-border/60">
                   <SelectItem value="all">All Hospitals</SelectItem>
                   {hospitals.map((hospital) => (
                     <SelectItem key={hospital} value={hospital}>{hospital}</SelectItem>

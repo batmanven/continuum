@@ -1,10 +1,11 @@
+/* eslint-disable react-refresh/only-export-components */
 import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Slider } from '@/components/ui/slider';
-import { 
+import {
   Activity, Plus, TrendingUp, TrendingDown, Minus,
   Calendar, Clock, AlertTriangle, Brain, BarChart3,
   RefreshCw, Trash2, Edit, X, Search
@@ -35,14 +36,14 @@ import {
 const mapSymptomToRegion = (symptom: string): BodyRegion[] => {
   const s = symptom.toLowerCase();
   const regions: BodyRegion[] = [];
-  
+
   if (s.includes('head') || s.includes('migraine') || s.includes('fever') || s.includes('dizz') || s.includes('face') || s.includes('eye')) regions.push('head');
   else if (s.includes('neck') || s.includes('throat') || s.includes('swallow')) regions.push('neck');
   else if (s.includes('shoulder')) { regions.push('front-deltoids'); regions.push('back-deltoids'); }
   else if (s.includes('chest') || s.includes('heart') || s.includes('breath') || s.includes('cough')) regions.push('chest');
   else if (s.includes('stomach') || s.includes('abdo') || s.includes('nausea') || s.includes('cramp') || s.includes('digest') || s.includes('belly')) { regions.push('abs'); regions.push('obliques'); }
   else if (s.includes('pelvi') || s.includes('groin') || s.includes('bladder')) regions.push('adductor');
-  
+
   if (s.includes('back')) {
     if (s.includes('upper')) regions.push('upper-back');
     else if (s.includes('lower')) regions.push('lower-back');
@@ -58,7 +59,7 @@ const mapSymptomToRegion = (symptom: string): BodyRegion[] => {
   if (s.includes('foot') || s.includes('feet') || s.includes('toe') || s.includes('ankle')) {
     regions.push('calves');
   }
-  
+
   return regions;
 };
 
@@ -83,26 +84,26 @@ export const GLOBAL_TRIGGERS = [
 ];
 
 export const TRIGGER_MAP: Record<string, string[]> = {
-  quadriceps:       ['Running', 'Cycling', 'Heavy leg workout', 'Muscle strain', 'Improper warm-up', 'Overstretching', 'Sudden sprinting'],
-  hamstring:        ['Sprinting', 'Stretching injury', 'Overuse', 'Poor flexibility'],
-  calves:           ['Dehydration', 'Electrolyte imbalance', 'Prolonged standing', 'Night cramps'],
-  biceps:           ['Weight lifting', 'Pulling motion', 'Overuse'],
-  triceps:          ['Pushing exercises', 'Overextension'],
-  forearm:          ['Typing', 'Repetitive motion', 'Grip strain'],
-  'lower-back':     ['Prolonged sitting', 'Bad posture', 'Lifting heavy objects', 'Sleeping position'],
-  'upper-back':     ['Desk work', 'Hunched posture'],
-  trapezius:        ['Stress', 'Neck strain', 'Laptop use', 'Heavy backpack'],
-  abs:              ['Core workout', 'Overexertion', 'Poor form exercise'],
-  obliques:         ['Twisting motion', 'Sports activity'],
-  head:             ['Screen time', 'Migraine triggers', 'Dehydration', 'Noise', 'Bright lights'],
-  neck:             ['Phone usage', 'Bad sleeping posture', 'Stress', 'Cold draft'],
-  chest:            ['Heavy workout', 'Anxiety', 'Respiratory issue', 'Cold air'],
-  gluteal:          ['Prolonged sitting', 'Stair climbing', 'Deep squats', 'Running'],
-  adductor:         ['Lateral movement', 'Sprinting', 'Groin strain'],
-  abductors:        ['Side-to-side motion', 'Running on uneven ground'],
+  quadriceps: ['Running', 'Cycling', 'Heavy leg workout', 'Muscle strain', 'Improper warm-up', 'Overstretching', 'Sudden sprinting'],
+  hamstring: ['Sprinting', 'Stretching injury', 'Overuse', 'Poor flexibility'],
+  calves: ['Dehydration', 'Electrolyte imbalance', 'Prolonged standing', 'Night cramps'],
+  biceps: ['Weight lifting', 'Pulling motion', 'Overuse'],
+  triceps: ['Pushing exercises', 'Overextension'],
+  forearm: ['Typing', 'Repetitive motion', 'Grip strain'],
+  'lower-back': ['Prolonged sitting', 'Bad posture', 'Lifting heavy objects', 'Sleeping position'],
+  'upper-back': ['Desk work', 'Hunched posture'],
+  trapezius: ['Stress', 'Neck strain', 'Laptop use', 'Heavy backpack'],
+  abs: ['Core workout', 'Overexertion', 'Poor form exercise'],
+  obliques: ['Twisting motion', 'Sports activity'],
+  head: ['Screen time', 'Migraine triggers', 'Dehydration', 'Noise', 'Bright lights'],
+  neck: ['Phone usage', 'Bad sleeping posture', 'Stress', 'Cold draft'],
+  chest: ['Heavy workout', 'Anxiety', 'Respiratory issue', 'Cold air'],
+  gluteal: ['Prolonged sitting', 'Stair climbing', 'Deep squats', 'Running'],
+  adductor: ['Lateral movement', 'Sprinting', 'Groin strain'],
+  abductors: ['Side-to-side motion', 'Running on uneven ground'],
   'front-deltoids': ['Overhead pressing', 'Front raises', 'Bench press', 'Overuse'],
-  'back-deltoids':  ['Rows', 'Rear delt flies', 'Overhead reach', 'Poor posture'],
-  shoulders:        ['Overhead lifting', 'Side sleeping', 'Reach extension'],
+  'back-deltoids': ['Rows', 'Rear delt flies', 'Overhead reach', 'Poor posture'],
+  shoulders: ['Overhead lifting', 'Side sleeping', 'Reach extension'],
 };
 
 export const GLOBAL_NOTES = [
@@ -111,26 +112,27 @@ export const GLOBAL_NOTES = [
   'Occurs during movement', 'Occurs at rest', 'Morning stiffness', 'Night pain'
 ];
 
+
 export const NOTES_MAP: Record<string, string[]> = {
-  quadriceps:       ['Pain while walking', 'Pain during squat', 'Muscle tightness', 'Swelling present'],
-  'lower-back':     ['Pain while bending', 'Pain while sitting', 'Radiates to leg', 'Stiffness after rest'],
-  neck:             ['Restricted movement', 'Pain turning head', 'Headache associated'],
-  head:             ['Throbbing pain', 'Light sensitivity', 'Nausea', 'Aura present'],
-  chest:            ['Tightness', 'Shortness of breath', 'Sharp on deep breath'],
-  hamstring:        ['Pain during extension', 'Tightness behind knee', 'Cramping', 'Weakness felt'],
-  calves:           ['Night cramping', 'Pain on tiptoe', 'Tightness after rest', 'Swelling present'],
-  biceps:           ['Pain during curl', 'Weakness on grip', 'Tender to touch'],
-  triceps:          ['Pain on extension', 'Elbow discomfort', 'Stiffness after push movements'],
-  forearm:          ['Tingling in fingers', 'Weakness in grip', 'Pain on rotation'],
-  'upper-back':     ['Pain between shoulder blades', 'Stiffness after sitting', 'Difficulty breathing deeply'],
-  trapezius:        ['Tension headache', 'Shoulder stiffness', 'Pain on neck rotation'],
-  abs:              ['Pain during sit-up', 'Tenderness on palpation', 'Pain when laughing or coughing'],
-  obliques:         ['Pain on twisting', 'Side stitch', 'Discomfort during rotation'],
-  gluteal:          ['Pain while sitting', 'Aching after stairs', 'Radiates to hamstring'],
-  adductor:         ['Inner thigh pain', 'Pain during lateral step', 'Weakness on squeeze'],
-  abductors:        ['Outer hip pain', 'Pain going up stairs', 'Lateral knee discomfort'],
+  quadriceps: ['Pain while walking', 'Pain during squat', 'Muscle tightness', 'Swelling present'],
+  'lower-back': ['Pain while bending', 'Pain  pwhile sitting', 'Radiates to leg', 'Stiffness after rest'],
+  neck: ['Restricted movement', 'Pain turning head', 'Headache associated'],
+  head: ['Throbbing pain', 'Light sensitivity', 'Nausea', 'Aura present'],
+  chest: ['Tightness', 'Shortness of breath', 'Sharp on deep breath'],
+  hamstring: ['Pain during extension', 'Tightness behind knee', 'Cramping', 'Weakness felt'],
+  calves: ['Night cramping', 'Pain on tiptoe', 'Tightness after rest', 'Swelling present'],
+  biceps: ['Pain during curl', 'Weakness on grip', 'Tender to touch'],
+  triceps: ['Pain on extension', 'Elbow discomfort', 'Stiffness after push movements'],
+  forearm: ['Tingling in fingers', 'Weakness in grip', 'Pain on rotation'],
+  'upper-back': ['Pain between shoulder blades', 'Stiffness after sitting', 'Difficulty breathing deeply'],
+  trapezius: ['Tension headache', 'Shoulder stiffness', 'Pain on neck rotation'],
+  abs: ['Pain during sit-up', 'Tenderness on palpation', 'Pain when laughing or coughing'],
+  obliques: ['Pain on twisting', 'Side stitch', 'Discomfort during rotation'],
+  gluteal: ['Pain while sitting', 'Aching after stairs', 'Radiates to hamstring'],
+  adductor: ['Inner thigh pain', 'Pain during lateral step', 'Weakness on squeeze'],
+  abductors: ['Outer hip pain', 'Pain going up stairs', 'Lateral knee discomfort'],
   'front-deltoids': ['Pain on shoulder press', 'Weakness lifting forward', 'Discomfort at top of arm'],
-  'back-deltoids':  ['Pain pulling back', 'Shoulder blade ache', 'Discomfort on shoulder rotation'],
+  'back-deltoids': ['Pain pulling back', 'Shoulder blade ache', 'Discomfort on shoulder rotation'],
 };
 
 const normalizeRegionKey = (region: string | null | undefined): string =>
@@ -148,22 +150,22 @@ const SymptomChecker = () => {
   const { user } = useSupabaseAuth();
   const userGender = (user?.user_metadata?.gender === 'female' ? 'female' : 'male') as 'male' | 'female';
 
-  const [showAddForm, setShowAddForm]     = useState(false);
+  const [showAddForm, setShowAddForm] = useState(false);
   const [hoveredRegion, setHoveredRegion] = useState<BodyRegion | null>(null);
   const [selectedRegion, setSelectedRegion] = useState<BodyRegion | null>(null);
-  const [editingEntry, setEditingEntry]   = useState<SymptomEntry | null>(null);
+  const [editingEntry, setEditingEntry] = useState<SymptomEntry | null>(null);
 
   const heatData = computeHeatData(patterns);
 
   const [formData, setFormData] = useState({
     symptom_name: '',
-    severity:     [5],
-    description:  '',
-    body_part:    null as string | null,
-    triggers:     '',
-    duration:     '',
+    severity: [5],
+    description: '',
+    body_part: null as string | null,
+    triggers: '',
+    duration: '',
     stress_level: [5],
-    sleep_hours:  [7]
+    sleep_hours: [7]
   });
 
   // ─── Suggestions: plain variables, recomputed every render, zero stale-closure risk ───
@@ -200,14 +202,14 @@ const SymptomChecker = () => {
     setSyncStatus('saving');
     const entryData = {
       symptom_name: formData.symptom_name,
-      severity:     formData.severity[0],
-      description:  formData.description || undefined,
-      body_part:    selectedRegion || formData.body_part || null,
-      triggers:     formData.triggers ? formData.triggers.split(',').map(t => t.trim()) : undefined,
-      duration:     formData.duration || undefined,
+      severity: formData.severity[0],
+      description: formData.description || undefined,
+      body_part: selectedRegion || formData.body_part || null,
+      triggers: formData.triggers ? formData.triggers.split(',').map(t => t.trim()) : undefined,
+      duration: formData.duration || undefined,
       stress_level: formData.stress_level[0],
-      sleep_hours:  formData.sleep_hours[0],
-      start_time:   new Date().toISOString()
+      sleep_hours: formData.sleep_hours[0],
+      start_time: new Date().toISOString()
     };
     try {
       if (editingEntry) {
@@ -227,13 +229,13 @@ const SymptomChecker = () => {
     setSelectedRegion(bodyPartRegion);
     setFormData({
       symptom_name: entry.symptom_name,
-      severity:     [entry.severity],
-      description:  entry.description || '',
-      body_part:    entry.body_part || null,
-      triggers:     entry.triggers?.join(', ') || '',
-      duration:     entry.duration || '',
+      severity: [entry.severity],
+      description: entry.description || '',
+      body_part: entry.body_part || null,
+      triggers: entry.triggers?.join(', ') || '',
+      duration: entry.duration || '',
       stress_level: [entry.stress_level || 5],
-      sleep_hours:  [entry.sleep_hours || 7]
+      sleep_hours: [entry.sleep_hours || 7]
     });
     setShowAddForm(true);
   };
@@ -250,9 +252,9 @@ const SymptomChecker = () => {
 
   const getTrendIcon = (trend: string) => {
     switch (trend) {
-      case 'improving': return <TrendingUp  className="h-4 w-4 text-emerald-500" />;
+      case 'improving': return <TrendingUp className="h-4 w-4 text-emerald-500" />;
       case 'worsening': return <TrendingDown className="h-4 w-4 text-red-500" />;
-      default:          return <Minus        className="h-4 w-4 text-amber-500" />;
+      default: return <Minus className="h-4 w-4 text-amber-500" />;
     }
   };
 
@@ -368,12 +370,10 @@ const SymptomChecker = () => {
             </div>
           </div>
 
-          {/* Right panel */}
           <div className="lg:col-span-8 space-y-12">
 
-            {/* Insights */}
             <div className="space-y-6">
-              <h2 className="text-[10px] font-bold uppercase tracking-[.3em] text-primary">Nexus Insights</h2>
+              <h2 className="text-[10px] font-bold uppercase tracking-[.3em] text-primary">AI Insights</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {insights.length > 0 ? insights.map((insight, index) => (
                   <div key={index} className="glass-premium p-6 rounded-3xl border-white/5 flex gap-4 transition-all hover:-translate-y-1">
