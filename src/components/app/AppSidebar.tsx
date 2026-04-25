@@ -2,20 +2,13 @@ import { useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
   Brain,
-  FileText,
   Settings,
-  Heart,
   Activity,
-  Users,
   Pill,
   User,
-  Zap,
   Stethoscope,
   MessageSquare,
   ChevronDown,
-  ClipboardList,
-  ShieldCheck,
-  TrendingUp,
   Bot,
   Receipt,
   BookUser,
@@ -23,14 +16,16 @@ import {
   Hospital,
   ClipboardPlus,
   CircleUser,
+  Cross,
+  NotebookTabs,
+  BriefcaseMedical,
+  Siren,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import {
   Sidebar,
   SidebarContent,
   SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -57,7 +52,7 @@ const clinicalIntelligence = [
 ];
 
 const specialistCare = [
-  { title: "Find Doctors", url: "/app/doctor-search", icon: Hospital },
+  { title: "Find Doctors", url: "/app/doctor-search", icon: BriefcaseMedical },
   { title: "My Doctors", url: "/app/my-doctors", icon: Stethoscope },
   { title: "My Consultations", url: "/app/chats", icon: MessageSquare },
   { title: "My Prescriptions", url: "/app/prescriptions", icon: PillBottle },
@@ -65,7 +60,8 @@ const specialistCare = [
 ];
 
 const communityCare = [
-  { title: "Guardians", url: "/app/guardians", icon: BookUser },
+  { title: "Emergency Contacts", url: "/app/emergency-contacts", icon: Siren },
+  { title: "Family", url: "/app/guardians", icon: BookUser },
 ];
 
 const accountItems = [
@@ -167,9 +163,9 @@ export function AppSidebar() {
       
       <SidebarContent className="flex flex-col h-full py-4 overflow-y-auto custom-scrollbar px-0">
         <div className="space-y-2">
-          {renderGroup("Clinical Hub", Zap, filteredIntelligence, "text-amber-500")}
-          {renderGroup("Care Circle", TrendingUp, filteredCommunity, "text-indigo-500")}
-          {renderGroup("My Clinic", ShieldCheck, specialistCare, "text-emerald-500")}
+          {renderGroup("Health Centre", NotebookTabs, filteredIntelligence, "text-amber-500")}
+          {renderGroup("Care Network", Cross, filteredCommunity, "text-indigo-500")}
+          {renderGroup("My Clinic", Hospital, specialistCare, "text-emerald-500")}
         </div>
 
         <div className="mt-auto pb-4">
