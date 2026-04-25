@@ -375,9 +375,11 @@ Respond ONLY with valid JSON.`;
   }
 
   async generateHealthSummary(entries: any[], userContext?: UserContext): Promise<{
+    title: string;
     summary: string;
     insights: string[];
     recommendations: string[];
+    suggested_medications: any[];
   }> {
     try {
       const entriesText = entries.map(entry =>
@@ -418,6 +420,7 @@ Your Requirements:
 
 Format as JSON:
 {
+  "title": "A short, descriptive, clinical title for the summary (max 40 characters)",
   "summary": "Professional clinical synthesis",
   "insights": ["specific pattern observation", "severity flag"],
   "recommendations": ["clinical follow-up suggestion", "lifestyle adjustment"],
@@ -446,9 +449,11 @@ Return ONLY valid JSON.`;
     } catch (error) {
       console.error('Error generating health summary:', error);
       return {
+        title: `Health Summary - ${new Date().toLocaleDateString()}`,
         summary: "Unable to generate health summary at this time.",
         insights: ["Please review your health entries manually"],
-        recommendations: ["Consult with your healthcare provider"]
+        recommendations: ["Consult with your healthcare provider"],
+        suggested_medications: []
       };
     }
   }

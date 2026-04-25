@@ -30,7 +30,7 @@ interface ChatWithDoctor {
   patient_blood_type?: string;
   reason_for_consultation?: string;
   patient_request_message?: string;
-  status?: 'active' | 'closed' | 'archived';
+  status?: 'active' | 'closed' | 'archived' | 'cancelled';
   doctor_accepted_at?: string;
   created_at?: string;
   updated_at?: string;

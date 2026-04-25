@@ -141,7 +141,7 @@ const AppLayout = () => {
                     <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4 border border-primary/20">
                       <Shield className="h-6 w-6 text-primary" />
                     </div>
-                    <DialogTitle className="text-2xl font-display font-bold text-center w-full">Emergency Seal</DialogTitle>
+                    <DialogTitle className="text-2xl font-display font-bold text-center w-full">Emergency QR</DialogTitle>
                     <p className="text-xs text-muted-foreground font-medium italic mt-2">
                       Paramedic bypass for critical medical data.
                     </p>
@@ -169,7 +169,7 @@ const AppLayout = () => {
                           onClick={() => navigate('/app/guardians')}
                           className="w-full h-12 rounded-2xl font-bold uppercase tracking-widest text-[10px] bg-primary group"
                          >
-                          View Full Passport <ExternalLink className="h-3 w-3 ml-2 group-hover:translate-x-1 transition-transform" />
+                          View Details <ExternalLink className="h-3 w-3 ml-2 group-hover:translate-x-1 transition-transform" />
                          </Button>
                          <p className="text-[10px] text-center text-muted-foreground px-4">
                            This QR allows first responders to access your blood type, allergies, and emergency contacts.

@@ -26,12 +26,14 @@ import {
   Copy,
   ExternalLink,
   Plus,
+  QrCode as QrIcon,
 } from "lucide-react";
 import { SubscriptionCard } from "@/components/SubscriptionCard";
 import { useNavigate } from "react-router-dom";
 import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
 import { passportService, HealthPassport } from "@/services/passportService";
 import { toast } from "sonner";
+import { QRCodeSVG } from "qrcode.react";
 import {
   Tooltip,
   TooltipContent,
@@ -148,7 +150,7 @@ const ProfilePage = () => {
           <div className="h-32 w-32 rounded-[2rem] bg-primary flex items-center justify-center text-primary-foreground text-5xl font-black shadow-2xl shadow-primary/20 ring-4 ring-background transform transition-transform hover:scale-105 group">
             <span className="group-hover:animate-pulse">{name.charAt(0).toUpperCase()}</span>
           </div>
-
+ 
           <div className="text-center md:text-left space-y-3">
             <div className="flex flex-wrap items-center justify-center md:justify-start gap-4">
               <h1 className="font-display text-5xl font-black text-foreground tracking-tighter">
@@ -162,7 +164,7 @@ const ProfilePage = () => {
             <p className="text-muted-foreground flex items-center justify-center md:justify-start gap-2 text-sm font-medium">
               <Mail className="h-4 w-4 text-primary" /> {email}
             </p>
-
+ 
             <div className="pt-4 flex items-center justify-center md:justify-start gap-4">
               <div className="h-2 w-48 bg-muted rounded-full overflow-hidden shadow-inner">
                 <div className="h-full bg-primary w-[92%] rounded-full shadow-[0_0_15px_rgba(16,185,129,0.5)] animate-pulse"></div>
@@ -172,7 +174,7 @@ const ProfilePage = () => {
           </div>
         </div>
       </div>
-
+ 
       <Tabs defaultValue="overview" className="w-full">
         <TabsList className="grid w-full grid-cols-3 h-14 p-1.5 bg-muted/50 backdrop-blur-md rounded-2xl border border-border/40">
           <TabsTrigger value="overview" className="rounded-xl data-[state=active]:bg-background data-[state=active]:shadow-lg font-black uppercase text-[10px] tracking-[0.2em]">
@@ -184,11 +186,11 @@ const ProfilePage = () => {
             Plan Details
           </TabsTrigger>
           <TabsTrigger value="security" className="rounded-xl data-[state=active]:bg-background data-[state=active]:shadow-lg font-black uppercase text-[10px] tracking-[0.2em]">
-            <Shield className="h-3.5 w-3.5 mr-2" />
-            Emergency details
+            <QrIcon className="h-3.5 w-3.5 mr-2" />
+            My Emergency QR
           </TabsTrigger>
         </TabsList>
-
+ 
         <TabsContent value="overview" className="space-y-6 mt-8 animate-in slide-in-from-bottom-4 duration-500">
           <Card className="rounded-[2.5rem] border-border/40 shadow-soft overflow-hidden">
             <CardHeader className="bg-muted/30 pb-6 flex flex-row items-center justify-between border-b border-border/10">
@@ -207,14 +209,14 @@ const ProfilePage = () => {
                     <p className="text-2xl font-black capitalize tracking-tight">{user?.user_metadata?.gender || "Not specified"}</p>
                   </div>
                 </ProvenanceTrigger>
-
+ 
                 <ProvenanceTrigger field="dob">
                   <div className="space-y-2 p-6 rounded-3xl bg-muted/20 border border-border/40 transition-colors hover:bg-muted/30">
                     <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">Date of Birth</p>
                     <p className="text-2xl font-black tracking-tight">{user?.user_metadata?.date_of_birth || "Not specified"}</p>
                   </div>
                 </ProvenanceTrigger>
-
+ 
                 <ProvenanceTrigger field="blood_group">
                   <div className="space-y-2 p-6 rounded-3xl bg-red-500/5 border border-red-500/10 transition-colors hover:bg-red-500/10 group">
                     <p className="text-[10px] font-black text-red-600/60 uppercase tracking-[0.2em]">Blood Group</p>
@@ -225,9 +227,9 @@ const ProfilePage = () => {
                   </div>
                 </ProvenanceTrigger>
               </div>
-
+ 
               <Separator className="opacity-40" />
-
+ 
               <div className="grid md:grid-cols-2 gap-10">
                 <ProvenanceTrigger field="allergies">
                   <div className="space-y-4">
@@ -252,7 +254,7 @@ const ProfilePage = () => {
                     </div>
                   </div>
                 </ProvenanceTrigger>
-
+ 
                 <ProvenanceTrigger field="medications">
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
@@ -288,7 +290,7 @@ const ProfilePage = () => {
               </div>
             </CardContent>
           </Card>
-
+ 
           {/* Account Control Strip (Localized to Overview) */}
           <div className="flex flex-col sm:flex-row items-center justify-between p-8 rounded-[2rem] bg-muted/30 border border-border/40 gap-6 animate-in slide-in-from-bottom-2 duration-700">
             <div className="flex items-center gap-6">
@@ -304,7 +306,7 @@ const ProfilePage = () => {
             <p className="text-[10px] font-mono text-muted-foreground opacity-40">System Node: {user?.id.substring(0, 13)}</p>
           </div>
         </TabsContent>
-
+ 
         <TabsContent value="subscription" className="mt-8 animate-in zoom-in-95 duration-500">
           <div className="max-w-2xl mx-auto space-y-6">
             <div className="text-center space-y-2 mb-10">
@@ -314,83 +316,12 @@ const ProfilePage = () => {
             <SubscriptionCard />
           </div>
         </TabsContent>
-
-        <TabsContent value="security" className="space-y-8 mt-8 animate-in slide-in-from-right-4 duration-500">
-           <div className="grid lg:grid-cols-2 gap-8">
-             <Card className="rounded-[2.5rem] border-border/40 shadow-soft">
-                <CardHeader className="pb-6">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-xl bg-orange-500/10 text-orange-600 flex items-center justify-center">
-                      <PhoneIcon className="h-5 w-5" />
-                    </div>
-                    <CardTitle className="text-2xl font-black tracking-tight text-orange-600">Verified Contacts</CardTitle>
-                    <Button 
-                      onClick={() => navigate('/app/settings', { state: { scrollTo: 'care-circle' } })}
-                      variant="ghost" 
-                      size="sm" 
-                      className="ml-auto h-9 rounded-xl bg-orange-500/10 text-orange-600 hover:bg-orange-500/20 font-black text-[10px] uppercase tracking-widest px-4 border border-orange-500/20"
-                    >
-                      <Plus className="h-3 w-3 mr-2" />
-                      Add Contacts
-                    </Button>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-8">
-                  <div className="grid sm:grid-cols-2 gap-6">
-                    <div className="space-y-1 p-4 rounded-2xl bg-muted/10 border border-border/40">
-                      <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Primary ICE</p>
-                      <p className="font-black text-sm text-foreground">{user?.user_metadata?.ice_contacts?.[0]?.name || "Self (No ICE Set)"}</p>
-                    </div>
-                    <div className="space-y-1 p-4 rounded-2xl bg-muted/10 border border-border/40">
-                      <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">ICE Phone</p>
-                      <p className="font-mono text-sm font-bold tracking-widest">{user?.user_metadata?.ice_contacts?.[0]?.phone || "No phone linked"}</p>
-                    </div>
-                  </div>
-
-                  <Separator className="opacity-40" />
-
-                  <div className="space-y-4">
-                    <Label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">Emergency Circle</Label>
-                    <div className="grid gap-3">
-                      {(user?.user_metadata?.ice_contacts || []).map((contact: any, i: number) => (
-                        <div key={`ice-${i}`} className="flex items-center gap-4 p-4 rounded-2xl bg-orange-500/5 border border-orange-500/10 transition-all hover:bg-orange-500/10">
-                          <div className="h-12 w-12 rounded-2xl bg-orange-500/10 text-orange-600 flex items-center justify-center text-sm font-black shadow-inner">
-                            {contact.name.split(' ').map((n: string) => n[0]).join('')}
-                          </div>
-                          <div className="flex-1">
-                            <p className="text-sm font-black tracking-tight">{contact.name}</p>
-                            <p className="text-[10px] text-orange-600 font-black uppercase tracking-widest opacity-80">
-                              {contact.relationship} • {contact.phone}
-                            </p>
-                          </div>
-                        </div>
-                      ))}
-
-                      {dependents.map((dep, i) => (
-                        <div key={`dep-${i}`} className="flex items-center gap-4 p-4 rounded-2xl bg-primary/5 border border-primary/10 transition-all hover:bg-primary/10">
-                          <div className="h-12 w-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center text-sm font-black shadow-inner">
-                            {dep.name.charAt(0)}
-                          </div>
-                          <div className="flex-1">
-                            <p className="text-sm font-black tracking-tight">{dep.name}</p>
-                            <p className="text-[10px] text-primary font-black uppercase tracking-widest opacity-80">
-                              Linked {dep.relationship}
-                            </p>
-                          </div>
-                        </div>
-                      ))}
-
-                      {(!user?.user_metadata?.ice_contacts?.length && !dependents.length) && (
-                        <div className="p-8 rounded-[2rem] border border-dashed border-border/60 text-center">
-                          <p className="text-xs text-muted-foreground italic font-medium">No emergency contacts or circle members found.</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="rounded-[2.5rem] border-border/40 shadow-soft bg-red-600 text-white overflow-hidden relative">
+ 
+        <TabsContent value="security" className="mt-8 animate-in slide-in-from-right-4 duration-500">
+          <div className="grid lg:grid-cols-12 gap-8 items-start">
+            {/* Left Column: QR Card */}
+            <div className="lg:col-span-5 space-y-6">
+              <Card className="rounded-[2.5rem] border-border/40 shadow-2xl bg-red-600 text-white overflow-hidden relative">
                 <div className="absolute top-0 right-0 p-8 opacity-10">
                    <Shield className="h-48 w-48" />
                 </div>
@@ -400,14 +331,23 @@ const ProfilePage = () => {
                     <CardTitle className="text-2xl font-black tracking-tight text-white uppercase italic">High-Trust Passport</CardTitle>
                   </div>
                 </CardHeader>
-                <CardContent className="pt-8 space-y-8 relative z-10">
-                  <div className="space-y-4">
-                    <p className="text-xs font-bold text-red-100 leading-relaxed uppercase tracking-wider">
-                      Your Emergency Passport provides paramedics with instant access to your clinical prerequisites bypassing account authentication.
-                    </p>
+                <CardContent className="pt-8 flex flex-col items-center space-y-8 relative z-10">
+                  <div className="bg-white p-6 rounded-[2rem] shadow-2xl ring-8 ring-white/10">
+                    {passport?.public_token ? (
+                      <QRCodeSVG 
+                        value={`${window.location.origin}/passport/${passport.public_token}`}
+                        size={200}
+                        level="H"
+                        includeMargin={false}
+                      />
+                    ) : (
+                      <div className="h-[200px] w-[200px] flex items-center justify-center text-red-600">
+                        <QrIcon className="h-12 w-12 animate-pulse" />
+                      </div>
+                    )}
                   </div>
-                  
-                  <div className="bg-white/10 backdrop-blur-md rounded-3xl p-6 border border-white/20 group/url relative overflow-hidden">
+ 
+                  <div className="w-full bg-white/10 backdrop-blur-md rounded-3xl p-6 border border-white/20 group/url relative overflow-hidden">
                      <div className="flex items-center justify-between mb-2">
                         <p className="text-[10px] font-black uppercase tracking-widest text-red-100">Live Registry URL</p>
                         <Button 
@@ -426,15 +366,15 @@ const ProfilePage = () => {
                         {window.location.origin}/passport/<span className="text-white font-bold">{passport?.public_token}</span>
                      </p>
                   </div>
-
-                  <div className="flex flex-col gap-4">
+ 
+                  <div className="flex flex-col w-full gap-4">
                     <Button 
                       variant="secondary" 
                       className="h-14 rounded-2xl font-black text-base uppercase tracking-widest shadow-2xl bg-white text-red-600 hover:bg-white/90 border-none transition-transform hover:scale-[1.02]" 
-                      onClick={() => window.open(`/passport/${passport?.public_token}`, '_blank')}
+                      onClick={() => window.open(`${window.location.origin}/passport/${passport?.public_token}`, '_blank')}
                     >
                       <ExternalLink className="h-4 w-4 mr-2" />
-                      Preview Emergency ID
+                      Preview Live ID
                     </Button>
                     <Button 
                       variant="ghost" 
@@ -443,12 +383,125 @@ const ProfilePage = () => {
                         toast.info("Security prompt: Contact support to revoke clinical tokens.");
                       }}
                     >
-                      Revoke Current Token
+                      Revoke QR
                     </Button>
                   </div>
                 </CardContent>
               </Card>
-           </div>
+              
+              <div className="p-6 rounded-3xl bg-muted/30 border border-border/40 flex items-start gap-4">
+                <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                  <Info className="h-5 w-5" />
+                </div>
+                <div className="space-y-1">
+                  <h4 className="text-xs font-bold uppercase tracking-widest">About Medical ID</h4>
+                  <p className="text-[11px] text-muted-foreground leading-relaxed">
+                    Paramedics and emergency responders are trained to check for medical ID tags. By having this QR active, you provide life-saving information even when unconscious.
+                  </p>
+                </div>
+              </div>
+            </div>
+ 
+            {/* Right Column: ID Content */}
+            <div className="lg:col-span-7 space-y-6">
+              <Card className="rounded-[2.5rem] border-border/40 shadow-soft overflow-hidden h-full">
+                <CardHeader className="bg-muted/30 pb-6 flex flex-row items-center justify-between border-b border-border/10">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                      <Activity className="h-5 w-5" />
+                    </div>
+                    <CardTitle className="text-2xl font-black tracking-tight">Clinical <span className="text-primary">Snapshot</span></CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-10 space-y-10">
+                  {/* Vital Bio */}
+                  <div className="grid grid-cols-2 gap-6">
+                    <ProvenanceTrigger field="blood_group">
+                      <div className="space-y-2 p-6 rounded-3xl bg-red-500/5 border border-red-500/10 transition-colors hover:bg-red-500/10 group h-full">
+                        <p className="text-[10px] font-black text-red-600/60 uppercase tracking-[0.2em]">Blood Group</p>
+                        <p className="text-4xl font-black text-red-600 flex items-center gap-2 tracking-tighter">
+                           {user?.user_metadata?.blood_type || "Unknown"}
+                           <Droplets className="h-6 w-6 fill-red-600 animate-pulse" />
+                        </p>
+                      </div>
+                    </ProvenanceTrigger>
+ 
+                    <div className="grid gap-4">
+                      <div className="p-4 rounded-2xl bg-muted/20 border border-border/40">
+                        <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">Gender</p>
+                        <p className="text-lg font-black capitalize tracking-tight">{user?.user_metadata?.gender || "Not specified"}</p>
+                      </div>
+                      <div className="p-4 rounded-2xl bg-muted/20 border border-border/40">
+                        <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">Date of Birth</p>
+                        <p className="text-lg font-black tracking-tight">{user?.user_metadata?.date_of_birth || "Not specified"}</p>
+                      </div>
+                    </div>
+                  </div>
+ 
+                  <Separator className="opacity-40" />
+ 
+                  {/* Critical Info */}
+                  <div className="space-y-8">
+                    <ProvenanceTrigger field="allergies">
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <Label className="text-[10px] font-black uppercase tracking-[0.2em] opacity-60 flex items-center gap-2">
+                            <AlertCircle className="h-3 w-3 text-red-500" />
+                            Critical Allergies
+                          </Label>
+                        </div>
+                        <div className="flex flex-wrap gap-3">
+                          {passport?.shared_data?.allergies && passport.shared_data.allergies.length > 0 ? (
+                            passport.shared_data.allergies.map((allergy: string, i: number) => (
+                              <Badge key={i} variant="outline" className="rounded-xl border-red-500/20 text-red-600 bg-red-500/5 px-4 py-2 font-black text-sm">
+                                {allergy}
+                              </Badge>
+                            ))
+                          ) : (
+                            <div className="p-6 rounded-[2rem] border border-dashed border-border/60 w-full text-center">
+                              <p className="text-xs text-muted-foreground italic font-medium">No life-threatening allergies reported</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </ProvenanceTrigger>
+ 
+                    <ProvenanceTrigger field="medications">
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <Label className="text-[10px] font-black uppercase tracking-[0.2em] opacity-60 flex items-center gap-2 text-primary">
+                            <ShieldCheck className="h-3 w-3" />
+                            Active Medications
+                          </Label>
+                        </div>
+                        <div className="space-y-3">
+                          {passport?.shared_data?.medications && passport.shared_data.medications.length > 0 ? (
+                            passport.shared_data.medications.map((med: any, i: number) => (
+                              <div key={i} className="group flex items-center justify-between p-5 rounded-2xl bg-primary/5 border border-primary/10 transition-all hover:bg-primary/10 hover:border-primary/20">
+                                <div className="flex items-center gap-4">
+                                  <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                                    <Pill className="h-5 w-5" />
+                                  </div>
+                                  <div>
+                                    <p className="text-base font-black tracking-tight">{med.name}</p>
+                                    <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">{med.dosage} • {med.frequency}</p>
+                                  </div>
+                                </div>
+                              </div>
+                            ))
+                          ) : (
+                            <div className="p-6 rounded-[2rem] border border-dashed border-border/60 w-full text-center">
+                              <p className="text-xs text-muted-foreground italic font-medium">No active clinical prescriptions found</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </ProvenanceTrigger>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
         </TabsContent>
       </Tabs>
     </div>

@@ -36,11 +36,7 @@ const SettingsPage = () => {
   const [dateOfBirth, setDateOfBirth] = useState("");
   const [countryCode, setCountryCode] = useState("+91");
   const [phoneNumber, setPhoneNumber] = useState("");
-  const [iceName, setIceName] = useState("");
-  const [icePhone, setIcePhone] = useState("");
-  const [iceRelationship, setIceRelationship] = useState("");
   const [iceContacts, setIceContacts] = useState<any[]>([]);
-  const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
@@ -80,51 +76,6 @@ const SettingsPage = () => {
 
   const isMissing = (val: any) => location.state?.highlightMissing && (!val || (typeof val === 'string' && !val.trim()));
   const highlightClass = "ring-2 ring-amber-500/50 shadow-[0_0_15px_rgba(245,158,11,0.3)] animate-pulse border-amber-500/50";
-
-  const addIceContact = () => {
-    if (!iceName || !icePhone) {
-      toast.error("Contact name and phone are required");
-      return;
-    }
-    const newContact = {
-      name: iceName.trim(),
-      phone: icePhone.trim(),
-      relationship: iceRelationship.trim()
-    };
-
-    if (editingIndex !== null) {
-      const updated = [...iceContacts];
-      updated[editingIndex] = newContact;
-      setIceContacts(updated);
-      setEditingIndex(null);
-      toast.success("Contact updated");
-    } else {
-      setIceContacts(prev => [...prev, newContact]);
-      toast.success("Contact added to your circle");
-    }
-
-    setIceName("");
-    setIcePhone("");
-    setIceRelationship("");
-  };
-
-  const startEditingIceContact = (index: number) => {
-    const contact = iceContacts[index];
-    setIceName(contact.name);
-    setIcePhone(contact.phone);
-    setIceRelationship(contact.relationship);
-    setEditingIndex(index);
-  };
-
-  const removeIceContact = (index: number) => {
-    setIceContacts(prev => prev.filter((_, i) => i !== index));
-    if (editingIndex === index) {
-      setEditingIndex(null);
-      setIceName("");
-      setIcePhone("");
-      setIceRelationship("");
-    }
-  };
 
   const handleSaveProfile = async () => {
     if (!name.trim()) {
@@ -178,8 +129,7 @@ const SettingsPage = () => {
     gender !== (user?.user_metadata?.gender || "") ||
     bloodGroup !== (user?.user_metadata?.blood_type || "") ||
     dateOfBirth !== (user?.user_metadata?.date_of_birth || "") ||
-    currentPhone !== initialPhone ||
-    JSON.stringify(iceContacts) !== JSON.stringify(user?.user_metadata?.ice_contacts || []);
+    currentPhone !== initialPhone;
 
   return (
     <div className="max-w-5xl mx-auto space-y-6 pb-32 pt-8 relative">
@@ -289,76 +239,6 @@ const SettingsPage = () => {
                       {bg}
                     </button>
                   ))}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card id="tour-settings-care-circle" className="rounded-[2rem] border-border/40 shadow-soft overflow-hidden">
-            <CardHeader className="bg-emerald-500/5 pb-4">
-              <div className="flex items-center gap-3">
-                <div className="h-8 w-8 rounded-lg bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
-                  <ShieldCheck className="h-4 w-4" />
-                </div>
-                <CardTitle className="text-xl">Primary Emergency Circle</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent className="pt-6 space-y-6">
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                Add trusted responders to your **Emergency Passport**. These people will be contacted
-                in order during a medical crisis.
-              </p>
-
-              <div className="space-y-3">
-                {iceContacts.map((contact, index) => (
-                  <div key={index} className="flex items-center justify-between p-4 rounded-2xl bg-muted/30 border border-border/40 group hover:border-emerald-500/30 transition-all">
-                    <div className="flex items-center gap-4">
-                      <div className="h-10 w-10 rounded-xl bg-background flex items-center justify-center text-sm font-bold border border-border/40">
-                        {contact.name.charAt(0).toUpperCase()}
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold text-foreground">{contact.name}</p>
-                        <p className="text-[10px] text-muted-foreground uppercase tracking-widest">{contact.relationship} • {contact.phone}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
-                      <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary" onClick={() => startEditingIceContact(index)}>
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive" onClick={() => removeIceContact(index)}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <Separator className="opacity-40" />
-
-              <div className="space-y-4">
-                <h4 className="text-sm font-bold flex items-center gap-2">
-                  {editingIndex !== null ? <Pencil className="h-4 w-4 text-amber-500" /> : <PlusCircle className="h-4 w-4 text-emerald-500" />}
-                  {editingIndex !== null ? "Edit Contact" : "Add New Contact"}
-                </h4>
-
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Full Name</Label>
-                    <Input value={iceName} onChange={(e) => setIceName(e.target.value)} placeholder="e.g. Jane Doe" className="h-11 rounded-xl bg-muted/20 border-transparent focus:border-primary focus:bg-background transition-all" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Relationship</Label>
-                    <Input value={iceRelationship} onChange={(e) => setIceRelationship(e.target.value)} placeholder="e.g. Spouse" className="h-11 rounded-xl bg-muted/20 border-transparent focus:border-primary focus:bg-background transition-all" />
-                  </div>
-                  <div className="space-y-2 md:col-span-2">
-                    <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Verified Phone</Label>
-                    <div className="flex gap-2">
-                      <Input type="tel" value={icePhone} onChange={(e) => setIcePhone(e.target.value)} placeholder="+1 234 567 890" className="flex-1 h-11 rounded-xl bg-muted/20 border-transparent focus:border-primary focus:bg-background transition-all font-mono" />
-                      <Button id="tour-settings-add-contact-btn" size="icon" className={`h-11 w-11 rounded-xl shadow-lg ${editingIndex !== null ? 'bg-amber-500 hover:bg-amber-600 shadow-amber-500/20' : 'shadow-primary/20'}`} onClick={addIceContact}>
-                        {editingIndex !== null ? <Check className="h-5 w-5" /> : <Plus className="h-5 w-5" />}
-                      </Button>
-                    </div>
-                  </div>
                 </div>
               </div>
             </CardContent>

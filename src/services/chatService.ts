@@ -86,7 +86,7 @@ export class ChatService {
 
   async getDoctorChats(
     doctorId: string,
-    status?: 'active' | 'closed' | 'archived',
+    status?: 'active' | 'closed' | 'archived' | 'cancelled',
     limit: number = 50,
     offset: number = 0
   ): Promise<{ data?: PatientDoctorChat[]; error?: string }> {
@@ -119,7 +119,7 @@ export class ChatService {
   async getDoctorPatientChats(
     doctorId: string,
     patientId: string,
-    status?: 'active' | 'closed' | 'archived'
+    status?: 'active' | 'closed' | 'archived' | 'cancelled'
   ): Promise<{ data?: PatientDoctorChat[]; error?: string }> {
     try {
       let query = supabase

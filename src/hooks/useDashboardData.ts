@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { healthService, HealthEntry } from '@/services/healthService';
 import { billService, BillRecord } from '@/services/billService';
 import { doctorSummaryService, DoctorSummary } from '@/services/doctorSummaryService';
-import { medicationService } from '@/services/medicationService';
+import { medicationService, MedicationRecord } from '@/services/medicationService';
 import { consultationRecordService, ConsultationRecord } from '@/services/consultationRecordService';
 import { medicalReportService, MedicalReport } from '@/services/medicalReportService';
 import { supabase } from '@/lib/supabase';
@@ -127,7 +127,7 @@ export const useDashboardData = () => {
           .from('profiles')
           .select('id, full_name')
           .in('id', Array.from(doctorIds));
-        profiles?.forEach(p => doctorMap[p.id] = p.full_name || p.name || 'Doctor');
+        profiles?.forEach(p => doctorMap[p.id] = p.full_name || 'Doctor');
       }
 
       const healthStats = processHealthStats(healthEntries);

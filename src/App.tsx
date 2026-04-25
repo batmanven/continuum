@@ -47,6 +47,7 @@ import MyDoctorsPage from "./pages/app/my-doctors";
 import DoctorDetailPage from "./pages/app/doctor-detail";
 import AppPrescriptionsPage from "./pages/app/prescriptions";
 import AppReportsPage from "./pages/app/reports";
+import EmergencyContactsPage from "./pages/app/emergency-contacts";
 
 import InstitutionalDashboard from "./pages/doctor/enterprise/institutional-dashboard";
 import EHRHub from "./pages/doctor/enterprise/ehr-hub";
@@ -91,6 +92,7 @@ const App = () => (
                 <Route path="my-doctors" element={<MyDoctorsPage />} />
                 <Route path="chats" element={<ChatsPage />} />
                 <Route path="doctor-chat/:chatId" element={<DoctorChatPage />} />
+                <Route path="emergency-contacts" element={<EmergencyContactsPage />} />
               </Route>
 
               <Route path="doctor" element={<DoctorLayout />}>
