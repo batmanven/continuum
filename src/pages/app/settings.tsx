@@ -243,9 +243,6 @@ const SettingsPage = () => {
               </div>
             </CardContent>
           </Card>
-
-          </Card>
-        </div>
         </div>
 
         <div className="space-y-6">
