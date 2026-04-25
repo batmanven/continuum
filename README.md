@@ -5,21 +5,21 @@ Continuum is an enterprise-grade personal health intelligence platform designed 
 
 ---
 
-## 🏗️ Platform Architecture
+## Platform Architecture
 
 Continuum operates as a dual-portal ecosystem, synchronized by a reactive intelligence bridge.
 
 ### 1. Care Seeker Portal (The Sanctuary)
 A cinematic dashboard designed for high-agency health management.
-- **🧠 Health Memory**: A natural-language interface for logging symptoms, medications, and clinical events, instantly structured by Gemini AI.
-- **🩺 Symptom Intelligence**: Proactive pattern analysis and longitudinal symptom mapping.
-- **📑 Financial Explainer**: AI-powered medical bill OCR and itemized cost decoding.
-- **👨‍👩‍👧‍👦 Care Circle (Guardians)**: Multi-profile orchestration for family health delegation.
-- **🆔 Emergency Passport**: A high-trust SOS interface with reactive clinical record mirroring.
+- **Health Memory**: A natural-language interface for logging symptoms, medications, and clinical events, instantly structured by Gemini AI.
+- **Symptom Intelligence**: Proactive pattern analysis and longitudinal symptom mapping.
+- **Financial Explainer**: AI-powered medical bill OCR and itemized cost decoding.
+- **Care Circle (Guardians)**: Multi-profile orchestration for family health delegation.
+- **Emergency Passport**: A high-trust SOS interface with reactive clinical record mirroring.
 
 ### 2. Specialist Portal (Banguard Suite)
 A professional cockpit for medical specialists and clinical teams.
-- **📊 Clinical Cockpit**: Longitudinal patient views with real-time consultation mapping.
+- **Clinical Cockpit**: Longitudinal patient views with real-time consultation mapping.
 - **💊 Staged Prescription Engine**: A high-fidelity workflow for issuing multi-medication clinical orders.
 - **📂 EHR Synchronization**: Intelligent indexing of medical reports and clinical summaries.
 - **💬 Direct Care Bridge**: Secure, context-aware consultation channels with patients.

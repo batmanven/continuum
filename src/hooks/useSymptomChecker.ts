@@ -203,7 +203,7 @@ export const useSymptomChecker = (): UseSymptomCheckerReturn => {
   };
 
   const analyzePatterns = async (symptomName?: string) => {
-    if (!user) return;
+    if (!user || analyzing) return;
 
     setAnalyzing(true);
     setError(null);
@@ -214,19 +214,21 @@ export const useSymptomChecker = (): UseSymptomCheckerReturn => {
 
       if (analyzeError) {
         setError(analyzeError);
-        toast.error('Failed to analyze patterns');
+        toast.error('Failed to analyze patterns: ' + analyzeError);
       } else if (newPatterns && newInsights) {
         setPatterns(newPatterns);
         setInsights(newInsights);
 
         if (newInsights.length > 0) {
-          toast.success(`Found ${newInsights.length} insights for your symptoms`);
+          toast.success(`Analysis complete: Found ${newInsights.length} health insights`);
+        } else {
+          toast.info('Analysis complete: No new patterns detected yet');
         }
       }
     } catch (error) {
       console.error('Error analyzing patterns:', error);
-      setError('Failed to analyze patterns');
-      toast.error('Failed to analyze patterns');
+      setError('An unexpected error occurred during analysis');
+      toast.error('Failed to analyze clinical patterns');
     } finally {
       setAnalyzing(false);
     }

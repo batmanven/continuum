@@ -298,13 +298,16 @@ const SymptomChecker = () => {
           </div>
           <div className="flex gap-3">
             <Button id="tour-sc-analyze" variant="outline" onClick={async () => {
-              setSyncStatus('analyzing');
-              await analyzePatterns();
-              setSyncStatus(null);
+              try {
+                setSyncStatus('analyzing');
+                await analyzePatterns();
+              } finally {
+                setSyncStatus(null);
+              }
             }} disabled={analyzing || syncStatus !== null}
-              className="rounded-full px-6 border-primary/20 hover:bg-primary/5 transition-all text-[10px] font-bold uppercase tracking-widest">
+              className={`rounded-full px-6 border-primary/20 hover:bg-primary/5 transition-all text-[10px] font-bold uppercase tracking-widest ${analyzing ? 'animate-pulse shadow-[0_0_15px_rgba(var(--primary),0.3)]' : ''}`}>
               {analyzing ? <RefreshCw className="h-3 w-3 animate-spin mr-2" /> : <Brain className="h-3 w-3 mr-2" />}
-              {analyzing ? 'Analyzing...' : 'Analyze Patterns'}
+              {analyzing ? 'Synchronizing Clinical Brain...' : 'Analyze Patterns'}
             </Button>
             <Button id="tour-sc-add-btn" onClick={() => { resetForm(); setShowAddForm(true); }}
               className="rounded-full px-6 bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all hover:scale-105">
@@ -383,8 +386,13 @@ const SymptomChecker = () => {
                     <div className="space-y-2">
                       <p className="text-xs font-semibold leading-relaxed line-clamp-2 italic">{insight.message}</p>
                       <div className="flex items-center gap-3">
-                        <Badge variant="outline" className="text-[9px] font-bold uppercase tracking-tighter bg-white/5 border-white/5">
-                          {insight.type}
+                        <Badge variant="outline" className={`text-[9px] font-bold uppercase tracking-tighter bg-white/5 ${insight.confidence > 0.8 ? 'border-primary/40 text-primary' : 'border-white/5'}`}>
+                          {insight.confidence > 0.8 ? (
+                            <span className="flex items-center gap-1">
+                              <Brain className="h-2 w-2" />
+                              Genius Pattern
+                            </span>
+                          ) : insight.type}
                         </Badge>
                         <div className="h-1 flex-1 bg-white/5 rounded-full overflow-hidden max-w-[80px]">
                           <div className="h-full bg-primary" style={{ width: `${insight.confidence * 100}%` }} />

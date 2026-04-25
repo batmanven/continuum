@@ -583,6 +583,20 @@ Return ONLY JSON.`;
       return null;
     }
   }
+  async runCustomPrompt(prompt: string): Promise<any> {
+    try {
+      const result = await ai.models.generateContent({
+        model: this.model,
+        contents: prompt
+      });
+      const text = result.text;
+      const cleanJsonText = text.replace(/```json\n?|\n?```/g, '').trim();
+      return JSON.parse(cleanJsonText);
+    } catch (error) {
+      console.error('Custom prompt error:', error);
+      return null;
+    }
+  }
 }
 
 export const healthProcessor = new HealthProcessor();
