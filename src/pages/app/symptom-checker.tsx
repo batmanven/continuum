@@ -143,6 +143,8 @@ const SymptomChecker = () => {
     analyzePatterns, clearError
   } = useSymptomChecker();
 
+  const [syncStatus, setSyncStatus] = useState<'saving' | 'analyzing' | null>(null);
+
   const { user } = useSupabaseAuth();
   const userGender = (user?.user_metadata?.gender === 'female' ? 'female' : 'male') as 'male' | 'female';
 
@@ -195,6 +197,7 @@ const SymptomChecker = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSyncStatus('saving');
     const entryData = {
       symptom_name: formData.symptom_name,
       severity:     formData.severity[0],
@@ -206,12 +209,16 @@ const SymptomChecker = () => {
       sleep_hours:  formData.sleep_hours[0],
       start_time:   new Date().toISOString()
     };
-    if (editingEntry) {
-      await updateSymptomEntry(editingEntry.id!, entryData);
-    } else {
-      await addSymptomEntry(entryData);
+    try {
+      if (editingEntry) {
+        await updateSymptomEntry(editingEntry.id!, entryData);
+      } else {
+        await addSymptomEntry(entryData);
+      }
+    } finally {
+      setSyncStatus(null);
+      resetForm();
     }
-    resetForm();
   };
 
   const handleEdit = (entry: SymptomEntry) => {
@@ -288,7 +295,11 @@ const SymptomChecker = () => {
             </p>
           </div>
           <div className="flex gap-3">
-            <Button id="tour-sc-analyze" variant="outline" onClick={() => analyzePatterns()} disabled={analyzing}
+            <Button id="tour-sc-analyze" variant="outline" onClick={async () => {
+              setSyncStatus('analyzing');
+              await analyzePatterns();
+              setSyncStatus(null);
+            }} disabled={analyzing || syncStatus !== null}
               className="rounded-full px-6 border-primary/20 hover:bg-primary/5 transition-all text-[10px] font-bold uppercase tracking-widest">
               {analyzing ? <RefreshCw className="h-3 w-3 animate-spin mr-2" /> : <Brain className="h-3 w-3 mr-2" />}
               {analyzing ? 'Analyzing...' : 'Analyze Patterns'}
@@ -698,6 +709,27 @@ const SymptomChecker = () => {
               </div>
             </div>
 
+          </div>
+        </div>
+      )}
+      {/* Global Sync Overlay */}
+      {syncStatus && (
+        <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-background/30 backdrop-blur-md transition-all duration-500 animate-in fade-in">
+          <div className="relative">
+            <div className="h-32 w-32 rounded-full border-b-2 border-primary animate-spin" />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <Brain className="h-12 w-12 text-primary animate-pulse" />
+            </div>
+          </div>
+          <div className="mt-8 text-center space-y-2">
+            <h2 className="text-2xl font-display font-bold text-foreground">
+              {syncStatus === 'saving' ? 'Synchronizing Health Record' : 'Analyzing Clinical Patterns'}
+            </h2>
+            <p className="text-muted-foreground animate-pulse">
+              {syncStatus === 'saving' 
+                ? 'Updating your health timeline and physiological nexus...' 
+                : 'Searching for correlations in your longitudinal data...'}
+            </p>
           </div>
         </div>
       )}

@@ -87,7 +87,9 @@ const HealthMemory = () => {
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Load profile-specific messages
+  const [isAiResponding, setIsAiResponding] = useState(false);
+  const [syncStatus, setSyncStatus] = useState<'analyzing' | 'generating' | null>(null);
+
   useEffect(() => {
     const storageKey = `health-chat-messages-${activeProfile.id}`;
     const savedMessages = localStorage.getItem(storageKey);
@@ -123,7 +125,7 @@ const HealthMemory = () => {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, isAiResponding]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -233,12 +235,14 @@ const HealthMemory = () => {
     setInput("");
     handleRemoveImage();
 
+    setIsAiResponding(true);
     // Contextual AI Processing via Gemini
     const result = await healthProcessor.processChat(
       currentInput, 
       currentMessages.slice(-5), // Send last 5 messages for context
       getUserContext()
     );
+    setIsAiResponding(false);
 
     setMessages(prev => [...prev, {
       role: "ai",
@@ -253,6 +257,7 @@ const HealthMemory = () => {
       return;
     }
 
+    setSyncStatus('analyzing');
     toast.loading("Analyzing conversation for timeline items...", { id: "sync" });
     
     try {
@@ -290,11 +295,14 @@ const HealthMemory = () => {
         toast.info("No new clinical items found to sync.", { id: "sync" });
       }
 
+      setSyncStatus('generating');
       // Finally, generate the doctor summary
       await handleGenerateSummary();
     } catch (error) {
        console.error("Sync error:", error);
        toast.error("Failed to sync chat to timeline", { id: "sync" });
+    } finally {
+       setSyncStatus(null);
     }
   };
 
@@ -319,7 +327,7 @@ const HealthMemory = () => {
         try {
           
           const { error } = await doctorSummaryService.createDoctorSummary(user.id, {
-            title: `Health Summary - ${new Date().toLocaleDateString()}`,
+            title: summaryData.title || `Health Summary - ${new Date().toLocaleDateString()}`,
             summary: summaryData.summary,
             insights: summaryData.insights,
             recommendations: summaryData.recommendations,
@@ -454,6 +462,21 @@ const HealthMemory = () => {
                     )}
                   </div>
                 ))}
+                {isAiResponding && (
+                  <div className="flex gap-3 mb-4 justify-start animate-in fade-in slide-in-from-left duration-300">
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                      <Bot className="h-4 w-4 text-primary" />
+                    </div>
+                    <div className="max-w-[80%] p-3 rounded-lg bg-muted flex items-center gap-2">
+                      <div className="flex gap-1">
+                        <div className="w-1.5 h-1.5 bg-primary/40 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                        <div className="w-1.5 h-1.5 bg-primary/40 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                        <div className="w-1.5 h-1.5 bg-primary/40 rounded-full animate-bounce"></div>
+                      </div>
+                      <span className="text-xs text-muted-foreground font-medium">Health Buddy is thinking...</span>
+                    </div>
+                  </div>
+                )}
                 <div ref={messagesEndRef} />
               </div>
               
@@ -475,7 +498,7 @@ const HealthMemory = () => {
                   onChange={(e) => setInput(e.target.value)}
                   placeholder="Tell me how you're feeling..."
                   onKeyPress={(e) => e.key === "Enter" && handleSend()}
-                  disabled={isProcessing}
+                  disabled={isProcessing || isAiResponding}
                 />
                 <input 
                   type="file" 
@@ -497,7 +520,7 @@ const HealthMemory = () => {
                   size="icon"
                   className={isRecording ? "text-red-500 animate-pulse border-red-200 bg-red-50" : ""}
                   onClick={handleToggleRecording}
-                  disabled={isProcessing}
+                  disabled={isProcessing || isAiResponding}
                   title="Voice log"
                 >
                   <Mic className="h-4 w-4" />
@@ -506,7 +529,7 @@ const HealthMemory = () => {
                   variant="outline"
                   size="icon"
                   onClick={() => cameraInputRef.current?.click()}
-                  disabled={isProcessing}
+                  disabled={isProcessing || isAiResponding}
                   title="Take photo"
                 >
                   <Camera className="h-4 w-4" />
@@ -515,17 +538,17 @@ const HealthMemory = () => {
                   variant="outline"
                   size="icon"
                   onClick={() => fileInputRef.current?.click()}
-                  disabled={isProcessing}
+                  disabled={isProcessing || isAiResponding}
                   title="Upload image"
                 >
                   <ImageIcon className="h-4 w-4" />
                 </Button>
                 <Button
                   onClick={handleSend}
-                  disabled={(!input.trim() && !selectedImage) || isProcessing}
+                  disabled={(!input.trim() && !selectedImage) || isProcessing || isAiResponding}
                   size="icon"
                 >
-                  {isProcessing ? (
+                  {isProcessing || isAiResponding ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
                     <Send className="h-4 w-4" />
@@ -540,12 +563,12 @@ const HealthMemory = () => {
                 <Button
                   id="tour-hm-summary-btn"
                   onClick={handleSyncAndSummarize}
-                  disabled={messages.length < 2 || loadingSummary}
+                  disabled={messages.length < 2 || loadingSummary || syncStatus !== null}
                   variant="hero"
                   size="sm"
                   className="rounded-xl px-4 shadow-lg shadow-primary/20 animate-in fade-in slide-in-from-right duration-500"
                 >
-                  {loadingSummary ? (
+                  {loadingSummary || syncStatus !== null ? (
                     <Loader2 className="h-4 w-4 animate-spin mr-2" />
                   ) : (
                     <Brain className="h-4 w-4 mr-2" />
@@ -687,6 +710,28 @@ const HealthMemory = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Global Sync Overlay */}
+      {syncStatus && (
+        <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-background/30 backdrop-blur-md transition-all duration-500 animate-in fade-in">
+          <div className="relative">
+            <div className="h-32 w-32 rounded-full border-b-2 border-primary animate-spin" />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <Brain className="h-12 w-12 text-primary animate-pulse" />
+            </div>
+          </div>
+          <div className="mt-8 text-center space-y-2">
+            <h2 className="text-2xl font-display font-bold text-foreground">
+              {syncStatus === 'analyzing' ? 'Analyzing and Syncing' : 'Generating Summary'}
+            </h2>
+            <p className="text-muted-foreground animate-pulse">
+              {syncStatus === 'analyzing' 
+                ? 'Processing your conversation items...' 
+                : 'Finalizing your clinical health summary...'}
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

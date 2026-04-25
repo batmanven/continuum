@@ -54,6 +54,8 @@ const DoctorSummaries = () => {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [stats, setStats] = useState<any>(null);
   const [filterFavorite, setFilterFavorite] = useState(false);
+  const [selectedMed, setSelectedMed] = useState<any>(null);
+  const [showMedDialog, setShowMedDialog] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -563,8 +565,9 @@ const DoctorSummaries = () => {
           {filteredSummaries.map((summary, index) => (
             <Card 
               key={summary.id} 
-              className="hover:shadow-md transition-all duration-200 group"
+              className="hover:shadow-md transition-all duration-200 group cursor-pointer"
               style={{ animationDelay: `${300 + index * 50}ms` }}
+              onClick={() => handleViewSummary(summary)}
             >
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
@@ -578,19 +581,16 @@ const DoctorSummaries = () => {
                         <Calendar className="h-3 w-3" />
                         {summary.generated_at ? formatDate(summary.generated_at) : "Unknown date"}
                       </div>
-                      {summary.date_range_start && summary.date_range_end && (
-                        <div className="flex items-center gap-1">
-                          <Clock className="h-3 w-3" />
-                          {new Date(summary.date_range_start).toLocaleDateString()} - {new Date(summary.date_range_end).toLocaleDateString()}
-                        </div>
-                      )}
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => handleToggleFavorite(summary.id!, !summary.is_favorite)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleToggleFavorite(summary.id!, !summary.is_favorite);
+                      }}
                       className="opacity-0 group-hover:opacity-100 transition-opacity"
                     >
                       <Star className={`h-4 w-4 ${summary.is_favorite ? 'fill-yellow-400 text-yellow-400' : ''}`} />
@@ -598,15 +598,10 @@ const DoctorSummaries = () => {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => handleViewSummary(summary)}
-                      className="opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDeleteSummary(summary.id!)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteSummary(summary.id!);
+                      }}
                       disabled={deletingId === summary.id}
                       className="opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive"
                     >
@@ -620,39 +615,76 @@ const DoctorSummaries = () => {
                 </div>
               </CardHeader>
               <CardContent className="pt-0">
-                <div className="space-y-3">
-                  {/* Summary Preview */}
-                  <div className="line-clamp-2 text-sm text-muted-foreground">
-                    {summary.summary}
+                <div className="flex flex-col md:flex-row gap-6">
+                  <div className="flex-1 space-y-3">
+                    {/* Summary Preview */}
+                    <div className="line-clamp-2 text-sm text-muted-foreground">
+                      {summary.summary}
+                    </div>
+
+                    {/* Insights Preview */}
+                    {summary.insights.length > 0 && (
+                      <div className="space-y-2">
+                        <span className="text-xs text-muted-foreground">Key Insights</span>
+                        <div className="space-y-1">
+                          {summary.insights.slice(0, 2).map((insight, i) => (
+                            <div key={i} className="text-xs bg-blue-50 text-blue-800 p-2 rounded">
+                              💡 {insight}
+                            </div>
+                          ))}
+                          {summary.insights.length > 2 && (
+                            <div className="text-xs text-muted-foreground text-center">
+                              +{summary.insights.length - 2} more insights
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Tags */}
+                    {summary.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {summary.tags.map((tag, i) => (
+                          <Badge key={i} variant="secondary" className="text-xs">
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
-                  {/* Insights Preview */}
-                  {summary.insights.length > 0 && (
-                    <div className="space-y-2">
-                      <span className="text-xs text-muted-foreground">Key Insights</span>
-                      <div className="space-y-1">
-                        {summary.insights.slice(0, 2).map((insight, i) => (
-                          <div key={i} className="text-xs bg-blue-50 text-blue-800 p-2 rounded">
-                            💡 {insight}
-                          </div>
+                  {/* Medications Suggested Preview */}
+                  {summary.suggested_medications && summary.suggested_medications.length > 0 && (
+                    <div className="w-full md:w-64 shrink-0 p-3 rounded-2xl bg-amber-50/50 border border-amber-100 flex flex-col gap-2">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Pill className="h-3 w-3 text-amber-600" />
+                        <span className="text-[10px] font-bold text-amber-900 uppercase tracking-widest">Meds suggested</span>
+                      </div>
+                      <div className="space-y-1.5">
+                        {summary.suggested_medications.slice(0, 2).map((med: any, i: number) => (
+                          <button 
+                            key={i} 
+                            className="flex flex-col gap-0.5 w-full text-left p-1.5 rounded-lg hover:bg-amber-100/50 transition-colors group/med"
+                            onClick={(e) => {
+                               e.stopPropagation();
+                               setSelectedMed(med);
+                               setShowMedDialog(true);
+                            }}
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs font-bold text-amber-950 truncate w-full group-hover/med:text-amber-600 transition-colors">{med.name}</span>
+                            </div>
+                            <p className="text-[10px] text-amber-800/60 line-clamp-1 italic leading-tight">
+                               <span className="font-bold text-amber-700/80 mr-1">{med.dosage}</span> • {med.reason || "No clinical reasoning provided."}
+                            </p>
+                          </button>
                         ))}
-                        {summary.insights.length > 2 && (
-                          <div className="text-xs text-muted-foreground text-center">
-                            +{summary.insights.length - 2} more insights
+                        {summary.suggested_medications.length > 2 && (
+                          <div className="text-[9px] text-amber-700/60 text-center pt-1 italic font-medium">
+                            +{summary.suggested_medications.length - 2} more suggestions
                           </div>
                         )}
                       </div>
-                    </div>
-                  )}
-
-                  {/* Tags */}
-                  {summary.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-1">
-                      {summary.tags.map((tag, i) => (
-                        <Badge key={i} variant="secondary" className="text-xs">
-                          {tag}
-                        </Badge>
-                      ))}
                     </div>
                   )}
                 </div>
@@ -794,9 +826,6 @@ const DoctorSummaries = () => {
                             <span>Clinical Window: {preVisitBrief.period}</span>
                          </div>
                       </div>
-                      <div className="flex flex-col items-end gap-4">
-                         <Badge className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-3 py-1">IDENTITY VERIFIED</Badge>
-                      </div>
                    </div>
                 </div>
 
@@ -931,6 +960,47 @@ const DoctorSummaries = () => {
             </div>
             </>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Medication Detail Dialog */}
+      <Dialog open={showMedDialog} onOpenChange={setShowMedDialog}>
+        <DialogContent className="max-w-md p-0 overflow-hidden rounded-[32px] border-none shadow-2xl">
+          <div className="bg-gradient-to-br from-amber-500 to-amber-600 p-8 text-white relative overflow-hidden">
+            <div className="absolute top-0 right-0 p-4 opacity-10">
+              <Pill className="h-24 w-24" />
+            </div>
+            <div className="relative z-10">
+               <Badge className="bg-white/20 text-white border-white/20 mb-4 uppercase tracking-widest text-[10px] font-bold">Clinical Suggestion</Badge>
+               <h2 className="text-3xl font-display font-black leading-tight mb-1">{selectedMed?.name}</h2>
+               <p className="text-amber-100 font-medium text-lg">{selectedMed?.dosage}</p>
+            </div>
+          </div>
+          <div className="p-8 bg-white space-y-6">
+            <div className="space-y-4">
+               <div className="flex items-center gap-2 text-amber-600">
+                  <ClipboardList className="h-5 w-5" />
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em]">Clinical Reasoning</span>
+               </div>
+               <div className="bg-slate-50 rounded-2xl p-6 border border-slate-100">
+                  <p className="text-slate-700 font-medium leading-relaxed italic">
+                     "{selectedMed?.reason || "The AI suggested this medication based on the symptoms and history analyzed in the summary. Please consult your primary care physician before taking any action."}"
+                  </p>
+               </div>
+            </div>
+
+            <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
+               <div className="flex items-center gap-2">
+                  <div className={`h-2 w-2 rounded-full ${selectedMed?.is_dosage_change ? 'bg-blue-500' : 'bg-emerald-500'}`} />
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                     {selectedMed?.is_dosage_change ? 'Dosage Adjustment' : 'New Medication Request'}
+                  </span>
+               </div>
+               <Button variant="ghost" onClick={() => setShowMedDialog(false)} className="text-[10px] font-bold uppercase tracking-widest text-slate-400 hover:text-slate-900">
+                  Dismiss
+               </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

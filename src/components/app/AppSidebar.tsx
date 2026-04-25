@@ -51,6 +51,7 @@ const clinicalIntelligence = [
   { title: "Dashboard", url: "/app", icon: LayoutDashboard },
   { title: "Health Memory", url: "/app/health-memory", icon: Brain },
   { title: "Symptom Checker", url: "/app/symptom-checker", icon: Activity },
+  { title: "Medications", url: "/app/medications", icon: Pill },
   { title: "AI Summaries", url: "/app/doctor-summaries", icon: Bot },
   { title: "Bill Explainer", url: "/app/bill-explainer", icon: Receipt },
 ];
@@ -65,7 +66,6 @@ const specialistCare = [
 
 const communityCare = [
   { title: "Guardians", url: "/app/guardians", icon: BookUser },
-  { title: "Medications", url: "/app/medications", icon: Pill },
 ];
 
 const accountItems = [
@@ -167,7 +167,7 @@ export function AppSidebar() {
       
       <SidebarContent className="flex flex-col h-full py-4 overflow-y-auto custom-scrollbar px-0">
         <div className="space-y-2">
-          {renderGroup("Intel Engine", Zap, filteredIntelligence, "text-amber-500")}
+          {renderGroup("Clinical Hub", Zap, filteredIntelligence, "text-amber-500")}
           {renderGroup("Care Circle", TrendingUp, filteredCommunity, "text-indigo-500")}
           {renderGroup("My Clinic", ShieldCheck, specialistCare, "text-emerald-500")}
         </div>

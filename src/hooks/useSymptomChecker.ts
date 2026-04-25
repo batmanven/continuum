@@ -4,6 +4,7 @@ import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { useProfile } from '@/contexts/ProfileContext';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
+import { healthService } from '@/services/healthService';
 
 interface UseSymptomCheckerReturn {
   
@@ -83,7 +84,17 @@ export const useSymptomChecker = (): UseSymptomCheckerReturn => {
         setEntries(prev => [data, ...prev]);
         toast.success('Symptom entry added successfully');
         
+        // Sync to Health Timeline
+        const severityMap = ['mild', 'moderate', 'severe'];
+        const severityIdx = Math.min(2, Math.floor((entryData.severity - 1) / 3.34));
         
+        await healthService.createHealthEntry(
+          user.id,
+          `${entryData.symptom_name}${entryData.description ? `: ${entryData.description}` : ''}${entryData.body_part ? ` (Area: ${entryData.body_part})` : ''}`,
+          'symptom',
+          activeProfile.id
+        );
+
         setTimeout(() => {
           analyzePatterns();
         }, 500);
@@ -113,7 +124,17 @@ export const useSymptomChecker = (): UseSymptomCheckerReturn => {
         ));
         toast.success('Symptom entry updated successfully');
         
-        
+        // Sync to Health Timeline as a new status update
+        if (user) {
+          const symptomName = updates.symptom_name || entries.find(e => e.id === id)?.symptom_name;
+          await healthService.createHealthEntry(
+            user.id,
+            `Update: ${symptomName}${updates.description ? `: ${updates.description}` : ''}${updates.severity ? ` (Severity: ${updates.severity}/10)` : ''}`,
+            'symptom',
+            activeProfile.id
+          );
+        }
+
         setTimeout(() => {
           analyzePatterns();
         }, 500);
