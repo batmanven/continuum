@@ -25,8 +25,9 @@ export class HealthProcessor {
     return text
       .trim()
       .replace(/\s+/g, ' ')
-      .replace(/[^\w\s\.\,\!\?\-\:\;\(\)\[\]\/\"\'\%\+\=\@\#\$\&\*\~]/g, '');
+      .replace(/[^\w\s\\.,\\!\\?\-\\:\\;\\(\\)\\[\]\\/\\"\\'\\%\\+\\=\\@\\#\\$\\*\\~]/g, '');
   }
+
 
   private createHealthPrompt(userInput: string, userContext?: UserContext): string {
     let patientInfo = '';
@@ -216,7 +217,7 @@ Response:`;
   }
 
   private createChatPrompt(currentInput: string, history: { role: string, content: string }[], userContext?: UserContext): string {
-    const historyText = history.length > 0 
+    const historyText = history.length > 0
       ? `\nCONVERSATION HISTORY:\n${history.map(m => `${m.role.toUpperCase()}: ${m.content}`).join('\n')}\n`
       : '';
 
@@ -268,11 +269,11 @@ Respond ONLY with valid JSON.`;
       const cleanJsonText = text.replace(/```json\n?|\n?```/g, '').trim();
       return JSON.parse(cleanJsonText);
     } catch (error) {
-       console.error('Chat processing error:', error);
-       return { 
-         response: "I'm having trouble processing that right now. Could you rephrase?", 
-         structured: { is_clinical: false }
-       };
+      console.error('Chat processing error:', error);
+      return {
+        response: "I'm having trouble processing that right now. Could you rephrase?",
+        structured: { is_clinical: false }
+      };
     }
   }
 
