@@ -78,14 +78,22 @@ const GuardiansDashboard = () => {
     if (!user) return;
     const loaded: Record<string, HealthPassport> = {};
     
-    // Load self passport
-    const { data: selfPassport } = await passportService.getPassportForProfile(user.id, null);
-    if (selfPassport) loaded['self'] = selfPassport;
+    // Load and sync self passport
+    const { data: selfPassportInitial } = await passportService.getPassportForProfile(user.id, null);
+    if (selfPassportInitial) {
+      await passportService.syncFullPassport(user.id, null);
+      const { data: selfPassport } = await passportService.getPassportForProfile(user.id, null);
+      if (selfPassport) loaded['self'] = selfPassport;
+    }
 
-    // Load dependent passports
+    // Load and sync dependent passports
     for (const dep of dependents) {
-      const { data: depPassport } = await passportService.getPassportForProfile(user.id, dep.id);
-      if (depPassport) loaded[dep.id] = depPassport;
+      const { data: depPassportInitial } = await passportService.getPassportForProfile(user.id, dep.id);
+      if (depPassportInitial) {
+        await passportService.syncFullPassport(user.id, dep.id);
+        const { data: depPassport } = await passportService.getPassportForProfile(user.id, dep.id);
+        if (depPassport) loaded[dep.id] = depPassport;
+      }
     }
     
     setPassports(loaded);
@@ -327,25 +335,7 @@ const GuardiansDashboard = () => {
     }
 
     toast.loading("Updating Medical QR...");
-    
-    let blood_type = "Not specified";
-    if (!id) {
-       blood_type = user.user_metadata?.blood_type || "Not specified";
-    } else {
-       const dep = dependents.find(d => d.id === id);
-       blood_type = dep?.blood_type || "Not specified";
-    }
-
-    const { error } = await passportService.updatePassportData(passport.id, {
-      name,
-      owner_email: user.email,
-      owner_phone: user.user_metadata?.phone || "Not linked",
-      owner_contact: user.user_metadata?.phone || user.email,
-      blood_type,
-      emergency_notes: passport.shared_data.emergency_notes || "Generated via Continuum Health",
-      allergies: passport.shared_data.allergies || [],
-      medications: passport.shared_data.medications || []
-    });
+    const { error } = await passportService.syncFullPassport(user.id, id);
     toast.dismiss();
 
     if (error) {

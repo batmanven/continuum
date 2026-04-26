@@ -270,39 +270,58 @@ export const useHealthMemory = (): UseHealthMemoryReturn => {
       const { error } = await healthService.deleteHealthEntry(entryId);
       if (error) {
         toast.error("Failed to delete entry: " + error);
-      } else {
-        toast.success("Health entry deleted");
-        setEntries(prev => prev.filter(entry => entry.id !== entryId));
+        return;
+      }
 
-        if (entry && user) {
-          // 1. Delete matching symptom_entries
-          if (entry.entry_type === 'symptom') {
-            const { data: symData } = await supabase
-              .from('symptom_entries')
-              .select('id')
-              .eq('user_id', user.id)
-              .eq('description', entry.raw_content);
-              
-            if (symData && symData.length > 0) {
-              for (const sym of symData) {
-                await supabase.from('symptom_entries').delete().eq('id', sym.id);
-              }
-            }
-          }
+      // Optimistically remove from local state immediately
+      setEntries(prev => prev.filter(e => e.id !== entryId));
+      toast.success("Health entry deleted");
 
-          // 2. Delete matching doctor_summaries
-          const { data: docData } = await supabase
-            .from('doctor_summaries')
-            .select('id')
-            .eq('user_id', user.id)
-            .contains('health_entry_ids', [entryId]);
-            
-          if (docData && docData.length > 0) {
-            for (const doc of docData) {
-              await supabase.from('doctor_summaries').delete().eq('id', doc.id);
-            }
-          }
-        }
+      if (!entry || !user) return;
+
+      // ── Cascade 1: Delete linked symptom_entries ──────────────────────────
+      // Strategy A: matched by the description field (set when syncing from health memory)
+      // Strategy B: matched by symptom name prefix in raw_content (set when adding via symptom checker)
+      const rawContent = entry.raw_content || '';
+
+      const [byDescription, byRawContent] = await Promise.all([
+        supabase
+          .from('symptom_entries')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('description', rawContent),
+        // The symptom checker writes raw_content as "SymptomName: description (Area: body_part)"
+        // Match entries whose description starts with the raw_content snippet
+        supabase
+          .from('symptom_entries')
+          .select('id')
+          .eq('user_id', user.id)
+          .ilike('description', `${rawContent.substring(0, 60)}%`)
+      ]);
+
+      const symptomIdsToDelete = new Set<string>();
+      byDescription.data?.forEach(r => symptomIdsToDelete.add(r.id));
+      byRawContent.data?.forEach(r => symptomIdsToDelete.add(r.id));
+
+      if (symptomIdsToDelete.size > 0) {
+        await supabase
+          .from('symptom_entries')
+          .delete()
+          .in('id', [...symptomIdsToDelete]);
+      }
+
+      // ── Cascade 2: Delete doctor_summaries that reference this health entry ─
+      const { data: linkedSummaries } = await supabase
+        .from('doctor_summaries')
+        .select('id')
+        .eq('user_id', user.id)
+        .contains('health_entry_ids', [entryId]);
+
+      if (linkedSummaries && linkedSummaries.length > 0) {
+        await supabase
+          .from('doctor_summaries')
+          .delete()
+          .in('id', linkedSummaries.map(s => s.id));
       }
     } catch (error) {
       toast.error("Error deleting entry");
