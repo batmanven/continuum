@@ -21,10 +21,6 @@ const About = () => {
           </div>
           {/* Hero Section */}
           <div className="max-w-3xl mx-auto text-center mb-24">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary mb-6 animate-fade-in">
-              <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
-              <span className="text-[10px] font-black uppercase tracking-[0.2em]">Our Mission</span>
-            </div>
             <h1 className="font-display text-5xl sm:text-6xl font-bold tracking-tight text-foreground mb-8 leading-[1.1] animate-fade-in" style={{ animationDelay: "100ms" }}>
               Bridging the gap in <span className="text-gradient font-black">Modern Healthcare</span>
             </h1>
