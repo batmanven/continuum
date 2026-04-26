@@ -491,9 +491,14 @@ Return ONLY JSON.`;
         model: this.model,
         contents: prompt
       });
-      const text = result.text;
+      const text = result.text || "";
       const cleanJsonText = text.replace(/```json\n?|\n?```/g, '').trim();
-      return JSON.parse(cleanJsonText);
+      try {
+        return JSON.parse(cleanJsonText);
+      } catch (e) {
+        const match = cleanJsonText.match(/\[.*\]/s);
+        return match ? JSON.parse(match[0]) : [];
+      }
     } catch (error) {
       console.error('Conversation summary error:', error);
       return [];
@@ -590,9 +595,14 @@ Return ONLY JSON.`;
         model: this.model,
         contents: prompt
       });
-      const text = result.text;
+      const text = result.text || "";
       const cleanJsonText = text.replace(/```json\n?|\n?```/g, '').trim();
-      return JSON.parse(cleanJsonText);
+      try {
+        return JSON.parse(cleanJsonText);
+      } catch (e) {
+        const match = cleanJsonText.match(/\{.*\}/s);
+        return match ? JSON.parse(match[0]) : null;
+      }
     } catch (error) {
       console.error('Custom prompt error:', error);
       return null;

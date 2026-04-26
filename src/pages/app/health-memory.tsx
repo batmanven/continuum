@@ -286,7 +286,14 @@ const HealthMemory = () => {
               user!.id,
               fact.raw_content,
               fact.entry_type,
-              activeProfile.id
+              activeProfile.id,
+              fact.structured_data ? {
+                symptoms: fact.entry_type === 'symptom' ? [{
+                  name: fact.structured_data.symptom_name,
+                  severity: fact.structured_data.severity <= 3 ? 'mild' : fact.structured_data.severity <= 7 ? 'moderate' : 'severe'
+                }] : []
+              } : undefined,
+              true // ai_processed
             );
           }
         }
@@ -339,7 +346,7 @@ const HealthMemory = () => {
             is_favorite: false,
             tags: ['health', 'summary', 'ai-generated'],
             suggested_medications: summaryData.suggested_medications || []
-          });
+          }, activeProfile.id);
 
           if (error) {
             toast.error("Failed to save summary: " + error);

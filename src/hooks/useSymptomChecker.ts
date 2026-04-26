@@ -91,7 +91,16 @@ export const useSymptomChecker = (): UseSymptomCheckerReturn => {
           user.id,
           `${entryData.symptom_name}${entryData.description ? `: ${entryData.description}` : ''}${entryData.body_part ? ` (Area: ${entryData.body_part})` : ''}`,
           'symptom',
-          activeProfile.id
+          activeProfile.id,
+          {
+            symptoms: [{
+              name: entryData.symptom_name,
+              severity: entryData.severity <= 3 ? 'mild' : entryData.severity <= 7 ? 'moderate' : 'severe',
+              duration: entryData.duration,
+              location: entryData.body_part || undefined
+            }]
+          },
+          true // ai_processed
         );
 
         setTimeout(() => {
@@ -130,7 +139,16 @@ export const useSymptomChecker = (): UseSymptomCheckerReturn => {
             user.id,
             `Update: ${symptomName}${updates.description ? `: ${updates.description}` : ''}${updates.severity ? ` (Severity: ${updates.severity}/10)` : ''}`,
             'symptom',
-            activeProfile.id
+            activeProfile.id,
+            {
+              symptoms: [{
+                name: symptomName!,
+                severity: (updates.severity || 5) <= 3 ? 'mild' : (updates.severity || 5) <= 7 ? 'moderate' : 'severe',
+                duration: updates.duration || undefined,
+                location: updates.body_part || undefined
+              }]
+            },
+            true // ai_processed
           );
         }
 

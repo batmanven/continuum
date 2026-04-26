@@ -66,7 +66,9 @@ export class HealthService {
     userId: string,
     rawContent: string,
     entryType: HealthEntry['entry_type'] = 'general',
-    dependentId?: string | null
+    dependentId?: string | null,
+    structuredData?: StructuredHealthData,
+    aiProcessed: boolean = false
   ): Promise<{ data?: HealthEntry; error?: string }> {
     try {
       const { data, error } = await supabase
@@ -76,7 +78,8 @@ export class HealthService {
           dependent_id: dependentId || null,
           entry_type: entryType,
           raw_content: rawContent,
-          ai_processed: false
+          structured_data: structuredData || null,
+          ai_processed: aiProcessed
         })
         .select()
         .single();
