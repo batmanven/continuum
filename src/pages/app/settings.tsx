@@ -89,9 +89,11 @@ const SettingsPage = () => {
       const { error: profileError } = await updateProfile({
         name: name.trim(),
         gender,
-        dateOfBirth,
+        date_of_birth: dateOfBirth,
+        dateOfBirth: null, // Clean up old incorrect key
         phone: combinedPhone,
-        bloodGroup,
+        blood_type: bloodGroup,
+        bloodGroup: null, // Clean up old incorrect key
         ice_contacts: iceContacts
       });
 

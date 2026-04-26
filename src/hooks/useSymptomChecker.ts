@@ -37,7 +37,6 @@ export const useSymptomChecker = (): UseSymptomCheckerReturn => {
   useEffect(() => {
     if (user) {
       loadEntries();
-      analyzePatterns();
     }
   }, [user, activeProfile.id]);
 
@@ -236,12 +235,6 @@ export const useSymptomChecker = (): UseSymptomCheckerReturn => {
       } else if (newPatterns && newInsights) {
         setPatterns(newPatterns);
         setInsights(newInsights);
-
-        if (newInsights.length > 0) {
-          toast.success(`Analysis complete: Found ${newInsights.length} health insights`);
-        } else {
-          toast.info('Analysis complete: No new patterns detected yet');
-        }
       }
     } catch (error) {
       console.error('Error analyzing patterns:', error);

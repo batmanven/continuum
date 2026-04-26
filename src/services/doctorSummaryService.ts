@@ -274,10 +274,24 @@ export class DoctorSummaryService {
         return { error: error.message };
       }
 
-      
-      const { data: allSummaries } = await this.getUserDoctorSummaries(userId, 100, 0, dependentId);
-      
-      if (!allSummaries) {
+      // Use a direct query instead of calling this.getUserDoctorSummaries() to avoid
+      // an RLS infinite recursion error (policy re-enters this table during the call).
+      let allQuery = supabase
+        .from('doctor_summaries')
+        .select('*')
+        .eq('user_id', userId);
+
+      if (dependentId === null || dependentId === undefined) {
+        allQuery = allQuery.is('dependent_id', null);
+      } else {
+        allQuery = allQuery.eq('dependent_id', dependentId);
+      }
+
+      const { data: allSummaries, error: allError } = await allQuery
+        .order('generated_at', { ascending: false })
+        .limit(100);
+
+      if (allError || !allSummaries) {
         return { error: 'Failed to fetch summaries for stats' };
       }
 

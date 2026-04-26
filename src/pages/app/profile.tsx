@@ -66,14 +66,13 @@ const ProfilePage = () => {
   const loadPassportData = async () => {
     try {
       setLoading(true);
-      // 1. Fetch Passport
       const { data, error } = await passportService.getPassportForProfile(user!.id, null);
       if (error) throw new Error(error);
       
-      // 2. Perform reactive sync with official prescriptions
       if (data) {
-        await passportService.syncPassportWithPrescriptions(user!.id, null);
-        // Reload to get synchronized data
+        // Full live sync: name, blood type, phone, allergies, ICE contacts, all medications
+        await passportService.syncFullPassport(user!.id, null);
+        // Reload to get fully synchronized data
         const { data: updatedData } = await passportService.getPassportForProfile(user!.id, null);
         setPassport(updatedData || data);
       } else {

@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { useSymptomChecker } from '@/hooks/useSymptomChecker';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
-import { SymptomEntry, SymptomPattern } from '@/services/symptomCheckerService';
+import { SymptomEntry } from '@/services/symptomCheckerService';
 import { BodyHeatmap, BodyRegion } from '@/components/ui/BodyHeatmap';
 import BodyPartCutout from '@/components/ui/BodyPartCutout';
 import {
@@ -63,15 +63,26 @@ const mapSymptomToRegion = (symptom: string): BodyRegion[] => {
   return regions;
 };
 
-const computeHeatData = (patterns: SymptomPattern[]) => {
+const computeHeatData = (entries: SymptomEntry[]): Partial<Record<BodyRegion, number>> => {
   const data: Partial<Record<BodyRegion, number>> = {};
-  patterns.forEach(p => {
-    const regions = mapSymptomToRegion(p.symptom_name);
+
+  entries.forEach(e => {
+    // Priority 1: explicit body_part stored on the entry (set when clicking the heatmap or form)
+    if (e.body_part) {
+      const region = e.body_part.toLowerCase().trim() as BodyRegion;
+      const existing = data[region] ?? 0;
+      if (e.severity > existing) data[region] = e.severity;
+      return; // already placed, skip name-based fallback for this entry
+    }
+
+    // Priority 2: derive region from symptom name keywords
+    const regions = mapSymptomToRegion(e.symptom_name);
     regions.forEach(r => {
-      const score = Math.min(10, p.avg_severity * (1 + (p.frequency * 0.1)));
-      if (!data[r] || score > data[r]!) data[r] = score;
+      const existing = data[r] ?? 0;
+      if (e.severity > existing) data[r] = e.severity;
     });
   });
+
   return data;
 };
 
@@ -155,7 +166,7 @@ const SymptomChecker = () => {
   const [selectedRegion, setSelectedRegion] = useState<BodyRegion | null>(null);
   const [editingEntry, setEditingEntry] = useState<SymptomEntry | null>(null);
 
-  const heatData = computeHeatData(patterns);
+  const heatData = computeHeatData(entries);
 
   const [formData, setFormData] = useState({
     symptom_name: '',

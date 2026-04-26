@@ -67,12 +67,7 @@ const HealthMemory = () => {
     loadingSummary
   } = useHealthMemory();
 
-  const {
-    addSymptomEntry,
-    patterns,
-    insights,
-    analyzing
-  } = useSymptomChecker();
+  const { addSymptomEntry } = useSymptomChecker();
   const { activeProfile } = useProfile();
 
   const [messages, setMessages] = useState<Message[]>([]);
@@ -273,10 +268,28 @@ const HealthMemory = () => {
               sev = sev.toLowerCase().includes('severe') ? 8 : sev.toLowerCase().includes('moderate') ? 5 : 2;
             }
 
+            // Derive body_part: use AI-provided one, or fall back to name-based keyword match
+            const aiBodyPart = fact.structured_data?.body_part || null;
+            const derivedBodyPart: string | null = (() => {
+              if (aiBodyPart) return aiBodyPart.toLowerCase().trim();
+              const name: string = (fact.structured_data?.symptom_name || fact.raw_content || '').toLowerCase();
+              if (name.includes('head') || name.includes('migraine')) return 'head';
+              if (name.includes('neck') || name.includes('throat')) return 'neck';
+              if (name.includes('chest') || name.includes('heart') || name.includes('breath')) return 'chest';
+              if (name.includes('stomach') || name.includes('abdo') || name.includes('nausea') || name.includes('belly')) return 'abs';
+              if (name.includes('back')) return name.includes('lower') ? 'lower-back' : 'upper-back';
+              if (name.includes('shoulder')) return 'front-deltoids';
+              if (name.includes('arm') || name.includes('elbow')) return 'biceps';
+              if (name.includes('leg') || name.includes('knee') || name.includes('thigh')) return 'quadriceps';
+              if (name.includes('calf') || name.includes('calves') || name.includes('foot') || name.includes('ankle')) return 'calves';
+              return null;
+            })();
+
             await addSymptomEntry({
               ...fact.structured_data,
               severity: typeof sev === 'number' ? Math.max(1, Math.min(10, sev)) : 3,
               description: fact.raw_content,
+              body_part: derivedBodyPart,
               start_time: new Date().toISOString()
             });
             // Skip manual healthService.createHealthEntry as addSymptomEntry now handles it
@@ -399,29 +412,7 @@ const HealthMemory = () => {
         </div>
       </div>
 
-      {/* Symptom Insights Banner */}
-      {insights.length > 0 && (
-        <div className="mb-6 opacity-0 animate-fade-in" style={{ animationDelay: "100ms" }}>
-          <Card className="border-blue-200 bg-blue-50">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2 text-blue-800">
-                <Brain className="h-5 w-5" />
-                <span className="text-sm font-medium">Recent Symptom Insights:</span>
-              </div>
-              <div className="mt-2 space-y-1">
-                {insights.slice(0, 2).map((insight, index) => (
-                  <p key={index} className="text-sm text-blue-700">
-                    {insight.message}
-                  </p>
-                ))}
-              </div>
-              <Button variant="outline" size="sm" className="mt-2" asChild>
-                <a href="/app/symptom-checker">View Detailed Analysis</a>
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+
 
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Chat Section */}

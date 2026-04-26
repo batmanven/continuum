@@ -475,7 +475,8 @@ Return a JSON array of entries:
     "entry_type": "symptom|medication|sleep|mood|energy|general",
     "structured_data": { 
       "symptom_name": "string",
-      "severity": 1-10
+      "severity": 1-10,
+      "body_part": "anatomical region if mentioned (e.g. head, chest, abs, lower-back, neck, quadriceps, calves)"
     }
   }
 ]
