@@ -19,9 +19,6 @@ const Footer = () => {
             <Link to="/about" className="text-xs font-bold uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors">
               About
             </Link>
-            <Link to="/pricing" className="text-xs font-bold uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors">
-              Pricing
-            </Link>
             <a href="/#features" className="text-xs font-bold uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors">
               Features
             </a>

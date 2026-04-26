@@ -14,13 +14,11 @@ const LandingNav = () => {
   const [activeSection, setActiveSection] = useState("");
 
   useEffect(() => {
-    // If we're not on the home page, the active section is just the path
     if (location.pathname !== "/") {
       setActiveSection(location.pathname.substring(1));
       return;
     }
 
-    // Intersection Observer for landing page sections
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -49,115 +47,73 @@ const LandingNav = () => {
       toast.success("Logged out successfully");
     } catch (error) {
       toast.error("Error logging out");
-      console.error("Logout error:", error);
     }
   };
 
   const NavLink = ({ to, href, children, sectionId }: { to?: string; href?: string; children: React.ReactNode; sectionId: string }) => {
     const isActive = activeSection === sectionId;
-    const baseClass = `text-sm font-medium transition-all duration-300 relative py-2 ${
-      isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
-    }`;
-
-    const Indicator = () => (
-      <span 
-        className={`absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-full transition-all duration-500 origin-left ${
-          isActive ? "scale-x-100 opacity-100" : "scale-x-0 opacity-0"
-        }`} 
-      />
-    );
-
-    if (to) {
-      return (
-        <Link to={to} className={baseClass}>
-          {children}
-          <Indicator />
-        </Link>
-      );
-    }
-
     return (
-      <a href={href} className={baseClass}>
-        {children}
-        <Indicator />
-      </a>
+      <div className="relative group">
+        {to ? (
+          <Link to={to} className={`text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300 ${isActive ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}>
+            {children}
+          </Link>
+        ) : (
+          <a href={href} className={`text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300 ${isActive ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}>
+            {children}
+          </a>
+        )}
+        <div className={`absolute -bottom-1 left-0 h-[2px] bg-primary transition-all duration-500 ${isActive ? 'w-full' : 'w-0 group-hover:w-4'}`} />
+      </div>
     );
   };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 glass border-b border-border/50">
-      <div className="container mx-auto flex h-16 items-center justify-between px-6">
-        <Link to="/" className="flex items-center gap-2.5 group">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary transition-transform duration-200 group-hover:scale-105">
-            <Heart className="h-4.5 w-4.5 text-primary-foreground" />
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/40 h-20 flex items-center">
+      <div className="container mx-auto px-6 flex items-center justify-between">
+        <Link to="/" className="flex items-center gap-4 group">
+          <div className="relative">
+            <div className="h-8 w-8 bg-primary rotate-45 flex items-center justify-center group-hover:rotate-90 transition-transform duration-700">
+              <Heart className="h-4 w-4 text-primary-foreground -rotate-45 group-hover:-rotate-90 transition-transform duration-700" />
+            </div>
+            <div className="absolute inset-0 bg-primary/20 blur-lg rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
           </div>
-          <span className="text-lg font-semibold tracking-tight text-foreground">
-            Continuum <span className="text-primary">Health</span>
+          <span className="font-display text-xl font-bold tracking-tighter text-foreground">
+            CONTINUUM <span className="text-primary italic serif-display">HEALTH</span>
           </span>
         </Link>
 
-        <div className="hidden md:flex items-center gap-8">
-          <NavLink href="/#features" sectionId="features">
-            Features
-          </NavLink>
-          <NavLink href="/#how-it-works" sectionId="how-it-works">
-            How it works
-          </NavLink>
+        <div className="hidden md:flex items-center gap-12">
+          <NavLink href="/#features" sectionId="features">Features</NavLink>
+          <NavLink href="/#how-it-works" sectionId="how-it-works">Process</NavLink>
+          <NavLink to="/pricing" sectionId="pricing">Pricing</NavLink>
         </div>
 
-        <div className="flex items-center gap-2 md:gap-4">
+        <div className="flex items-center gap-6">
           <Button
             variant="ghost"
             size="icon"
             onClick={toggle}
-            className="text-muted-foreground hover:text-foreground hover:bg-primary/5 transition-all duration-300"
-            title={`Switch to ${theme === "light" ? "dark" : "light"} mode`}
+            className="text-muted-foreground hover:text-primary transition-colors"
           >
-            {theme === "light" ? (
-              <Moon className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all" />
-            ) : (
-              <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all" />
-            )}
-            <span className="sr-only">Toggle theme</span>
+            {theme === "light" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
           </Button>
 
           {user ? (
-            <>
-              <Button variant="default" size="sm" asChild>
-                <Link to="/app">Patient Dashboard</Link>
-              </Button>
-              <div className="flex items-center gap-2">
-                <Avatar className="h-8 w-8">
-                  <AvatarImage src={user.user_metadata?.avatar_url} />
-                  <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
-                    {initials}
-                  </AvatarFallback>
-                </Avatar>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  onClick={handleLogout}
-                  className="text-muted-foreground hover:text-foreground"
-                  title="Log out"
-                >
-                  <LogOut className="h-4 w-4" />
-                </Button>
-              </div>
-            </>
+            <div className="flex items-center gap-4">
+              <Link to="/app" className="text-[10px] font-black uppercase tracking-widest text-foreground hover:text-primary transition-colors">Dashboard</Link>
+              <div className="h-4 w-px bg-border/40" />
+              <button onClick={handleLogout} className="text-muted-foreground hover:text-destructive transition-colors">
+                <LogOut className="h-4 w-4" />
+              </button>
+            </div>
           ) : (
-            <>
-              <div className="hidden md:flex items-center gap-4">
-                <Button variant="ghost" size="sm" asChild>
-                  <Link to="/role-selection?mode=login">Login</Link>
-                </Button>
-                <Button variant="hero" size="sm" asChild>
-                  <Link to="/role-selection?mode=signup">Sign Up</Link>
-                </Button>
-              </div>
-              <Button variant="ghost" size="icon" asChild className="md:hidden">
-                <Link to="/role-selection?mode=login" className="text-sm">Login</Link>
+            <div className="flex items-center gap-8">
+              <Link to="/role-selection?mode=login" className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground transition-colors">Login</Link>
+              <Button size="sm" className="rounded-none px-6 bg-foreground text-background hover:bg-primary transition-colors duration-500" asChild>
+                <Link to="/role-selection?mode=signup">Sign Up</Link>
               </Button>
-            </>
+            </div>
           )}
         </div>
       </div>
